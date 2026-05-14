@@ -1,0 +1,19 @@
+{
+  "name": "FinanzLog",
+  "short_name": "FinanzLog",
+  "description": "Registro personal de gastos diarios",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111210",
+  "theme_color": "#111210",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQ4IiBmaWxsPSIjMjEyMzIwIi8+CiAgPGNpcmNsZSBjeD0iOTYiIGN5PSI5NiIgcj0iNTAiIHN0cm9rZT0iI2M4YTk2ZSIgc3Ryb2tlLXdpZHRoPSIxNCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC45Ii8+CiAgPGxpbmUgeDE9Ijk2IiB5MT0iNTAiIHgyPSI5NiIgeTI9IjYyIiBzdHJva2U9IiNjOGE5NmUiIHN0cm9rZS13aWR0aD0iMTIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxsaW5lIHgxPSI5NiIgeTE9IjEzMCIgeDI9Ijk2IiB5Mj0iMTQyIiBzdHJva2U9IiNjOGE5NmUiIHN0cm9rZS13aWR0aD0iMTIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik03NiA3OC41IEM3NiA3MC41IDgzIDY1IDk2IDY1IEMxMDcgNjUgMTE2IDcwIDExNiA3OCBDMTE2IDg2IDEwNiA5MCA5NiA5NCBDODYgOTggNzYgMTAyIDc2IDExMCBDNzYgMTE4IDg1IDEyNCA5NiAxMjQgQzEwOSAxMjQgMTE2IDExNyAxMTYgMTEwIiBzdHJva2U9IiNlOGU2ZGYiIHN0cm9rZS13aWR0aD0iMTAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgZmlsbD0ibm9uZSIgb3BhY2l0eT0iMC42Ii8+Cjwvc3ZnPg==",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
