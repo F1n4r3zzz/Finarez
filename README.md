@@ -1,3 +1,3 @@
 # FinanzLog
 
-https://xii1rst.github.io/Finanz/
+https://finanz-log.vercel.app/
