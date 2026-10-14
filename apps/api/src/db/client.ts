@@ -8,6 +8,8 @@ import { Pool } from 'pg';
  */
 export type Executor = PgDatabase<NodePgQueryResultHKT>;
 
+export type Database = ReturnType<typeof createDatabase>['db'];
+
 export function createDatabase(connectionString: string, options: { max?: number } = {}) {
   const pool = new Pool({ connectionString, max: options.max ?? 10 });
   // Without a listener, an idle client's network error would crash the process.

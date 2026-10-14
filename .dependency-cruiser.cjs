@@ -31,6 +31,20 @@ module.exports = {
       to: { dependencyTypes: ['core'] },
     },
     {
+      name: 'platform-not-modules',
+      comment: 'Shared infrastructure (email, db) must not depend on domain modules.',
+      severity: 'error',
+      from: { path: '^apps/api/src/(platform|db)/' },
+      to: { path: '^apps/api/src/modules/' },
+    },
+    {
+      name: 'contracts-standalone',
+      comment: 'Contracts are shared by web and api, so they import neither.',
+      severity: 'error',
+      from: { path: '^packages/contracts/' },
+      to: { path: '^apps/' },
+    },
+    {
       name: 'web-not-api',
       severity: 'error',
       from: { path: '^apps/web/' },

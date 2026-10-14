@@ -10,9 +10,12 @@ Personal finance web app: accounts, income and expenses, transfers, budgets, sav
 ## Setup
 
 ```sh
-cp .env.example .env
+cp .env.example .env   # then set AUTH_SECRET to the output of: openssl rand -base64 32
 pnpm install
-pnpm check        # lint, typecheck, module boundaries, tests (needs the test database)
-pnpm dev          # API on http://localhost:3000/api (GET /api/health)
-pnpm db:migrate   # apply migrations to DATABASE_URL
+pnpm db:migrate        # create the tables in DATABASE_URL
+pnpm check             # lint, typecheck, module boundaries, tests (needs the test database)
+pnpm dev               # API on http://localhost:3000/api
+pnpm --filter @finanz/web dev   # web app on http://localhost:5173
 ```
+
+Locally, sign-up and password-reset emails are printed in the API's terminal.
