@@ -6,6 +6,7 @@ import { testDatabaseUrl } from './database';
 import { CapturingEmailSender } from './email';
 
 export const TEST_APP_URL = 'http://localhost:5173';
+export const TEST_PASSWORD = 'correct horse battery';
 
 /** One API instance against the test database. Create two to simulate two servers. */
 export function createTestContext() {
@@ -16,7 +17,13 @@ export function createTestContext() {
     config: { APP_URL: TEST_APP_URL, AUTH_SECRET: 'test-only-secret-not-used-anywhere-else' },
     email: emails,
   });
-  return { app: createApp({ db, auth }), db, emails, close: () => pool.end() };
+  return {
+    app: createApp({ db, auth, appUrl: TEST_APP_URL }),
+    auth,
+    db,
+    emails,
+    close: () => pool.end(),
+  };
 }
 
 export type TestApp = ReturnType<typeof createTestContext>['app'];
@@ -29,6 +36,14 @@ export const randomIp = () => {
   return `100.${64 + (a % 64)}.${b}.${c}`;
 };
 
+export interface RequestOptions {
+  /** Override the Origin header; `null` sends none. */
+  origin?: string | null;
+  contentType?: string;
+  /** Send this exact body instead of JSON-encoding `body`. */
+  rawBody?: string;
+}
+
 /** A browser-like client: same origin, one IP, and a cookie jar. */
 export class TestClient {
   private readonly cookies = new Map<string, string>();
@@ -38,16 +53,25 @@ export class TestClient {
     readonly ip: string = randomIp(),
   ) {}
 
-  async request(method: string, path: string, body?: unknown): Promise<Response> {
-    const headers = new Headers({ origin: TEST_APP_URL, 'x-forwarded-for': this.ip });
-    if (body !== undefined) headers.set('content-type', 'application/json');
+  async request(
+    method: string,
+    path: string,
+    body?: unknown,
+    options: RequestOptions = {},
+  ): Promise<Response> {
+    const headers = new Headers({ 'x-forwarded-for': this.ip });
+    const origin = options.origin === undefined ? TEST_APP_URL : options.origin;
+    if (origin !== null) headers.set('origin', origin);
+    const payload = options.rawBody ?? (body === undefined ? undefined : JSON.stringify(body));
+    if (payload !== undefined)
+      headers.set('content-type', options.contentType ?? 'application/json');
     if (this.cookies.size > 0) {
       headers.set('cookie', [...this.cookies].map(([k, v]) => `${k}=${v}`).join('; '));
     }
     const res = await this.app.request(`${TEST_APP_URL}${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: payload,
       redirect: 'manual',
     });
     for (const cookie of res.headers.getSetCookie()) {
@@ -70,4 +94,24 @@ export class TestClient {
   copyCookiesFrom(other: TestClient): void {
     for (const [k, v] of other.cookies) this.cookies.set(k, v);
   }
+}
+
+export type TestContext = ReturnType<typeof createTestContext>;
+
+/** Registers and verifies a new account; the returned client is signed in. */
+export async function signedInUser(
+  ctx: TestContext,
+): Promise<{ client: TestClient; email: string }> {
+  const client = new TestClient(ctx.app);
+  const email = uniqueEmail();
+  const res = await client.request('POST', '/api/auth/sign-up/email', {
+    name: 'Ana',
+    email,
+    password: TEST_PASSWORD,
+    callbackURL: '/',
+  });
+  if (res.status !== 200) throw new Error(`sign-up failed: ${res.status}`);
+  const verified = await client.open(ctx.emails.lastLink(email));
+  if (verified.status !== 302) throw new Error(`verification failed: ${verified.status}`);
+  return { client, email };
 }

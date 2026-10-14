@@ -5,7 +5,10 @@ export interface UserVariables {
   userId: string;
 }
 
-/** The only way a route learns who the user is: from the session, never from the request body. */
+/**
+ * The only way a route learns who the user is: from the session, never from the request.
+ * Responses for a signed-in user are private: never stored by browsers or shared caches.
+ */
 export function requireUser(auth: Auth): MiddlewareHandler<{ Variables: UserVariables }> {
   return async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -14,5 +17,6 @@ export function requireUser(auth: Auth): MiddlewareHandler<{ Variables: UserVari
     }
     c.set('userId', session.user.id);
     await next();
+    c.header('Cache-Control', 'no-store');
   };
 }

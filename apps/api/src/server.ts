@@ -13,7 +13,10 @@ const { db, pool } = createDatabase(config.DATABASE_URL);
 const email = new BudgetedEmailSender(new ConsoleEmailSender(), db, config.EMAIL_DAILY_LIMIT);
 const auth = createAuth({ db, config, email });
 
-const server = serve({ fetch: createApp({ db, auth }).fetch, port: config.PORT });
+const server = serve({
+  fetch: createApp({ db, auth, appUrl: config.APP_URL }).fetch,
+  port: config.PORT,
+});
 console.log(`API listening on http://localhost:${config.PORT}/api`);
 
 const shutdown = () => server.close(() => void pool.end());

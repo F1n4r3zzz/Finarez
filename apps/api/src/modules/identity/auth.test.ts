@@ -1,11 +1,17 @@
 import { sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';
-import { createTestContext, TestClient, uniqueEmail } from '../../test/context';
+import {
+  createTestContext,
+  signedInUser,
+  TEST_PASSWORD,
+  TestClient,
+  uniqueEmail,
+} from '../../test/context';
 
 const ctx = createTestContext();
 afterAll(() => ctx.close());
 
-const PASSWORD = 'correct horse battery';
+const PASSWORD = TEST_PASSWORD;
 const PREFS = { language: 'es', timeZone: 'America/Bogota', primaryCurrency: 'COP' };
 
 async function signUp(client: TestClient, email: string, password = PASSWORD) {
@@ -17,14 +23,7 @@ async function signUp(client: TestClient, email: string, password = PASSWORD) {
   });
 }
 
-/** Registers and verifies an account; the client ends up signed in. */
-async function verifiedUser() {
-  const client = new TestClient(ctx.app);
-  const email = uniqueEmail();
-  expect((await signUp(client, email)).status).toBe(200);
-  expect((await client.open(ctx.emails.lastLink(email))).status).toBe(302);
-  return { client, email };
-}
+const verifiedUser = () => signedInUser(ctx);
 
 describe('registration and email verification', () => {
   it('emails a verification link and blocks sign-in until it is opened', async () => {
