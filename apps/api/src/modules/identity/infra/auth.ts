@@ -1,3 +1,4 @@
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@finanz/contracts';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
@@ -60,8 +61,8 @@ export function createAuth({ db, config, email, emailBudget }: AuthDeps) {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
-      minPasswordLength: 10,
-      maxPasswordLength: 128,
+      minPasswordLength: PASSWORD_MIN_LENGTH,
+      maxPasswordLength: PASSWORD_MAX_LENGTH,
       resetPasswordTokenExpiresIn: HOUR,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => {

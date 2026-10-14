@@ -2,11 +2,27 @@ import { money } from '@finanz/kernel';
 import { Monitor, Moon, MoonStar, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  type ActionFunctionArgs,
+  Form,
+  redirect,
+  useActionData,
+  useFetcher,
+  useNavigation,
+} from 'react-router';
+import { savePreferences, signInPath, useAccount } from '../../app/account';
 import { setShowInvestments, useShowInvestments } from '../../app/preferences';
 import { setThemePreference, useTheme } from '../../app/theme';
+import { Button } from '../../components/Button';
+import { FailureNotice } from '../../components/FailureNotice';
+import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
-import { detectedTimeZone, formattingLocale } from '../../lib/locale';
+import { isApiFailure } from '../../lib/api';
+import { describeFailure, type Failure } from '../../lib/failure';
+import { formattingLocale } from '../../lib/locale';
 import { formatMoney } from '../../lib/money';
+import { preferencesFromForm } from '../preferences/defaults';
+import { PreferencesFields } from '../preferences/PreferencesFields';
 
 const FORMAT_SAMPLES = [
   money(123_456_789n, 'COP'),
@@ -51,6 +67,62 @@ function ThemeChoice() {
   );
 }
 
+interface SaveResult {
+  saved?: boolean;
+  failure?: Failure;
+}
+
+export async function settingsAction({ request }: ActionFunctionArgs) {
+  const preferences = preferencesFromForm(await request.formData(), 'es');
+  if (!preferences) return { failure: { key: 'unexpected' } } satisfies SaveResult;
+  try {
+    await savePreferences(preferences);
+  } catch (error) {
+    if (isApiFailure(error, 401)) return redirect(signInPath(request));
+    return { failure: describeFailure(error) } satisfies SaveResult;
+  }
+  return { saved: true } satisfies SaveResult;
+}
+
+function AccountSection() {
+  const { t } = useTranslation();
+  const { user } = useAccount();
+  const fetcher = useFetcher<{ failure?: Failure }>();
+  return (
+    <>
+      <p className="text-ink">{t('settings.signedInAs', { email: user.email })}</p>
+      <div className="mt-3 grid gap-3">
+        <fetcher.Form method="post" action="/sign-out">
+          <Button type="submit" variant="secondary" pending={fetcher.state !== 'idle'}>
+            {t('settings.signOut')}
+          </Button>
+        </fetcher.Form>
+        <FailureNotice failure={fetcher.data?.failure} />
+      </div>
+    </>
+  );
+}
+
+function PreferencesForm() {
+  const { t } = useTranslation();
+  const { preferences } = useAccount();
+  const result = useActionData<SaveResult>();
+  const navigation = useNavigation();
+  const saving = navigation.state !== 'idle' && navigation.formAction === '/settings';
+  return (
+    <Form method="post" className="grid max-w-md gap-5 text-ink">
+      <PreferencesFields initial={preferences} />
+      {!saving && result?.saved && <Notice tone="success">{t('preferences.saved')}</Notice>}
+      <FailureNotice failure={result?.failure} />
+      <div>
+        <Button type="submit" pending={saving}>
+          {t(saving ? 'preferences.saving' : 'preferences.save')}
+        </Button>
+      </div>
+    </Form>
+  );
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="grid gap-2 border-line border-t py-6 md:grid-cols-[14rem_minmax(0,1fr)] md:gap-8">
@@ -72,6 +144,12 @@ export function SettingsPage() {
         description={t('modules.settings.description')}
       />
       <div className="max-w-3xl">
+        <Section title={t('settings.account')}>
+          <AccountSection />
+        </Section>
+        <Section title={t('settings.currencyAndZone')}>
+          <PreferencesForm />
+        </Section>
         <Section title={t('settings.appearance')}>
           <ThemeChoice />
           <p className="mt-2 text-sm">{t('settings.themeHint')}</p>
@@ -90,9 +168,6 @@ export function SettingsPage() {
               </li>
             ))}
           </ul>
-        </Section>
-        <Section title={t('settings.timeZone')}>
-          <p>{t('settings.timeZoneDetected', { timeZone: detectedTimeZone() })}</p>
         </Section>
         <Section title={t('settings.sections')}>
           <div className="flex items-start justify-between gap-6">

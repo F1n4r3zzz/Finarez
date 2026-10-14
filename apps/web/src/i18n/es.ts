@@ -2,6 +2,7 @@
 export const es = {
   app: {
     name: 'Finanz',
+    loading: 'Cargando…',
     skipToContent: 'Saltar al contenido',
     mainNav: 'Navegación principal',
     mobileNav: 'Secciones',
@@ -43,7 +44,7 @@ export const es = {
     },
     settings: {
       title: 'Ajustes',
-      description: 'Idioma, formato y secciones visibles en este dispositivo.',
+      description: 'Tu cuenta, tu moneda, tu zona horaria y cómo se ve Finanz.',
     },
     more: { title: 'Más', description: 'Todas las secciones de Finanz.' },
   },
@@ -119,7 +120,104 @@ export const es = {
       },
     },
   },
+  auth: {
+    email: 'Correo',
+    password: 'Contraseña',
+    newPassword: 'Contraseña nueva',
+    passwordHint: 'Al menos {{min}} caracteres. Una frase fácil de recordar sirve.',
+    showPassword: 'Mostrar contraseña',
+    hidePassword: 'Ocultar contraseña',
+    signIn: {
+      title: 'Entra a Finanz',
+      submit: 'Entrar',
+      submitting: 'Entrando…',
+      forgot: '¿Olvidaste tu contraseña?',
+      noAccount: '¿Aún no tienes cuenta?',
+      createAccount: 'Crea una',
+      verified: 'Tu correo está confirmado. Ya puedes entrar.',
+      linkInvalid:
+        'El enlace de confirmación venció o no es válido. Entra con tu correo y contraseña, y si hace falta te enviaremos uno nuevo.',
+      passwordChanged: 'Tu contraseña cambió. Entra con la nueva.',
+      unverified: 'Antes de entrar, confirma tu correo con el enlace que te enviamos.',
+      resend: 'Enviar el enlace otra vez',
+      resending: 'Enviando…',
+      resent: 'Te enviamos un enlace nuevo. Si no lo ves, revisa la carpeta de spam.',
+    },
+    signUp: {
+      title: 'Crea tu cuenta',
+      description: 'Solo necesitas un correo. Tus datos financieros solo los ves tú.',
+      submit: 'Crear cuenta',
+      submitting: 'Creando cuenta…',
+      haveAccount: '¿Ya tienes cuenta?',
+      signIn: 'Entra',
+    },
+    checkEmail: {
+      title: 'Revisa tu correo',
+      body: 'Te enviamos un enlace a {{email}} para confirmar tu cuenta. Vence en 24 horas. Después de abrirlo, entra con tu correo y contraseña.',
+      existing:
+        'Si ya tenías una cuenta con este correo, no te enviamos nada: entra o recupera tu contraseña.',
+      resend: 'Enviar otro enlace',
+      goToSignIn: 'Ir a entrar',
+    },
+    forgot: {
+      title: 'Recupera tu contraseña',
+      description:
+        'Escribe el correo de tu cuenta y te enviaremos un enlace para elegir una contraseña nueva.',
+      submit: 'Enviar enlace',
+      submitting: 'Enviando…',
+      sent: 'Si {{email}} tiene una cuenta en Finanz, te llegará un enlace para elegir una contraseña nueva. Vence en 1 hora.',
+      back: 'Volver a entrar',
+    },
+    reset: {
+      title: 'Elige una contraseña nueva',
+      description: 'Al guardarla, se cerrarán las sesiones abiertas en todos tus dispositivos.',
+      submit: 'Guardar contraseña',
+      submitting: 'Guardando…',
+      invalidTitle: 'Este enlace ya no sirve',
+      invalidBody:
+        'Los enlaces para cambiar la contraseña vencen en 1 hora y solo se pueden usar una vez.',
+      requestNew: 'Pedir un enlace nuevo',
+    },
+    fields: {
+      emailRequired: 'Escribe tu correo.',
+      emailInvalid: 'Escribe un correo válido, como nombre@ejemplo.com.',
+      passwordRequired: 'Escribe tu contraseña.',
+      passwordTooShort: 'Usa al menos {{min}} caracteres.',
+      passwordTooLong: 'Usa como máximo {{max}} caracteres.',
+    },
+  },
+  failures: {
+    invalidCredentials: 'El correo o la contraseña no coinciden.',
+    tooManyAttempts_one: 'Demasiados intentos. Inténtalo de nuevo en {{count}} minuto.',
+    tooManyAttempts_other: 'Demasiados intentos. Inténtalo de nuevo en {{count}} minutos.',
+    emailUnavailable: 'Ahora mismo no podemos enviar correos. Inténtalo de nuevo más tarde.',
+    network: 'No hay conexión con Finanz. Revisa tu internet e inténtalo de nuevo.',
+    unexpected: 'Algo falló de nuestro lado. Inténtalo de nuevo en un momento.',
+  },
+  welcome: {
+    title: 'Antes de empezar',
+    description:
+      'Dos datos para mostrar bien tus cifras. Puedes cambiarlos cuando quieras en Ajustes.',
+    submit: 'Guardar y empezar',
+    submitting: 'Guardando…',
+  },
+  preferences: {
+    currency: 'Moneda principal',
+    currencyHint:
+      'Tus totales y tu patrimonio se muestran en esta moneda. Cada cuenta puede tener la suya.',
+    timeZone: 'Zona horaria',
+    timeZoneHint: 'Decide en qué día cae cada movimiento.',
+    deviceZone: 'La de este dispositivo',
+    allZones: 'Todas',
+    save: 'Guardar cambios',
+    saving: 'Guardando…',
+    saved: 'Cambios guardados.',
+  },
   settings: {
+    account: 'Cuenta',
+    signedInAs: 'Entraste con {{email}}.',
+    signOut: 'Cerrar sesión',
+    currencyAndZone: 'Moneda y zona horaria',
     appearance: 'Apariencia',
     themeSystem: 'Como el sistema',
     themeLight: 'Claro',
@@ -132,13 +230,12 @@ export const es = {
     languageNote: 'El inglés estará disponible más adelante.',
     format: 'Formato de cifras',
     formatDetected: 'Según tu navegador ({{locale}}), así se ven las cantidades:',
-    timeZone: 'Zona horaria',
-    timeZoneDetected: '{{timeZone}}. Las fechas de tus movimientos se cuentan en esta zona.',
     sections: 'Secciones opcionales',
     showInvestments: 'Mostrar Inversiones',
     showInvestmentsHint:
       'Si no inviertes, ocúltala del menú. Puedes volver a mostrarla cuando quieras.',
-    deviceNote: 'Por ahora estos ajustes se guardan en este dispositivo.',
+    deviceNote:
+      'La apariencia y las secciones visibles se guardan en este dispositivo. Tu moneda y tu zona horaria, en tu cuenta.',
   },
   notFound: {
     title: 'Esta página no existe',
@@ -147,6 +244,9 @@ export const es = {
   error: {
     title: 'No se pudo cargar esta página',
     body: 'Recarga la página. Si sigue fallando, vuelve al inicio.',
+    offlineTitle: 'No pudimos conectar con Finanz',
+    offlineBody: 'Revisa tu conexión a internet e inténtalo de nuevo.',
+    retry: 'Reintentar',
   },
   preview: {
     badge: 'Datos de ejemplo',

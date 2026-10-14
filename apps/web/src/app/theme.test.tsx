@@ -1,8 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider } from 'react-router';
+import { act, fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SettingsPage } from '../features/settings/SettingsPage';
-import { routes } from './routes';
+import { fakeApi, renderApp, signedIn } from '../test/fake-api';
 import { resolveTheme, setThemePreference, startThemeSync, toggleTheme } from './theme';
 
 const html = document.documentElement;
@@ -60,19 +58,24 @@ describe('OLED theme', () => {
 });
 
 describe('theme controls', () => {
-  it('the quick toggle switches between light and dark', () => {
-    render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/'] })} />);
-    const [toggle] = screen.getAllByRole('button', { name: 'Cambiar a tema oscuro' });
-    act(() => toggle?.click());
-    expect(html.dataset.theme).toBe('dark');
-    expect(screen.getAllByRole('button', { name: 'Cambiar a tema claro' }).length).toBeGreaterThan(
-      0,
-    );
+  beforeEach(() => {
+    fakeApi(signedIn);
   });
 
-  it('Ajustes offers system, light, dark and OLED as a single choice', () => {
-    render(<SettingsPage />);
-    const dark = screen.getByRole('radio', { name: 'Oscuro' });
+  it('the quick toggle switches between light and dark', async () => {
+    renderApp('/');
+    const [toggle] = await screen.findAllByRole('button', { name: 'Cambiar a tema oscuro' });
+    act(() => toggle?.click());
+    expect(html.dataset.theme).toBe('dark');
+    // The router renders in transitions, so the new label may land a tick later.
+    expect(
+      (await screen.findAllByRole('button', { name: 'Cambiar a tema claro' })).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('Ajustes offers system, light, dark and OLED as a single choice', async () => {
+    renderApp('/settings');
+    const dark = await screen.findByRole('radio', { name: 'Oscuro' });
     expect(
       (screen.getByRole('radio', { name: 'Como el sistema' }) as HTMLInputElement).checked,
     ).toBe(true);

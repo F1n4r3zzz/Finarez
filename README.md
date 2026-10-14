@@ -16,6 +16,7 @@ pnpm db:migrate        # create the tables in DATABASE_URL
 pnpm check             # lint, typecheck, module boundaries, tests (needs the test database)
 pnpm dev               # API on http://localhost:3000/api
 pnpm --filter @finanz/web dev   # web app on http://localhost:5173
+pnpm e2e               # browser tests: sign-up to sign-out against a fresh test database
 ```
 
-Locally, sign-up and password-reset emails are printed in the API's terminal.
+Locally, sign-up and password-reset emails are printed in the API's terminal. `pnpm e2e` uses the installed Google Chrome; in CI it uses Playwright's Chromium.
