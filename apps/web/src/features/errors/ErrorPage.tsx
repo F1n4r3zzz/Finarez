@@ -11,7 +11,7 @@ export function ErrorPage() {
       <p className="mt-2 text-muted">{t('error.body')}</p>
       <a
         href="/"
-        className="mt-6 inline-block rounded-lg bg-brand px-4 py-2 font-medium text-paper"
+        className="mt-6 inline-block rounded-lg bg-brand px-4 py-2 font-medium text-on-brand"
       >
         {t('app.goHome')}
       </a>

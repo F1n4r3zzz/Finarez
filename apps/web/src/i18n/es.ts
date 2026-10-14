@@ -6,6 +6,8 @@ export const es = {
     mainNav: 'Navegación principal',
     mobileNav: 'Secciones',
     goHome: 'Ir al inicio',
+    toDark: 'Cambiar a tema oscuro',
+    toLight: 'Cambiar a tema claro',
   },
   modules: {
     dashboard: { title: 'Inicio', description: 'Tu dinero de un vistazo.' },
@@ -118,6 +120,12 @@ export const es = {
     },
   },
   settings: {
+    appearance: 'Apariencia',
+    themeSystem: 'Como el sistema',
+    themeLight: 'Claro',
+    themeDark: 'Oscuro',
+    themeHint:
+      'Con «Como el sistema», Finanz cambia solo según la configuración de tu dispositivo.',
     language: 'Idioma',
     languageValue: 'Español',
     languageNote: 'El inglés estará disponible más adelante.',

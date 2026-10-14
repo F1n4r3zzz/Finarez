@@ -3,24 +3,32 @@
 
 /*
  * Swiss-minimal financial dashboard: neutral slate surfaces, trust blue for brand and
- * navigation, green/red reserved for money in/out. Chart mark colors validated with the
- * dataviz palette checks (light and dark against their own surfaces).
+ * navigation, green/red reserved for money in/out. Text pairs meet WCAG AA (4.5:1) in both
+ * themes; chart mark colors are validated with the dataviz palette checks per theme.
+ *
+ * The theme is chosen by `data-theme` on <html> (set before first paint by
+ * /theme-init.js, then kept in sync by src/app/theme.ts).
  */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
   --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
   --color-paper: #f5f7fa;
   --color-surface: #ffffff;
+  --color-hover: #f1f5f9;
   --color-ink: #0f172a;
   --color-muted: #475569;
   --color-subtle: #64748b;
   --color-line: #e2e8f0;
   --color-brand: #1e40af;
-  --color-brand-hover: #1e3a8a;
   --color-brand-soft: #eff4ff;
   --color-on-brand: #ffffff;
 
-  /* Text on money amounts (WCAG AA on surface). */
+  /* The logo keeps the same blue in both themes. */
+  --color-logo: #2563eb;
+
+  /* Text on money amounts. */
   --color-income: #047857;
   --color-expense: #b91c1c;
   --color-income-soft: #ecfdf5;
@@ -31,27 +39,35 @@
   --color-bar-track: #eff4ff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-paper: #0f172a;
-    --color-surface: #182133;
-    --color-ink: #f1f5f9;
-    --color-muted: #a3b1c6;
-    --color-subtle: #8a99b0;
-    --color-line: #27324a;
-    --color-brand: #93b4fd;
-    --color-brand-hover: #b7cdfe;
-    --color-brand-soft: #1e2a47;
-    --color-on-brand: #0f172a;
+:root {
+  color-scheme: light;
+}
 
-    --color-income: #34d399;
-    --color-expense: #f87171;
-    --color-income-soft: #0f2e2a;
-    --color-expense-soft: #3a1d24;
+/*
+ * Dark: deep navy, not black. Depth comes from lightness steps (page < panel < hover)
+ * because shadows don't read on dark. Colors are desaturated tonal variants, not inversions.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
 
-    --color-bar: #3b82f6;
-    --color-bar-track: #1e2a47;
-  }
+  --color-paper: #0b1120;
+  --color-surface: #121b2d;
+  --color-hover: #1a2438;
+  --color-ink: #e7ecf3;
+  --color-muted: #a5b2c5;
+  --color-subtle: #8f9db3;
+  --color-line: #2a3752;
+  --color-brand: #8db0ff;
+  --color-brand-soft: #1b2a4a;
+  --color-on-brand: #0b1120;
+
+  --color-income: #5bd39a;
+  --color-expense: #f58a8f;
+  --color-income-soft: #10291f;
+  --color-expense-soft: #2e1820;
+
+  --color-bar: #3b82f6;
+  --color-bar-track: #1c2840;
 }
 
 /* Amounts: tabular figures so columns of numbers line up. */

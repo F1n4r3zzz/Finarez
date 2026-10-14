@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { Wordmark } from '../components/Wordmark';
 import { MODULES, MORE, type ModuleDef } from './modules';
 import { useShowInvestments } from './preferences';
@@ -17,7 +18,7 @@ function SidebarLink({ module }: { module: ModuleDef }) {
         `flex min-h-10 items-center gap-3 rounded-lg px-3 text-[0.9375rem] transition-colors duration-150 ${
           isActive
             ? 'bg-brand-soft font-medium text-brand'
-            : 'text-muted hover:bg-paper hover:text-ink'
+            : 'text-muted hover:bg-hover hover:text-ink'
         }`
       }
     >
@@ -44,8 +45,9 @@ export function AppShell() {
       </a>
 
       <aside className="sticky top-0 hidden h-dvh flex-col border-line border-r bg-surface px-3 py-5 md:flex">
-        <div className="px-3">
+        <div className="flex items-center justify-between pl-3">
           <Wordmark />
+          <ThemeToggle />
         </div>
         <nav aria-label={t('app.mainNav')} className="mt-7 flex flex-1 flex-col">
           {GROUPS.map((group, index) => (
@@ -72,8 +74,9 @@ export function AppShell() {
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-10 flex h-14 items-center border-line border-b bg-surface px-4 md:hidden">
+      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-line border-b bg-surface pr-1.5 pl-4 md:hidden">
         <Wordmark />
+        <ThemeToggle />
       </header>
 
       <main

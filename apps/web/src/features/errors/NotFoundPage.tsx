@@ -9,7 +9,7 @@ export function NotFoundPage() {
       <p className="mt-2 text-muted">{t('notFound.body')}</p>
       <Link
         to="/"
-        className="mt-6 inline-block rounded-lg bg-brand px-4 py-2 font-medium text-paper"
+        className="mt-6 inline-block rounded-lg bg-brand px-4 py-2 font-medium text-on-brand"
       >
         {t('app.goHome')}
       </Link>
