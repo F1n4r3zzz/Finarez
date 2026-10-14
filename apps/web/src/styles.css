@@ -9,13 +9,17 @@
  * The theme is chosen by `data-theme` on <html> (set before first paint by
  * /theme-init.js, then kept in sync by src/app/theme.ts).
  */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant dark (
+  &:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="oled"], [data-theme="oled"] *)
+);
 
 @theme {
   --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
   --color-paper: #f5f7fa;
   --color-surface: #ffffff;
+  /* App frame: sidebar, mobile header and bottom bar. */
+  --color-chrome: #ffffff;
   --color-hover: #f1f5f9;
   --color-ink: #0f172a;
   --color-muted: #475569;
@@ -47,11 +51,13 @@
  * Dark: deep navy, not black. Depth comes from lightness steps (page < panel < hover)
  * because shadows don't read on dark. Colors are desaturated tonal variants, not inversions.
  */
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+:root[data-theme="oled"] {
   color-scheme: dark;
 
   --color-paper: #0b1120;
   --color-surface: #121b2d;
+  --color-chrome: #121b2d;
   --color-hover: #1a2438;
   --color-ink: #e7ecf3;
   --color-muted: #a5b2c5;
@@ -68,6 +74,21 @@
 
   --color-bar: #3b82f6;
   --color-bar-track: #1c2840;
+}
+
+/*
+ * OLED: the dark theme on a pure black page. Text, brand, money and chart colors are
+ * inherited unchanged; only the surfaces step down (contrast only goes up). Panels stay a
+ * hair above black, with slightly stronger borders, so the layout still reads.
+ */
+:root[data-theme="oled"] {
+  --color-paper: #000000;
+  --color-surface: #0a0e16;
+  --color-chrome: #000000;
+  --color-hover: #151b27;
+  --color-line: #222b3d;
+  --color-brand-soft: #14203a;
+  --color-bar-track: #141c2e;
 }
 
 /* Amounts: tabular figures so columns of numbers line up. */

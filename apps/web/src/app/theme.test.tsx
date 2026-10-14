@@ -3,7 +3,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { routes } from './routes';
-import { resolveTheme, setThemePreference, startThemeSync } from './theme';
+import { resolveTheme, setThemePreference, startThemeSync, toggleTheme } from './theme';
 
 const html = document.documentElement;
 
@@ -19,6 +19,7 @@ describe('resolveTheme', () => {
     expect(resolveTheme('system', false)).toBe('light');
     expect(resolveTheme('light', true)).toBe('light');
     expect(resolveTheme('dark', false)).toBe('dark');
+    expect(resolveTheme('oled', false)).toBe('oled');
   });
 });
 
@@ -37,6 +38,27 @@ describe('setThemePreference', () => {
   });
 });
 
+describe('OLED theme', () => {
+  it('uses a pure black browser bar and is remembered by the quick toggle', () => {
+    act(() => setThemePreference('oled'));
+    expect(html.dataset.theme).toBe('oled');
+    expect(document.querySelector('meta[name="theme-color"]')?.getAttribute('content')).toBe(
+      '#000000',
+    );
+
+    act(() => toggleTheme());
+    expect(html.dataset.theme).toBe('light');
+    act(() => toggleTheme());
+    expect(html.dataset.theme).toBe('oled');
+  });
+
+  it('the quick toggle goes to regular dark for users who never chose OLED', () => {
+    act(() => setThemePreference('light'));
+    act(() => toggleTheme());
+    expect(html.dataset.theme).toBe('dark');
+  });
+});
+
 describe('theme controls', () => {
   it('the quick toggle switches between light and dark', () => {
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/'] })} />);
@@ -48,7 +70,7 @@ describe('theme controls', () => {
     );
   });
 
-  it('Ajustes offers system, light and dark as a single choice', () => {
+  it('Ajustes offers system, light, dark and OLED as a single choice', () => {
     render(<SettingsPage />);
     const dark = screen.getByRole('radio', { name: 'Oscuro' });
     expect(
@@ -57,5 +79,7 @@ describe('theme controls', () => {
     fireEvent.click(dark);
     expect((dark as HTMLInputElement).checked).toBe(true);
     expect(html.dataset.theme).toBe('dark');
+    fireEvent.click(screen.getByRole('radio', { name: 'Negro (OLED)' }));
+    expect(html.dataset.theme).toBe('oled');
   });
 });

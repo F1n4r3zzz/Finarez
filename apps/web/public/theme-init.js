@@ -8,9 +8,9 @@
     // Storage blocked: follow the system setting.
   }
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const dark = preference === 'dark' || (preference === 'system' && systemDark);
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', dark ? '#0b1120' : '#f5f7fa');
+  const fixed = preference === 'light' || preference === 'dark' || preference === 'oled';
+  const theme = fixed ? preference : systemDark ? 'dark' : 'light';
+  const barColor = { light: '#f5f7fa', dark: '#0b1120', oled: '#000000' };
+  document.documentElement.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', barColor[theme]);
 })();

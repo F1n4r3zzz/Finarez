@@ -1,5 +1,5 @@
 import { money } from '@finanz/kernel';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Monitor, Moon, MoonStar, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setShowInvestments, useShowInvestments } from '../../app/preferences';
@@ -19,6 +19,7 @@ const THEME_OPTIONS = [
   { value: 'system', icon: Monitor, key: 'settings.themeSystem' },
   { value: 'light', icon: Sun, key: 'settings.themeLight' },
   { value: 'dark', icon: Moon, key: 'settings.themeDark' },
+  { value: 'oled', icon: MoonStar, key: 'settings.themeOled' },
 ] as const;
 
 function ThemeChoice() {

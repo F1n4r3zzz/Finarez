@@ -44,7 +44,7 @@ export function AppShell() {
         {t('app.skipToContent')}
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh flex-col border-line border-r bg-surface px-3 py-5 md:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-line border-r bg-chrome px-3 py-5 md:flex">
         <div className="flex items-center justify-between pl-3">
           <Wordmark />
           <ThemeToggle />
@@ -74,7 +74,7 @@ export function AppShell() {
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-line border-b bg-surface pr-1.5 pl-4 md:hidden">
+      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-line border-b bg-chrome pr-1.5 pl-4 md:hidden">
         <Wordmark />
         <ThemeToggle />
       </header>
@@ -91,7 +91,7 @@ export function AppShell() {
 
       <nav
         aria-label={t('app.mobileNav')}
-        className="fixed inset-x-0 bottom-0 z-10 border-line border-t bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-10 border-line border-t bg-chrome pb-[env(safe-area-inset-bottom)] md:hidden"
       >
         <ul className="grid grid-cols-5">
           {mobile.map((m) => {
