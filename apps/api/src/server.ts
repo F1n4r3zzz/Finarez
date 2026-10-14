@@ -1,20 +1,12 @@
 import { serve } from '@hono/node-server';
-import { createApp } from './app';
 import { loadConfig } from './config';
-import { createDatabase } from './db/client';
 import { loadLocalEnv } from './env';
 import { clientAddressFromSocket } from './http/client-address';
-import { createAuth } from './modules/identity';
-import { BudgetedEmailSender, EmailBudget } from './platform/email/budget';
-import { ConsoleEmailSender } from './platform/email/email';
+import { createRuntime } from './runtime';
 
 loadLocalEnv();
 const config = loadConfig();
-const { db, pool } = createDatabase(config.DATABASE_URL);
-const emailBudget = new EmailBudget(db, config.EMAIL_DAILY_LIMIT);
-const email = new BudgetedEmailSender(new ConsoleEmailSender(), emailBudget);
-const auth = createAuth({ db, config, email, emailBudget });
-const app = createApp({ db, auth, appUrl: config.APP_URL });
+const { app, pool } = createRuntime(config);
 
 // Direct Node listener: the client address comes from the socket, never from request headers.
 // (On Vercel, the platform sets x-forwarded-for itself.)

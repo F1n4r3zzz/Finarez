@@ -50,8 +50,8 @@ jobs:
           DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
           APP_URL: http://localhost:5173
       - run: pnpm check
-      - name: Build the web app
-        run: pnpm --filter @finanz/web build
+      - name: Build the deployment (web app and bundled API)
+        run: node scripts/vercel-build.mjs
 
   e2e:
     name: Browser tests

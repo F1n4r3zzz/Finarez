@@ -36,4 +36,13 @@ describe('loadConfig', () => {
   it('refuses to print emails to the console in production', () => {
     expect(() => loadConfig({ ...valid, NODE_ENV: 'production' })).toThrow(/EMAIL_TRANSPORT/);
   });
+
+  it('sends through Resend in production, and requires its key', () => {
+    const production = { ...valid, NODE_ENV: 'production', EMAIL_TRANSPORT: 'resend' };
+    expect(() => loadConfig(production)).toThrow(/RESEND_API_KEY/);
+    expect(loadConfig({ ...production, RESEND_API_KEY: 're_test' })).toMatchObject({
+      EMAIL_TRANSPORT: 'resend',
+      EMAIL_FROM: 'Finanz <onboarding@resend.dev>',
+    });
+  });
 });

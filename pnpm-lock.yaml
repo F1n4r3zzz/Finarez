@@ -17,6 +17,9 @@ importers:
       dependency-cruiser:
         specifier: ^18.0.0
         version: 18.5.0
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       fast-check:
         specifier: ^4.0.0
         version: 4.10.2

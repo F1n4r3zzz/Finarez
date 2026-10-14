@@ -6,6 +6,7 @@ import type { Config } from '../../../config';
 import type { Database } from '../../../db/client';
 import { type EmailBudget, reserveEmail } from '../../../platform/email/budget';
 import type { EmailMessage, EmailSender } from '../../../platform/email/email';
+import { EmailDeliveryError } from '../../../platform/email/resend';
 import { resetPasswordEmail, verificationEmail } from './emails';
 import { accounts, rateLimits, sessions, users, verifications } from './schema';
 
@@ -35,10 +36,14 @@ export function createAuth({ db, config, email, emailBudget }: AuthDeps) {
     try {
       await email.send(message);
     } catch (error) {
-      console.error(
-        `Email delivery failed (${kind}):`,
-        error instanceof Error ? error.name : 'unknown',
-      );
+      // The provider's status helps; other errors are named only (messages may hold data).
+      const reason =
+        error instanceof EmailDeliveryError
+          ? error.message
+          : error instanceof Error
+            ? error.name
+            : 'unknown';
+      console.error(`Email delivery failed (${kind}):`, reason);
     }
   };
 

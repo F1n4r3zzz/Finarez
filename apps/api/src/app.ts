@@ -18,6 +18,7 @@ export interface AppDeps {
 export function createApp({ db, auth, appUrl }: AppDeps) {
   const app = new Hono().basePath('/api');
   app.onError(handleError);
+  app.notFound((c) => c.json({ error: { code: 'not_found', message: 'Not found' } }, 404));
   app.use(secureHeaders());
   app.use(sameOriginMutations(appUrl));
   app.use(jsonBodiesOnly());

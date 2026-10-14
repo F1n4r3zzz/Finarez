@@ -101,3 +101,11 @@ describe('auth responses', () => {
     expect(redirect.headers.get('cache-control')).toBe('no-store');
   });
 });
+
+describe('unknown API paths', () => {
+  it('answer 404 in the usual error shape', async () => {
+    const res = await new TestClient(ctx.app).request('GET', '/api/no-such-thing');
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: { code: 'not_found', message: 'Not found' } });
+  });
+});
