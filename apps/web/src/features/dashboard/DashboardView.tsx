@@ -1,5 +1,6 @@
 import { add, type LocalDate, type Money, negate } from '@finanz/kernel';
 import { ChevronRight } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Amount } from '../../components/Amount';
@@ -50,6 +51,8 @@ interface DashboardViewProps {
   accounts?: readonly AccountRow[];
   recent?: readonly RecentRow[];
   spending?: readonly CategorySpend[];
+  /** Shown under the page title, e.g. that the app is still being built. */
+  notice?: ReactNode;
 }
 
 function Balance({ summary }: { summary: DashboardSummary }) {
@@ -197,6 +200,7 @@ export function DashboardView({
   accounts = [],
   recent = [],
   spending = [],
+  notice,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const subtitle = summary
@@ -211,6 +215,7 @@ export function DashboardView({
         </h1>
         <p className="mt-1 text-muted">{subtitle}</p>
       </header>
+      {notice}
 
       {!summary ? (
         <Onboarding />

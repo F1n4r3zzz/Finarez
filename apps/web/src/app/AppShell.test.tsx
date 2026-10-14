@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react';
+import { act, cleanup, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fakeApi, renderApp, signedIn } from '../test/fake-api';
 import { setShowInvestments } from './preferences';
@@ -63,5 +63,32 @@ describe('AppShell', () => {
     await renderAt('/no-existe');
     expect(screen.getByRole('heading', { name: 'Esta página no existe' })).toBeTruthy();
     expect(mainNav()).toBeTruthy();
+  });
+});
+
+describe('unfinished sections', () => {
+  beforeEach(() => {
+    fakeApi(signedIn);
+  });
+
+  it('say they are under construction, so nobody expects them to work yet', async () => {
+    for (const path of ['/accounts', '/import', '/budgets']) {
+      renderApp(path);
+      expect(
+        await screen.findByText(/Esta sección todavía está en construcción y no funciona/),
+      ).toBeTruthy();
+      cleanup();
+    }
+  });
+
+  it('the dashboard says what already works', async () => {
+    renderApp('/');
+    expect(await screen.findByText(/Finanz está en construcción/)).toBeTruthy();
+  });
+
+  it('Ajustes, which works, carries no such notice', async () => {
+    renderApp('/settings');
+    await screen.findByText('Entraste con ana@example.com.');
+    expect(screen.queryByText(/en construcción/)).toBeNull();
   });
 });

@@ -82,12 +82,17 @@ export const es = {
       body: 'Registra qué compraste, a qué precio y en qué moneda para ver su valor estimado. Si no inviertes, puedes ocultar esta sección en Ajustes.',
     },
     import: {
-      title: 'Sube un extracto de tu banco',
-      body: 'Antes de guardar, revisarás cada movimiento, y los que ya tengas registrados se marcarán como repetidos.',
-      formats: 'Formatos aceptados: CSV, XLSX y XLSM.',
+      title: 'Así funcionará la importación',
+      body: 'Subirás el extracto de tu banco y, antes de guardar, revisarás cada movimiento. Los que ya tengas registrados se marcarán como repetidos.',
+      formats: 'Formatos que aceptará: CSV, XLSX y XLSM.',
       macros:
-        'Las macros de los archivos XLSM nunca se ejecutan: solo se leen los valores de las celdas.',
+        'Las macros de los archivos XLSM nunca se ejecutarán: solo se leerán los valores de las celdas.',
     },
+  },
+  underConstruction: {
+    section:
+      'Esta sección todavía está en construcción y no funciona. Por ahora muestra lo que encontrarás aquí cuando esté lista.',
+    app: 'Finanz está en construcción. Por ahora puedes crear tu cuenta y elegir tu moneda, zona horaria y apariencia. Las cuentas, los movimientos y la importación llegarán en las próximas versiones.',
   },
   dashboard: {
     subtitle: 'Resumen de {{month}}',

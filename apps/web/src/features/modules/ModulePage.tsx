@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { moduleById } from '../../app/modules';
 import { EmptyState } from '../../components/EmptyState';
 import { PageHeader } from '../../components/PageHeader';
+import { UnderConstruction } from '../../components/UnderConstruction';
 
 export type SimpleModuleId =
   | 'accounts'
@@ -19,6 +20,7 @@ export function ModulePage({ id }: { id: SimpleModuleId }) {
   return (
     <>
       <PageHeader title={t(`modules.${id}.title`)} description={t(`modules.${id}.description`)} />
+      <UnderConstruction scope="section" />
       <EmptyState
         icon={moduleById(id).icon}
         title={t(`empty.${id}.title`)}

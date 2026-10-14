@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { moduleById } from '../../app/modules';
 import { EmptyState } from '../../components/EmptyState';
 import { PageHeader } from '../../components/PageHeader';
+import { UnderConstruction } from '../../components/UnderConstruction';
 
 export function ImportPage() {
   const { t } = useTranslation();
   return (
     <>
       <PageHeader title={t('modules.import.title')} description={t('modules.import.description')} />
+      <UnderConstruction scope="section" />
       <EmptyState
         icon={moduleById('import').icon}
         title={t('empty.import.title')}
