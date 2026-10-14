@@ -14,10 +14,10 @@ function SidebarLink({ module }: { module: ModuleDef }) {
       to={module.path}
       end={module.path === '/'}
       className={({ isActive }) =>
-        `flex items-center gap-3 rounded-lg px-3 py-2 text-[0.95rem] transition-colors ${
+        `flex min-h-10 items-center gap-3 rounded-lg px-3 text-[0.9375rem] transition-colors duration-150 ${
           isActive
-            ? 'bg-brand-soft font-semibold text-brand'
-            : 'text-muted hover:bg-brand-soft/60 hover:text-ink'
+            ? 'bg-brand-soft font-medium text-brand'
+            : 'text-muted hover:bg-paper hover:text-ink'
         }`
       }
     >
@@ -35,7 +35,7 @@ export function AppShell() {
   const mobile = [...visible.filter((m) => m.mobile), MORE];
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[248px_minmax(0,1fr)]">
+    <div className="min-h-dvh md:grid md:grid-cols-[240px_minmax(0,1fr)]">
       <a
         href="#main"
         className="sr-only z-50 rounded-md bg-surface px-4 py-2 font-medium text-brand focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -43,11 +43,11 @@ export function AppShell() {
         {t('app.skipToContent')}
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh flex-col border-line border-r px-4 py-6 md:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-line border-r bg-surface px-3 py-5 md:flex">
         <div className="px-3">
           <Wordmark />
         </div>
-        <nav aria-label={t('app.mainNav')} className="mt-8 flex flex-1 flex-col">
+        <nav aria-label={t('app.mainNav')} className="mt-7 flex flex-1 flex-col">
           {GROUPS.map((group, index) => (
             <ul
               key={group}
@@ -72,14 +72,14 @@ export function AppShell() {
         </nav>
       </aside>
 
-      <header className="sticky top-0 z-10 flex h-14 items-center border-line border-b bg-paper px-4 md:hidden">
+      <header className="sticky top-0 z-10 flex h-14 items-center border-line border-b bg-surface px-4 md:hidden">
         <Wordmark />
       </header>
 
       <main
         id="main"
         tabIndex={-1}
-        className="px-4 pt-6 pb-28 outline-none md:px-10 md:pt-10 md:pb-12"
+        className="px-4 pt-6 pb-28 outline-none md:px-8 md:pt-8 md:pb-12 lg:px-10"
       >
         <div className="mx-auto max-w-[1200px]">
           <Outlet />
@@ -99,7 +99,7 @@ export function AppShell() {
                   to={m.path}
                   end={m.path === '/'}
                   className={({ isActive }) =>
-                    `flex flex-col items-center gap-1 py-2 text-xs ${
+                    `flex min-h-14 flex-col items-center justify-center gap-0.5 text-[0.6875rem] transition-colors duration-150 ${
                       isActive ? 'font-semibold text-brand' : 'text-muted'
                     }`
                   }

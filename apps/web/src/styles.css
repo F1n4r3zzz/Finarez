@@ -1,47 +1,63 @@
 @import "tailwindcss";
-@import "@fontsource-variable/archivo/standard.css";
+@import "@fontsource-variable/ibm-plex-sans/wght.css";
 
+/*
+ * Swiss-minimal financial dashboard: neutral slate surfaces, trust blue for brand and
+ * navigation, green/red reserved for money in/out. Chart mark colors validated with the
+ * dataviz palette checks (light and dark against their own surfaces).
+ */
 @theme {
-  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --color-paper: #eef2ec;
+  --color-paper: #f5f7fa;
   --color-surface: #ffffff;
-  --color-ink: #14231f;
-  --color-muted: #56675f;
-  --color-line: #d3dcd5;
-  --color-brand: #1d5c4d;
-  --color-brand-soft: #dde8e1;
-  --color-hero: #1d5c4d;
-  --color-hero-ink: #f3f7f4;
-  --color-hero-muted: #b9d3c8;
-  --color-hero-line: #4e8a78;
-  --color-income: #1d6b4a;
-  --color-expense: #a3333d;
+  --color-ink: #0f172a;
+  --color-muted: #475569;
+  --color-subtle: #64748b;
+  --color-line: #e2e8f0;
+  --color-brand: #1e40af;
+  --color-brand-hover: #1e3a8a;
+  --color-brand-soft: #eff4ff;
+  --color-on-brand: #ffffff;
+
+  /* Text on money amounts (WCAG AA on surface). */
+  --color-income: #047857;
+  --color-expense: #b91c1c;
+  --color-income-soft: #ecfdf5;
+  --color-expense-soft: #fef2f2;
+
+  /* Chart marks. */
+  --color-bar: #2563eb;
+  --color-bar-track: #eff4ff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-paper: #0f1715;
-    --color-surface: #16211e;
-    --color-ink: #e4ebe7;
-    --color-muted: #9db0a8;
-    --color-line: #27352f;
-    --color-brand: #5db394;
-    --color-brand-soft: #1c302a;
-    --color-hero: #133a30;
-    --color-hero-ink: #e9f2ee;
-    --color-hero-muted: #9cc3b3;
-    --color-hero-line: #2f6656;
-    --color-income: #6cc79a;
-    --color-expense: #e58a92;
+    --color-paper: #0f172a;
+    --color-surface: #182133;
+    --color-ink: #f1f5f9;
+    --color-muted: #a3b1c6;
+    --color-subtle: #8a99b0;
+    --color-line: #27324a;
+    --color-brand: #93b4fd;
+    --color-brand-hover: #b7cdfe;
+    --color-brand-soft: #1e2a47;
+    --color-on-brand: #0f172a;
+
+    --color-income: #34d399;
+    --color-expense: #f87171;
+    --color-income-soft: #0f2e2a;
+    --color-expense-soft: #3a1d24;
+
+    --color-bar: #3b82f6;
+    --color-bar-track: #1e2a47;
   }
 }
 
-/* Amounts: condensed, tabular figures so columns of numbers line up. */
+/* Amounts: tabular figures so columns of numbers line up. */
 @utility amount {
-  font-stretch: 75%;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
@@ -50,7 +66,13 @@
     background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    line-height: 1.5;
     -webkit-text-size-adjust: 100%;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
   }
 
   :focus-visible {
