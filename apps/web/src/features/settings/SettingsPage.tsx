@@ -1,0 +1,86 @@
+import { money } from '@finanz/kernel';
+import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { setShowInvestments, useShowInvestments } from '../../app/preferences';
+import { PageHeader } from '../../components/PageHeader';
+import { detectedTimeZone, formattingLocale } from '../../lib/locale';
+import { formatMoney } from '../../lib/money';
+
+const FORMAT_SAMPLES = [
+  money(123_456_789n, 'COP'),
+  money(123_456_789n, 'MXN'),
+  money(123_456_789n, 'USD'),
+  money(123_456_789n, 'EUR'),
+];
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="grid gap-2 border-line border-t py-6 md:grid-cols-[14rem_minmax(0,1fr)] md:gap-8">
+      <h2 className="font-semibold">{title}</h2>
+      <div className="text-muted">{children}</div>
+    </section>
+  );
+}
+
+export function SettingsPage() {
+  const { t } = useTranslation();
+  const showInvestments = useShowInvestments();
+  const locale = formattingLocale();
+
+  return (
+    <>
+      <PageHeader
+        title={t('modules.settings.title')}
+        description={t('modules.settings.description')}
+      />
+      <div className="max-w-3xl">
+        <Section title={t('settings.language')}>
+          <p className="font-medium text-ink">{t('settings.languageValue')}</p>
+          <p className="mt-1 text-sm">{t('settings.languageNote')}</p>
+        </Section>
+        <Section title={t('settings.format')}>
+          <p>{t('settings.formatDetected', { locale })}</p>
+          <ul className="mt-3 grid gap-1 text-ink">
+            {FORMAT_SAMPLES.map((sample) => (
+              <li key={sample.currency} className="flex justify-between gap-6 sm:max-w-sm">
+                <span className="text-muted">{sample.currency}</span>
+                <span className="amount">{formatMoney(sample, { locale })}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+        <Section title={t('settings.timeZone')}>
+          <p>{t('settings.timeZoneDetected', { timeZone: detectedTimeZone() })}</p>
+        </Section>
+        <Section title={t('settings.sections')}>
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <p id="investments-label" className="font-medium text-ink">
+                {t('settings.showInvestments')}
+              </p>
+              <p className="mt-1 text-sm">{t('settings.showInvestmentsHint')}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showInvestments}
+              aria-labelledby="investments-label"
+              onClick={() => setShowInvestments(!showInvestments)}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                showInvestments ? 'bg-brand' : 'bg-line'
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`absolute top-1 left-1 size-5 rounded-full bg-surface motion-safe:transition-transform ${
+                  showInvestments ? 'translate-x-5' : ''
+                }`}
+              />
+            </button>
+          </div>
+        </Section>
+        <p className="border-line border-t pt-6 text-muted text-sm">{t('settings.deviceNote')}</p>
+      </div>
+    </>
+  );
+}

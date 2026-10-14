@@ -1,0 +1,18 @@
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
+
+export function NotFoundPage() {
+  const { t } = useTranslation();
+  return (
+    <section className="py-16">
+      <h1 className="text-3xl font-semibold">{t('notFound.title')}</h1>
+      <p className="mt-2 text-muted">{t('notFound.body')}</p>
+      <Link
+        to="/"
+        className="mt-6 inline-block rounded-lg bg-brand px-4 py-2 font-medium text-paper"
+      >
+        {t('app.goHome')}
+      </Link>
+    </section>
+  );
+}

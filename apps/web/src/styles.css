@@ -1,0 +1,60 @@
+@import "tailwindcss";
+@import "@fontsource-variable/archivo/standard.css";
+
+@theme {
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #eef2ec;
+  --color-surface: #ffffff;
+  --color-ink: #14231f;
+  --color-muted: #56675f;
+  --color-line: #d3dcd5;
+  --color-brand: #1d5c4d;
+  --color-brand-soft: #dde8e1;
+  --color-hero: #1d5c4d;
+  --color-hero-ink: #f3f7f4;
+  --color-hero-muted: #b9d3c8;
+  --color-hero-line: #4e8a78;
+  --color-income: #1d6b4a;
+  --color-expense: #a3333d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #0f1715;
+    --color-surface: #16211e;
+    --color-ink: #e4ebe7;
+    --color-muted: #9db0a8;
+    --color-line: #27352f;
+    --color-brand: #5db394;
+    --color-brand-soft: #1c302a;
+    --color-hero: #133a30;
+    --color-hero-ink: #e9f2ee;
+    --color-hero-muted: #9cc3b3;
+    --color-hero-line: #2f6656;
+    --color-income: #6cc79a;
+    --color-expense: #e58a92;
+  }
+}
+
+/* Amounts: condensed, tabular figures so columns of numbers line up. */
+@utility amount {
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
