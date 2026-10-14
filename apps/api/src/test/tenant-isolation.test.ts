@@ -29,12 +29,34 @@ const comments = fixture.table('comments', {
 
 const notFound = { error: { code: 'not_found', message: 'Not found' } } as const;
 
-/** `holes` drops the owner check from the named operations, to show the harness notices. */
-function fixtureRoutes(auth: Auth, db: Database, holes: ReadonlySet<ProbeKind>) {
+/** A deliberate flaw to plant: a missing owner check, or a 401 that still leaks data. */
+type Hole = ProbeKind | 'anonymous';
+
+/** `holes` plants the named flaws, to show the harness notices each one. */
+function fixtureRoutes(auth: Auth, db: Database, holes: ReadonlySet<Hole>) {
   const scope = (kind: ProbeKind, column: PgColumn, userId: string, condition?: SQL) =>
     holes.has(kind) ? condition : ownedBy(column, userId, condition);
 
   return new Hono<{ Variables: UserVariables }>()
+    .use(async (c, next) => {
+      // 'anonymous' hole: refuses signed-out visitors with 401 but includes the note anyway.
+      const id = c.req.path.match(/\/notes\/(\d+)$/)?.[1];
+      if (
+        holes.has('anonymous') &&
+        id &&
+        !(await auth.api.getSession({ headers: c.req.raw.headers }))
+      ) {
+        const [row] = await db
+          .select()
+          .from(notes)
+          .where(eq(notes.id, Number(id)));
+        return c.json(
+          { error: { code: 'auth.required', message: 'Sign in required' }, debug: row },
+          401,
+        );
+      }
+      await next();
+    })
     .use(requireUser(auth))
     .post('/notes', async (c) => {
       const { title, amount } = await c.req.json<{ title: string; amount: number }>();
@@ -130,7 +152,7 @@ type Seed = Parameters<typeof findIsolationViolations>[1];
  * A fresh app (same database and auth) with the fixture mounted. Hono freezes its routes
  * after the first request, so each variant gets its own app instance.
  */
-function variant(holes: ProbeKind[]): { ctx: TestContext; seed: Seed } {
+function variant(holes: Hole[]): { ctx: TestContext; seed: Seed } {
   const app = createApp({ db: ctx.db, auth: ctx.auth, appUrl: TEST_APP_URL });
   app.route('/fx', fixtureRoutes(ctx.auth, ctx.db, new Set(holes)));
 
@@ -207,4 +229,10 @@ describe('tenant-isolation harness', () => {
       expect(violations.some((v) => v.probe.startsWith(`${hole}:`))).toBe(true);
     },
   );
+
+  it("catches a 401 that still carries the owner's data to anonymous visitors", async () => {
+    const leaky = variant(['anonymous']);
+    const violations = await findIsolationViolations(leaky.ctx, leaky.seed);
+    expect(violations.some((v) => v.reason.startsWith('anonymous response contains'))).toBe(true);
+  });
 });

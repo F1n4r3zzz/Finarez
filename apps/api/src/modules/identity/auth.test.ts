@@ -43,8 +43,37 @@ describe('registration and email verification', () => {
 
     const verified = await client.open(ctx.emails.lastLink(email));
     expect(verified.status).toBe(302);
-    // Verifying signs the user in.
+    // Verifying does not sign in; the user signs in with their password.
+    expect((await client.request('GET', '/api/me/preferences')).status).toBe(401);
+    const signIn = await client.request('POST', '/api/auth/sign-in/email', {
+      email,
+      password: PASSWORD,
+    });
+    expect(signIn.status).toBe(200);
     expect((await client.request('GET', '/api/me/preferences')).status).toBe(404);
+  });
+
+  it("an attacker's verification link cannot sign a victim into the attacker's account", async () => {
+    const victim = await verifiedUser();
+    const attacker = new TestClient(ctx.app);
+    const attackerEmail = uniqueEmail();
+    await signUp(attacker, attackerEmail);
+    const link = ctx.emails.lastLink(attackerEmail);
+
+    // The victim opens the attacker's link (cross-site navigation, e.g. from a chat).
+    const res = await victim.client.request('GET', `${link.pathname}${link.search}`, undefined, {
+      origin: 'https://evil.example',
+    });
+    expect(res.status).toBe(302);
+    expect(
+      res.headers.getSetCookie().some((c) => c.includes('session_token=') && !/max-age=0/i.test(c)),
+    ).toBe(false);
+    const session = (await (
+      await victim.client.request('GET', '/api/auth/get-session')
+    ).json()) as {
+      user: { email: string };
+    };
+    expect(session.user.email).toBe(victim.email);
   });
 
   it('rejects passwords shorter than 10 characters', async () => {

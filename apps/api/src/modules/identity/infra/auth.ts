@@ -1,22 +1,46 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import type { Config } from '../../../config';
 import type { Database } from '../../../db/client';
-import type { EmailSender } from '../../../platform/email/email';
+import { type EmailBudget, reserveEmail } from '../../../platform/email/budget';
+import type { EmailMessage, EmailSender } from '../../../platform/email/email';
 import { resetPasswordEmail, verificationEmail } from './emails';
 import { accounts, rateLimits, sessions, users, verifications } from './schema';
 
 export interface AuthDeps {
   db: Database;
   config: Pick<Config, 'APP_URL' | 'AUTH_SECRET'>;
+  /** Must draw from `emailBudget` (e.g. a BudgetedEmailSender). */
   email: EmailSender;
+  emailBudget: EmailBudget;
 }
+
+/** Endpoints that may send an email; each reserves budget before touching the account. */
+const EMAIL_SENDING_PATHS = new Set([
+  '/sign-up/email',
+  '/send-verification-email',
+  '/request-password-reset',
+]);
 
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-export function createAuth({ db, config, email }: AuthDeps) {
+export function createAuth({ db, config, email, emailBudget }: AuthDeps) {
+  // Delivery failures keep the normal answer (no account discovery); the user can ask for
+  // the email again. Logged without the address.
+  const deliver = async (kind: string, message: EmailMessage) => {
+    try {
+      await email.send(message);
+    } catch (error) {
+      console.error(
+        `Email delivery failed (${kind}):`,
+        error instanceof Error ? error.name : 'unknown',
+      );
+    }
+  };
+
   return betterAuth({
     appName: 'Finanz',
     baseURL: config.APP_URL,
@@ -41,15 +65,18 @@ export function createAuth({ db, config, email }: AuthDeps) {
       resetPasswordTokenExpiresIn: HOUR,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) => {
-        await email.send(resetPasswordEmail(user.email, url));
+        await deliver('password reset', resetPasswordEmail(user.email, url));
       },
     },
     emailVerification: {
       sendOnSignUp: true,
-      autoSignInAfterVerification: true,
+      // Never: opening a verification link must not sign anyone in, or an attacker could send
+      // their own link and have the victim work inside the attacker's account (Codex CP3 #1).
+      sendOnSignIn: false,
+      autoSignInAfterVerification: false,
       expiresIn: DAY,
       sendVerificationEmail: async ({ user, url }) => {
-        await email.send(verificationEmail(user.email, url));
+        await deliver('verification', verificationEmail(user.email, url));
       },
     },
     session: {
@@ -69,6 +96,17 @@ export function createAuth({ db, config, email }: AuthDeps) {
         '/reset-password': { window: HOUR, max: 5 },
         '/send-verification-email': { window: HOUR, max: 3 },
       },
+    },
+    hooks: {
+      // Runs after the rate limit and before the endpoint looks at the account.
+      before: createAuthMiddleware(async (ctx) => {
+        if (EMAIL_SENDING_PATHS.has(ctx.path) && !(await reserveEmail(emailBudget))) {
+          throw new APIError('SERVICE_UNAVAILABLE', {
+            code: 'EMAIL_UNAVAILABLE',
+            message: 'Email is temporarily unavailable. Try again later.',
+          });
+        }
+      }),
     },
     advanced: {
       useSecureCookies: config.APP_URL.startsWith('https://'),

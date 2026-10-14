@@ -6,6 +6,7 @@ import { handleError } from './http/errors';
 import { jsonBodiesOnly, sameOriginMutations } from './http/guards';
 import { healthRoutes } from './http/health';
 import { type Auth, meRoutes } from './modules/identity';
+import { withEmailReservations } from './platform/email/budget';
 
 export interface AppDeps {
   db: Database;
@@ -26,7 +27,13 @@ export function createApp({ db, auth, appUrl }: AppDeps) {
       await db.execute(sql`select 1`);
     }),
   );
-  app.on(['GET', 'POST'], '/auth/*', (c) => auth.handler(c.req.raw));
+  app.on(['GET', 'POST'], '/auth/*', async (c) => {
+    const res = await withEmailReservations(() => auth.handler(c.req.raw));
+    // Sessions, tokens and account data: never cached anywhere (Codex CP3 #4).
+    const out = new Response(res.body, res);
+    out.headers.set('Cache-Control', 'no-store');
+    return out;
+  });
   app.route('/me', meRoutes({ auth, db }));
   return app;
 }

@@ -79,3 +79,25 @@ describe('response headers', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
 });
+
+describe('auth responses', () => {
+  it('are never cached: sessions, session lists and redirects', async () => {
+    const { client } = await signedInUser(ctx);
+    for (const path of ['/api/auth/get-session', '/api/auth/list-sessions']) {
+      const res = await client.request('GET', path);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('cache-control')).toBe('no-store');
+    }
+    const email = uniqueEmail();
+    const newcomer = new TestClient(ctx.app);
+    await newcomer.request('POST', '/api/auth/sign-up/email', {
+      name: 'Ana',
+      email,
+      password: 'correct horse battery',
+      callbackURL: '/',
+    });
+    const redirect = await newcomer.open(ctx.emails.lastLink(email));
+    expect(redirect.status).toBe(302);
+    expect(redirect.headers.get('cache-control')).toBe('no-store');
+  });
+});

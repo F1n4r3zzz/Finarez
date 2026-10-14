@@ -2,20 +2,34 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { createApp } from '../app';
 import { createDatabase } from '../db/client';
 import { createAuth } from '../modules/identity';
+import { BudgetedEmailSender, EmailBudget } from '../platform/email/budget';
+import type { EmailSender } from '../platform/email/email';
 import { testDatabaseUrl } from './database';
 import { CapturingEmailSender } from './email';
 
 export const TEST_APP_URL = 'http://localhost:5173';
 export const TEST_PASSWORD = 'correct horse battery';
 
+export interface TestContextOptions {
+  /** Daily email cap for this instance (default: plenty). */
+  emailLimit?: number;
+  /** The day the email budget counts against (default: today). */
+  emailDay?: () => Date;
+  /** Replaces the delivery step, e.g. to simulate a provider outage. Emails are still captured. */
+  deliver?: EmailSender;
+}
+
 /** One API instance against the test database. Create two to simulate two servers. */
-export function createTestContext() {
+export function createTestContext(options: TestContextOptions = {}) {
   const { db, pool } = createDatabase(testDatabaseUrl(), { max: 4 });
   const emails = new CapturingEmailSender();
+  const emailBudget = new EmailBudget(db, options.emailLimit ?? 100_000, options.emailDay);
+  const email = new BudgetedEmailSender(options.deliver ?? emails, emailBudget);
   const auth = createAuth({
     db,
     config: { APP_URL: TEST_APP_URL, AUTH_SECRET: 'test-only-secret-not-used-anywhere-else' },
-    email: emails,
+    email,
+    emailBudget,
   });
   return {
     app: createApp({ db, auth, appUrl: TEST_APP_URL }),
@@ -98,7 +112,7 @@ export class TestClient {
 
 export type TestContext = ReturnType<typeof createTestContext>;
 
-/** Registers and verifies a new account; the returned client is signed in. */
+/** Registers, verifies and signs in a new account; the returned client is signed in. */
 export async function signedInUser(
   ctx: TestContext,
 ): Promise<{ client: TestClient; email: string }> {
@@ -113,5 +127,11 @@ export async function signedInUser(
   if (res.status !== 200) throw new Error(`sign-up failed: ${res.status}`);
   const verified = await client.open(ctx.emails.lastLink(email));
   if (verified.status !== 302) throw new Error(`verification failed: ${verified.status}`);
+  // Verification never signs in (login-CSRF defence), so sign in explicitly.
+  const signIn = await client.request('POST', '/api/auth/sign-in/email', {
+    email,
+    password: TEST_PASSWORD,
+  });
+  if (signIn.status !== 200) throw new Error(`sign-in failed: ${signIn.status}`);
   return { client, email };
 }

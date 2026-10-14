@@ -69,6 +69,14 @@ export async function findIsolationViolations(
     const label = `${probe.kind}: ${probe.method} ${probe.path}`;
 
     const anon = await anonymous.request(probe.method, probe.path, probe.body);
+    const anonText = await anon.text();
+    const anonLeaked = secrets.filter((secret) => anonText.includes(secret));
+    if (anonLeaked.length > 0) {
+      violations.push({
+        probe: label,
+        reason: `anonymous response contains the owner's data: ${anonLeaked.join(', ')}`,
+      });
+    }
     if (anon.status !== 401) {
       violations.push({
         probe: label,

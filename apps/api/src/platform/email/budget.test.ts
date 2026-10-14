@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { createDatabase } from '../../db/client';
 import { testDatabaseUrl } from '../../test/database';
 import { CapturingEmailSender } from '../../test/email';
-import { BudgetedEmailSender } from './budget';
+import { BudgetedEmailSender, EmailBudget, reserveEmail, withEmailReservations } from './budget';
 import { EmailBudgetExceededError } from './email';
 
 const { db, pool } = createDatabase(testDatabaseUrl(), { max: 10 });
@@ -16,10 +16,10 @@ const someDay = () => {
 };
 const message = { to: 'ana@example.com', subject: 'Hola', text: 'Hola' };
 
-describe('BudgetedEmailSender', () => {
+describe('email budget', () => {
   it('sends up to the daily limit and then refuses', async () => {
     const inner = new CapturingEmailSender();
-    const sender = new BudgetedEmailSender(inner, db, 2, someDay());
+    const sender = new BudgetedEmailSender(inner, new EmailBudget(db, 2, someDay()));
     await sender.send(message);
     await sender.send(message);
     await expect(sender.send(message)).rejects.toBeInstanceOf(EmailBudgetExceededError);
@@ -29,7 +29,9 @@ describe('BudgetedEmailSender', () => {
   it('never exceeds the limit under concurrent sends from several instances', async () => {
     const inner = new CapturingEmailSender();
     const day = someDay();
-    const senders = [1, 2, 3].map(() => new BudgetedEmailSender(inner, db, 3, day));
+    const senders = [1, 2, 3].map(
+      () => new BudgetedEmailSender(inner, new EmailBudget(db, 3, day)),
+    );
     const results = await Promise.allSettled(
       Array.from({ length: 12 }, (_, i) => senders[i % 3]?.send(message)),
     );
@@ -39,9 +41,20 @@ describe('BudgetedEmailSender', () => {
 
   it('sends nothing when the limit is zero', async () => {
     const inner = new CapturingEmailSender();
-    await expect(
-      new BudgetedEmailSender(inner, db, 0, someDay()).send(message),
-    ).rejects.toBeInstanceOf(EmailBudgetExceededError);
+    const sender = new BudgetedEmailSender(inner, new EmailBudget(db, 0, someDay()));
+    await expect(sender.send(message)).rejects.toBeInstanceOf(EmailBudgetExceededError);
     expect(inner.sent).toHaveLength(0);
+  });
+
+  it('an email sent within a request uses the unit that request reserved, not a second one', async () => {
+    const inner = new CapturingEmailSender();
+    const budget = new EmailBudget(db, 1, someDay());
+    const sender = new BudgetedEmailSender(inner, budget);
+    await withEmailReservations(async () => {
+      expect(await reserveEmail(budget)).toBe(true);
+      await sender.send(message); // uses the reservation; the budget (1) is not claimed again
+    });
+    expect(inner.sent).toHaveLength(1);
+    expect(await budget.claim()).toBe(false);
   });
 });

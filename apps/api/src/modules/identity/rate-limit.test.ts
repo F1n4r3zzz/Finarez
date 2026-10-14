@@ -46,3 +46,22 @@ describe('sign-in rate limit', () => {
     expect(someoneElse.status).toBe(401);
   });
 });
+
+describe('sign-in rate limit under concurrency', () => {
+  it('lets exactly 5 of 12 simultaneous attempts through, across both instances', async () => {
+    const ip = randomIp();
+    const attempts = Array.from({ length: 12 }, (_, n) =>
+      new TestClient(n % 2 === 0 ? first.app : second.app, ip).request(
+        'POST',
+        '/api/auth/sign-in/email',
+        {
+          email: uniqueEmail(),
+          password: 'not the password',
+        },
+      ),
+    );
+    const statuses = (await Promise.all(attempts)).map((r) => r.status).sort();
+    expect(statuses.filter((s) => s === 401)).toHaveLength(5);
+    expect(statuses.filter((s) => s === 429)).toHaveLength(7);
+  });
+});
