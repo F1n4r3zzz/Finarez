@@ -8,7 +8,7 @@ import {
   type TransactionView,
   voidTransactionSchema,
 } from '@finanz/contracts';
-import { parseCurrencyCode, parseLocalDate } from '@finanz/kernel';
+import { parseCurrencyCode, parseLocalDate, todayIn } from '@finanz/kernel';
 import { and, desc, eq, exists, gte, inArray, lte, type SQL } from 'drizzle-orm';
 import { Hono } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
@@ -17,7 +17,7 @@ import type { Database, Executor } from '../../../db/client';
 import { ownedBy } from '../../../db/tenancy';
 import { inUnitOfWork } from '../../../db/unit-of-work';
 import { isUuid } from '../../../http/ids';
-import { type Auth, requireUser, type UserVariables } from '../../identity';
+import { type Auth, getPreferences, requireUser, type UserVariables } from '../../identity';
 import {
   type AccountRow,
   createAccount,
@@ -25,6 +25,7 @@ import {
   updateAccount,
 } from '../application/accounts';
 import { commandHash, IdempotencyKeyReusedError, onceForKey } from '../application/idempotency';
+import { balancesAsOf } from '../application/reads';
 import type { EntryRow, TransactionRow } from '../application/store';
 import {
   editTransaction,
@@ -47,7 +48,7 @@ const STATUS: Partial<Record<LedgerError['code'], ContentfulStatusCode>> = {
   'ledger.not_void': 409,
 };
 
-function accountView(row: AccountRow): AccountView {
+function accountView(row: AccountRow, balanceMinor = 0n): AccountView {
   return {
     id: row.id,
     name: row.name,
@@ -57,7 +58,30 @@ function accountView(row: AccountRow): AccountView {
     institution: row.institution,
     openedOn: parseLocalDate(row.openedOn),
     archived: row.archivedAt !== null,
+    balanceMinor: balanceMinor.toString(),
   };
+}
+
+/** Today's balances, as seen in the user's time zone. */
+async function withBalances(
+  db: Database,
+  userId: string,
+  rows: AccountRow[],
+): Promise<AccountView[]> {
+  if (rows.length === 0) return [];
+  const preferences = await getPreferences(db, userId);
+  const today = todayIn(preferences?.timeZone ?? 'UTC');
+  const balances = new Map(
+    (
+      await balancesAsOf(
+        db,
+        userId,
+        today,
+        rows.map((r) => r.id),
+      )
+    ).map((b) => [b.accountId, b.balanceMinor]),
+  );
+  return rows.map((r) => accountView(r, balances.get(r.id) ?? 0n));
 }
 
 function transactionView(header: TransactionRow, rows: readonly EntryRow[]): TransactionView {
@@ -113,7 +137,9 @@ export function ledgerRoutes({ auth, db }: { auth: Auth; db: Database }) {
       throw error;
     })
 
-    .get('/accounts', async (c) => c.json((await listAccounts(db, c.var.userId)).map(accountView)))
+    .get('/accounts', async (c) =>
+      c.json(await withBalances(db, c.var.userId, await listAccounts(db, c.var.userId))),
+    )
     .post('/accounts', async (c) => {
       const input = accountInputSchema.parse(await c.req.json());
       const row = await inUnitOfWork(db, (tx) =>
@@ -125,7 +151,9 @@ export function ledgerRoutes({ auth, db }: { auth: Auth; db: Database }) {
       const input = accountUpdateSchema.parse(await c.req.json());
       const id = c.req.param('id');
       if (!isUuid(id)) return c.json(notFound, 404);
-      return c.json(accountView(await updateAccount(db, c.var.userId, id, input)));
+      const row = await updateAccount(db, c.var.userId, id, input);
+      const [view] = await withBalances(db, c.var.userId, [row]);
+      return c.json(view);
     })
 
     .get('/transactions', async (c) => {

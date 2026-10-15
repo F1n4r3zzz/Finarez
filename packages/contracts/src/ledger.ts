@@ -109,6 +109,8 @@ export interface AccountView {
   institution: string | null;
   openedOn: LocalDate;
   archived: boolean;
+  /** Balance today in the account's own currency (owed amounts are negative). */
+  balanceMinor: string;
 }
 
 export interface EntryView {
