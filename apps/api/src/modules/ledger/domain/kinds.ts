@@ -9,17 +9,8 @@ export const ACCOUNT_KINDS = [
 ] as const;
 export type AccountKind = (typeof ACCOUNT_KINDS)[number];
 
-export const ASSET_SUBTYPES = [
-  'bank',
-  'cash',
-  'wallet',
-  'savings',
-  'investment',
-  'receivable',
-  'other_asset',
-] as const;
-export const LIABILITY_SUBTYPES = ['credit_card', 'loan', 'payable', 'other_liability'] as const;
-export type AccountSubtype = (typeof ASSET_SUBTYPES)[number] | (typeof LIABILITY_SUBTYPES)[number];
+export type { AccountSubtype } from '@finanz/contracts';
+export { ASSET_SUBTYPES, LIABILITY_SUBTYPES } from '@finanz/contracts';
 
 /** Hidden accounts that take the other side of entries, one per role and currency. */
 export const SYSTEM_ROLES = ['income', 'expense', 'opening_balance', 'valuation', 'fx'] as const;

@@ -198,3 +198,21 @@ export const transactionAudit = ledger.table(
     index().on(t.userId, t.transactionId, t.version),
   ],
 );
+
+/** Financial requests' Idempotency-Key claims, kept 24 hours (data-model §10). */
+export const idempotencyKeys = ledger.table(
+  'idempotency_keys',
+  {
+    userId: owner(),
+    key: text().notNull(),
+    /** Method, route, path parameters and canonical body: one key, one command. */
+    commandSha256: text().notNull(),
+    responseStatus: integer(),
+    response: jsonb(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.key] }),
+    check('idempotency_keys_key', sql`length(${t.key}) between 1 and 200`),
+  ],
+);

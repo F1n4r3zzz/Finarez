@@ -56,6 +56,8 @@ export interface RequestOptions {
   contentType?: string;
   /** Send this exact body instead of JSON-encoding `body`. */
   rawBody?: string;
+  /** Extra request headers, e.g. Idempotency-Key. */
+  headers?: Record<string, string>;
 }
 
 /** A browser-like client: same origin, one IP, and a cookie jar. */
@@ -79,6 +81,7 @@ export class TestClient {
     const payload = options.rawBody ?? (body === undefined ? undefined : JSON.stringify(body));
     if (payload !== undefined)
       headers.set('content-type', options.contentType ?? 'application/json');
+    for (const [name, value] of Object.entries(options.headers ?? {})) headers.set(name, value);
     if (this.cookies.size > 0) {
       headers.set('cookie', [...this.cookies].map(([k, v]) => `${k}=${v}`).join('; '));
     }

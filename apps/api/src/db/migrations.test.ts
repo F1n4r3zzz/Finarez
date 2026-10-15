@@ -74,6 +74,7 @@ describe('migrations', () => {
         'identity.verifications',
         'ledger.accounts',
         'ledger.entries',
+        'ledger.idempotency_keys',
         'ledger.transaction_audit',
         'ledger.transactions',
         'platform.email_sends',
