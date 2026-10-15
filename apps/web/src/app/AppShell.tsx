@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Wordmark } from '../components/Wordmark';
 import { MODULES, MORE, type ModuleDef } from './modules';
@@ -33,7 +33,11 @@ export function AppShell() {
   const showInvestments = useShowInvestments();
   const visible = MODULES.filter((m) => !m.optional || showInvestments);
   const settings = visible.filter((m) => m.group === 'settings');
-  const mobile = [...visible.filter((m) => m.mobile), MORE];
+  const bar = visible.filter((m) => m.mobile);
+  const mobile = [...bar, MORE];
+  const { pathname } = useLocation();
+  // Sections without a place in the bar are reached through "Más", so it stays lit there.
+  const inBar = bar.some((m) => (m.path === '/' ? pathname === '/' : pathname.startsWith(m.path)));
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[240px_minmax(0,1fr)]">
@@ -101,13 +105,16 @@ export function AppShell() {
                 <NavLink
                   to={m.path}
                   end={m.path === '/'}
-                  className={({ isActive }) =>
-                    `flex min-h-14 flex-col items-center justify-center gap-0.5 text-[0.6875rem] transition-colors duration-150 ${
-                      isActive ? 'font-semibold text-brand' : 'text-muted'
-                    }`
-                  }
+                  className={({ isActive }) => {
+                    const lit = isActive || (m.id === 'more' && !inBar);
+                    return `group flex min-h-16 flex-col items-center justify-center gap-1 text-xs transition-colors duration-150 ${
+                      lit ? 'lit font-semibold text-brand' : 'text-muted'
+                    }`;
+                  }}
                 >
-                  <Icon size={20} aria-hidden="true" />
+                  <span className="flex h-7 w-14 items-center justify-center rounded-full transition-colors duration-150 group-[.lit]:bg-brand-soft">
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
                   {t(`modules.${m.id}.title`)}
                 </NavLink>
               </li>

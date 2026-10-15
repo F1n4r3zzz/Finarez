@@ -14,6 +14,7 @@ import {
 } from 'react-router';
 import { useAccount } from '../../app/account';
 import { moduleById } from '../../app/modules';
+import { ActionLink } from '../../components/ActionLink';
 import { Amount } from '../../components/Amount';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
@@ -64,7 +65,7 @@ function AccountList({
               className="-mx-2 flex min-h-14 items-center justify-between gap-4 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-hover"
             >
               <span className="min-w-0">
-                <span className="block truncate font-medium">{a.name}</span>
+                <span className="line-clamp-2 font-medium">{a.name}</span>
                 <span className="block truncate text-sm text-subtle">
                   {a.archived
                     ? t('ledger.accounts.archived')
@@ -98,21 +99,13 @@ export function AccountsPage() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeader
-          title={t('modules.accounts.title')}
-          description={t('modules.accounts.description')}
-        />
-        {accounts.length > 0 && (
-          <Link
-            to="/accounts/new"
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-brand px-4 font-medium text-on-brand transition-colors duration-150 hover:bg-brand/90"
-          >
-            <Plus size={18} aria-hidden="true" />
-            {t('ledger.accounts.add')}
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title={t('modules.accounts.title')}
+        description={t('modules.accounts.description')}
+        action={
+          accounts.length > 0 && <ActionLink to="/accounts/new" label={t('ledger.accounts.add')} />
+        }
+      />
       {accounts.length === 0 ? (
         <EmptyState
           icon={moduleById('accounts').icon}

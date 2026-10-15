@@ -121,4 +121,13 @@
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
   }
+
+  /*
+   * A grid without columns of its own gets one column that can shrink to the screen. Left
+   * to the default, the column grows to its widest content (a long name next to an amount
+   * that never wraps) and pushes the page past a phone's width. `grid-cols-*` overrides it.
+   */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

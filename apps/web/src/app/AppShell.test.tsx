@@ -56,9 +56,16 @@ describe('AppShell', () => {
       'Inicio',
       'Cuentas',
       'Movimientos',
-      'Presupuestos',
+      'Reportes',
       'Más',
     ]);
+  });
+
+  it('keeps "Más" lit in sections that live inside it', async () => {
+    await renderAt('/debts');
+    const bar = within(screen.getByRole('navigation', { name: 'Secciones' }));
+    expect(bar.getByRole('link', { name: 'Más' }).className).toContain('lit');
+    expect(bar.getByRole('link', { name: 'Inicio' }).className).not.toContain('lit');
   });
 
   it('shows a not-found page inside the shell for unknown addresses', async () => {

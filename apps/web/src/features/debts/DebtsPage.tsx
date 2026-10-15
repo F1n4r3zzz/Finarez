@@ -22,6 +22,7 @@ import {
 } from 'react-router';
 import { useAccount } from '../../app/account';
 import { moduleById } from '../../app/modules';
+import { ActionLink } from '../../components/ActionLink';
 import { Amount } from '../../components/Amount';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
@@ -103,7 +104,7 @@ function DebtCard({ debt }: { debt: DebtView }) {
     >
       <div className="flex items-start justify-between gap-4">
         <span className="min-w-0">
-          <span className="block truncate font-semibold">{debt.name}</span>
+          <span className="line-clamp-2 font-semibold">{debt.name}</span>
           <span className="block text-sm text-subtle">{t(`debts.types.${debt.type}`)}</span>
         </span>
         <span className="text-right">
@@ -142,15 +143,11 @@ export function DebtsPage() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeader title={t('modules.debts.title')} description={t('modules.debts.description')} />
-        {open.length > 0 && (
-          <Link to="/debts/new" className={ADD_LINK}>
-            <Plus size={18} aria-hidden="true" />
-            {t('debts.add')}
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title={t('modules.debts.title')}
+        description={t('modules.debts.description')}
+        action={open.length > 0 && <ActionLink to="/debts/new" label={t('debts.add')} />}
+      />
       {open.length === 0 ? (
         <EmptyState
           icon={moduleById('debts').icon}

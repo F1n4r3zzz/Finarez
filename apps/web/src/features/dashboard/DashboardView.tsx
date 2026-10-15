@@ -234,7 +234,7 @@ export function DashboardView({
                 {accounts.map((a) => (
                   <li key={a.id} className="flex items-baseline justify-between gap-4 py-2.5">
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{a.name}</span>
+                      <span className="line-clamp-2 text-sm font-medium">{a.name}</span>
                       <span className="block truncate text-sm text-subtle">{a.detail}</span>
                     </span>
                     <Amount value={a.balance} />
@@ -270,7 +270,7 @@ export function DashboardView({
                         {formatShortDate(r.date)}
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium">{r.description}</span>
+                        <span className="line-clamp-2 text-sm font-medium">{r.description}</span>
                         <span className="block truncate text-sm text-subtle">{r.category}</span>
                       </span>
                       <Amount value={r.amount} signed={!r.transfer} />

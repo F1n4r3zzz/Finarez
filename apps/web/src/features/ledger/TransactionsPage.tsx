@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Form, Link, type LoaderFunctionArgs, useLoaderData, useSubmit } from 'react-router';
 import { moduleById } from '../../app/modules';
+import { ActionLink } from '../../components/ActionLink';
 import { Amount } from '../../components/Amount';
 import { EmptyState } from '../../components/EmptyState';
 import { SelectField } from '../../components/Field';
@@ -69,21 +70,15 @@ export function TransactionsPage() {
 
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeader
-          title={t('modules.transactions.title')}
-          description={t('modules.transactions.description')}
-        />
-        {accounts.length > 0 && (
-          <Link
-            to="/transactions/new"
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-brand px-4 font-medium text-on-brand transition-colors duration-150 hover:bg-brand/90"
-          >
-            <Plus size={18} aria-hidden="true" />
-            {t('ledger.transactions.add')}
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title={t('modules.transactions.title')}
+        description={t('modules.transactions.description')}
+        action={
+          accounts.length > 0 && (
+            <ActionLink to="/transactions/new" label={t('ledger.transactions.add')} />
+          )
+        }
+      />
 
       {accounts.length === 0 ? (
         <EmptyState
@@ -101,7 +96,7 @@ export function TransactionsPage() {
         </EmptyState>
       ) : (
         <>
-          <Form method="get" className="mb-5 max-w-xs" onChange={(e) => submit(e.currentTarget)}>
+          <Form method="get" className="mb-5 sm:max-w-xs" onChange={(e) => submit(e.currentTarget)}>
             <SelectField
               label={t('ledger.transactions.account')}
               name="account"
@@ -139,7 +134,7 @@ export function TransactionsPage() {
                           >
                             <span className="min-w-0">
                               <span
-                                className={`block truncate font-medium ${isVoid ? 'line-through' : ''}`}
+                                className={`line-clamp-2 font-medium ${isVoid ? 'line-through' : ''}`}
                               >
                                 {item.description}
                               </span>

@@ -45,11 +45,11 @@ export const MODULES: readonly ModuleDef[] = [
   { id: 'accounts', path: '/accounts', icon: Wallet, group: 'daily', mobile: true },
   { id: 'transactions', path: '/transactions', icon: ArrowLeftRight, group: 'daily', mobile: true },
   { id: 'import', path: '/import', icon: FileUp, group: 'daily' },
-  { id: 'budgets', path: '/budgets', icon: Target, group: 'plan', mobile: true },
+  { id: 'budgets', path: '/budgets', icon: Target, group: 'plan' },
   { id: 'savings', path: '/savings', icon: PiggyBank, group: 'plan' },
   { id: 'debts', path: '/debts', icon: CreditCard, group: 'plan' },
   { id: 'networth', path: '/net-worth', icon: Scale, group: 'analyze' },
-  { id: 'reports', path: '/reports', icon: ChartColumn, group: 'analyze' },
+  { id: 'reports', path: '/reports', icon: ChartColumn, group: 'analyze', mobile: true },
   { id: 'investments', path: '/investments', icon: TrendingUp, group: 'analyze', optional: true },
   { id: 'settings', path: '/settings', icon: Settings, group: 'settings' },
 ];
