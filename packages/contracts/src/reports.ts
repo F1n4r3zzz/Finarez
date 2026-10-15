@@ -29,6 +29,22 @@ export interface SummaryReport extends Completeness {
   expensesByCategory: { categoryId: string; amountMinor: string }[];
 }
 
+/** Income and expenses for each calendar month of a range (months without movements included). */
+export interface MonthlyReport extends Completeness {
+  from: LocalDate;
+  to: LocalDate;
+  months: {
+    /** "2026-03". */
+    month: string;
+    from: LocalDate;
+    to: LocalDate;
+    incomeMinor: string;
+    expensesMinor: string;
+    netMinor: string;
+    expensesByCategory: { categoryId: string; amountMinor: string }[];
+  }[];
+}
+
 export interface NetWorthReport extends Completeness {
   on: LocalDate;
   totalMinor: string;

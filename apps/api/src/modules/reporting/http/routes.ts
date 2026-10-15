@@ -1,4 +1,4 @@
-import type { BridgeReport, NetWorthReport, SummaryReport } from '@finanz/contracts';
+import type { BridgeReport, MonthlyReport, NetWorthReport, SummaryReport } from '@finanz/contracts';
 import {
   type CurrencyCode,
   type LocalDate,
@@ -13,7 +13,7 @@ import { inSnapshot } from '../../../db/unit-of-work';
 import { loadRateBook } from '../../currency';
 import { type Auth, getPreferences, requireUser, type UserVariables } from '../../identity';
 import { balancesAsOf, factsBetween } from '../../ledger';
-import { bridge, Converter, netWorth, summarize } from '../domain/figures';
+import { bridge, Converter, netWorth, summarize, summarizeByMonth } from '../domain/figures';
 
 const range = z.object({ from: z.string(), to: z.string() });
 const day = z.object({ on: z.string().optional() });
@@ -33,6 +33,12 @@ function completeness(converter: Converter, currency: CurrencyCode) {
     staleRateIds: [...converter.staleRateIds].sort(),
   };
 }
+
+/** Monthly series cover at most five years, which bounds the work per request. */
+const MAX_MONTHS = 60;
+const rangeTooLong = {
+  error: { code: 'reports.range_too_long', message: `At most ${MAX_MONTHS} months` },
+} as const;
 
 const noPreferences = {
   error: { code: 'preferences.not_set', message: 'Choose a primary currency first' },
@@ -79,6 +85,34 @@ export function reportRoutes({ auth, db }: { auth: Auth; db: Database }) {
           expensesByCategory: list(s.expensesByCategory),
           ...completeness(ctx.converter, ctx.currency),
         };
+      });
+      return body ? c.json(body) : c.json(noPreferences, 409);
+    })
+    .get('/monthly', async (c) => {
+      const q = range.parse(c.req.query());
+      const [from, to] = [parseLocalDate(q.from), parseLocalDate(q.to)];
+      const [fy, fm] = from.split('-').map(Number) as [number, number];
+      const [ty, tm] = to.split('-').map(Number) as [number, number];
+      if (from > to || (ty - fy) * 12 + (tm - fm) + 1 > MAX_MONTHS)
+        return c.json(rangeTooLong, 400);
+      const userId = c.var.userId;
+      const body = await inSnapshot(db, async (tx): Promise<MonthlyReport | undefined> => {
+        const ctx = await setup(tx, userId);
+        if (!ctx) return undefined;
+        const facts = await factsBetween(tx, userId, from, to);
+        const months = summarizeByMonth(facts, ctx.converter, from, to).map((m) => ({
+          month: m.month,
+          from: m.from,
+          to: m.to,
+          incomeMinor: minor(m.income),
+          expensesMinor: minor(m.expenses),
+          netMinor: minor(m.net),
+          expensesByCategory: m.expensesByCategory.map((i) => ({
+            categoryId: i.categoryId,
+            amountMinor: minor(i.amountMinor),
+          })),
+        }));
+        return { from, to, months, ...completeness(ctx.converter, ctx.currency) };
       });
       return body ? c.json(body) : c.json(noPreferences, 409);
     })

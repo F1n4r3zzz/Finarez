@@ -4,7 +4,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { PageHeader } from '../../components/PageHeader';
 import { UnderConstruction } from '../../components/UnderConstruction';
 
-export type SimpleModuleId = 'budgets' | 'savings' | 'networth' | 'reports' | 'investments';
+export type SimpleModuleId = 'budgets' | 'savings' | 'networth' | 'investments';
 
 /** A section whose data isn't available yet: title, purpose and what will appear here. */
 export function ModulePage({ id }: { id: SimpleModuleId }) {

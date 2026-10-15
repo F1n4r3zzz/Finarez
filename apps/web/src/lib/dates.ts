@@ -25,6 +25,16 @@ export function formatMediumDate(date: LocalDate, locale = formattingLocale()): 
   }).format(toUtcDate(date));
 }
 
+/** "1 de octubre de 2025": a date that names its year, for ranges. */
+export function formatFullDate(date: LocalDate, locale = formattingLocale()): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(toUtcDate(date));
+}
+
 export function formatMonthName(date: LocalDate, locale = formattingLocale()): string {
   return new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(
     toUtcDate(date),

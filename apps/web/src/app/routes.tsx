@@ -38,6 +38,11 @@ import { TransactionsPage, transactionsLoader } from '../features/ledger/Transac
 import { ImportPage } from '../features/modules/ImportPage';
 import { ModulePage } from '../features/modules/ModulePage';
 import { MorePage } from '../features/more/MorePage';
+import {
+  ReportsPage,
+  reportsLoader,
+  reportsShouldRevalidate,
+} from '../features/reports/ReportsPage';
 import { ratesAction, ratesLoader } from '../features/settings/RatesSection';
 import { SettingsPage, settingsAction } from '../features/settings/SettingsPage';
 import { WelcomePage, welcomeAction } from '../features/welcome/WelcomePage';
@@ -152,7 +157,12 @@ export const routes: RouteObject[] = [
           },
           { path: 'debts/:id/proposal', loader: proposalLoader },
           { path: 'net-worth', element: <ModulePage id="networth" /> },
-          { path: 'reports', element: <ModulePage id="reports" /> },
+          {
+            path: 'reports',
+            loader: reportsLoader,
+            shouldRevalidate: reportsShouldRevalidate,
+            element: <ReportsPage />,
+          },
           { path: 'investments', element: <ModulePage id="investments" /> },
           { path: 'settings', action: settingsAction, element: <SettingsPage /> },
           { path: 'settings/rates', loader: ratesLoader, action: ratesAction },

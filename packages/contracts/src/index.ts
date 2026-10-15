@@ -46,4 +46,10 @@ export {
   rateRevisionSchema,
   type UserRate,
 } from './rates';
-export type { BridgeReport, ExcludedView, NetWorthReport, SummaryReport } from './reports';
+export type {
+  BridgeReport,
+  ExcludedView,
+  MonthlyReport,
+  NetWorthReport,
+  SummaryReport,
+} from './reports';

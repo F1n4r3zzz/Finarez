@@ -245,7 +245,11 @@ export function DashboardView({
           </div>
 
           <div className="mt-4 grid gap-4 xl:grid-cols-5">
-            <Panel title={t('dashboard.spending')} className="xl:col-span-2">
+            <Panel
+              title={t('dashboard.spending')}
+              link={{ to: '/reports', label: t('dashboard.seeReports') }}
+              className="xl:col-span-2"
+            >
               <SpendingBars rows={spending} />
             </Panel>
             <Panel

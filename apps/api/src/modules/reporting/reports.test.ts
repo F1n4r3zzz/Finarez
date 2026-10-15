@@ -3,6 +3,7 @@ import type {
   AccountView,
   BridgeReport,
   Category,
+  MonthlyReport,
   NetWorthReport,
   SummaryReport,
 } from '@finanz/contracts';
@@ -208,6 +209,58 @@ describe('reports in the primary currency', () => {
   });
 });
 
+describe('monthly report', () => {
+  it('gives each month the same figures as a summary of that month, empty months included', async () => {
+    const { client } = await signedInUser(ctx);
+    await freelancer(client);
+    const { status, body } = await json<MonthlyReport>(
+      client,
+      'GET',
+      '/api/reports/monthly?from=2025-09-15&to=2025-12-31',
+    );
+    expect(status).toBe(200);
+    expect(body.months.map((m) => [m.month, m.from, m.to])).toEqual([
+      ['2025-09', '2025-09-15', '2025-09-30'],
+      ['2025-10', '2025-10-01', '2025-10-31'],
+      ['2025-11', '2025-11-01', '2025-11-30'],
+      ['2025-12', '2025-12-01', '2025-12-31'],
+    ]);
+    for (const m of body.months) {
+      const s = (
+        await json<SummaryReport>(client, 'GET', `/api/reports/summary?from=${m.from}&to=${m.to}`)
+      ).body;
+      expect(m).toEqual({
+        month: m.month,
+        from: m.from,
+        to: m.to,
+        incomeMinor: s.incomeMinor,
+        expensesMinor: s.expensesMinor,
+        netMinor: s.netMinor,
+        expensesByCategory: s.expensesByCategory,
+      });
+    }
+    expect(body.months[1]?.incomeMinor).not.toBe('0');
+    expect(body.months[3]).toMatchObject({ incomeMinor: '0', expensesMinor: '0' });
+  });
+
+  it('refuses ranges that run backwards or span more than five years', async () => {
+    const { client } = await signedInUser(ctx);
+    await json(client, 'PUT', '/api/me/preferences', {
+      language: 'es',
+      timeZone: 'America/Bogota',
+      primaryCurrency: 'COP',
+    });
+    for (const q of ['from=2026-02-01&to=2026-01-31', 'from=2020-01-01&to=2025-01-01']) {
+      const res = await json<{ error: { code: string } }>(
+        client,
+        'GET',
+        `/api/reports/monthly?${q}`,
+      );
+      expect([res.status, res.body.error.code]).toEqual([400, 'reports.range_too_long']);
+    }
+  });
+});
+
 describe('stale rates', () => {
   it('says which rates were older than 45 days when used (CP2 code #8)', async () => {
     const { client } = await signedInUser(ctx);
@@ -256,6 +309,27 @@ describe('reports: tenant isolation', () => {
               netMinor: '0',
               incomeByCategory: [],
               expensesByCategory: [],
+              ...empty,
+            },
+          },
+          {
+            kind: 'aggregate',
+            method: 'GET',
+            path: '/api/reports/monthly?from=2025-10-01&to=2025-10-31',
+            intruderSees: {
+              from: '2025-10-01',
+              to: '2025-10-31',
+              months: [
+                {
+                  month: '2025-10',
+                  from: '2025-10-01',
+                  to: '2025-10-31',
+                  incomeMinor: '0',
+                  expensesMinor: '0',
+                  netMinor: '0',
+                  expensesByCategory: [],
+                },
+              ],
               ...empty,
             },
           },

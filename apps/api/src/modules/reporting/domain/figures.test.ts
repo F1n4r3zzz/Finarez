@@ -3,7 +3,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { RateBook, type RateRow } from '../../currency';
 import type { AccountBalance, LedgerFact } from '../../ledger';
-import { bridge, Converter, netWorth, summarize } from './figures';
+import { bridge, Converter, monthsBetween, netWorth, summarize, summarizeByMonth } from './figures';
 
 const d = parseLocalDate;
 
@@ -79,6 +79,75 @@ describe('summarize', () => {
     expect(converter.excluded).toEqual([
       { date: d('2025-12-31'), currency: 'USD', component: 'income:b', amountMinor: -100_00n },
     ]);
+  });
+});
+
+describe('summarizeByMonth', () => {
+  it('lists every month the range touches, clipped to it, including months with no movements', () => {
+    expect(monthsBetween(d('2025-11-15'), d('2026-02-10'))).toEqual([
+      { month: '2025-11', from: '2025-11-15', to: '2025-11-30' },
+      { month: '2025-12', from: '2025-12-01', to: '2025-12-31' },
+      { month: '2026-01', from: '2026-01-01', to: '2026-01-31' },
+      { month: '2026-02', from: '2026-02-01', to: '2026-02-10' },
+    ]);
+    expect(monthsBetween(d('2026-02-01'), d('2026-02-28'))).toEqual([
+      { month: '2026-02', from: '2026-02-01', to: '2026-02-28' },
+    ]);
+  });
+
+  it('puts each line in its month, converted at its own day’s rate', () => {
+    const rates = book([
+      ['USD/COP', '4000', '2025-12-01'],
+      ['USD/COP', '3900', '2026-01-01'],
+    ]);
+    const facts = [
+      fact('2025-12-20', 'expense', 'expense', 'COP', 100_000_00n, { categoryId: 'mercado' }),
+      fact('2026-01-05', 'income', 'income', 'USD', -1_000_00n, { categoryId: 'servicios' }),
+      fact('2026-01-09', 'expense', 'expense', 'USD', 10_00n, { categoryId: 'software' }),
+    ];
+    const months = summarizeByMonth(
+      facts,
+      new Converter(rates, 'COP'),
+      d('2025-11-01'),
+      d('2026-01-31'),
+    );
+    expect(months.map((m) => [m.month, m.income, m.expenses])).toEqual([
+      ['2025-11', 0n, 0n],
+      ['2025-12', 0n, 100_000_00n],
+      ['2026-01', 3_900_000_00n, 39_000_00n],
+    ]);
+    expect(months[2]?.expensesByCategory).toEqual([
+      { categoryId: 'software', amountMinor: 39_000_00n },
+    ]);
+  });
+
+  it('always adds up to the summary of the whole range', () => {
+    const day = fc.integer({ min: 0, max: 400 }).map((n) => {
+      const t = new Date(Date.UTC(2025, 9, 1 + n));
+      return t.toISOString().slice(0, 10);
+    });
+    const line = fc.record({
+      date: day,
+      kind: fc.constantFrom('income' as const, 'expense' as const),
+      category: fc.constantFrom('a', 'b', 'c'),
+      amount: fc.bigInt({ min: -5_000_000n, max: 50_000_000n }),
+    });
+    fc.assert(
+      fc.property(fc.array(line, { maxLength: 40 }), (lines) => {
+        const facts = lines.map((l) =>
+          fact(l.date, l.kind, l.kind, 'COP', l.kind === 'income' ? -l.amount : l.amount, {
+            categoryId: l.category,
+          }),
+        );
+        const [from, to] = [d('2025-10-01'), d('2026-11-30')];
+        const total = summarize(facts, new Converter(book([]), 'COP'));
+        const months = summarizeByMonth(facts, new Converter(book([]), 'COP'), from, to);
+        expect(months).toHaveLength(14);
+        expect(months.reduce((s, m) => s + m.income, 0n)).toBe(total.income);
+        expect(months.reduce((s, m) => s + m.expenses, 0n)).toBe(total.expenses);
+      }),
+      { numRuns: 100 },
+    );
   });
 });
 

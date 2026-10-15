@@ -38,9 +38,12 @@
   --color-income-soft: #ecfdf5;
   --color-expense-soft: #fef2f2;
 
-  /* Chart marks. */
+  /* Chart marks. Income/expense columns pass the dataviz checks on each theme's surface
+     (colorblind separation 11.9 light, 11.8 dark and OLED). */
   --color-bar: #2563eb;
   --color-bar-track: #eff4ff;
+  --color-chart-income: #0d9488;
+  --color-chart-expense: #e34948;
 }
 
 :root {
@@ -74,6 +77,8 @@
 
   --color-bar: #3b82f6;
   --color-bar-track: #1c2840;
+  --color-chart-income: #0f9f90;
+  --color-chart-expense: #ef5350;
 }
 
 /*

@@ -90,6 +90,54 @@ export function summarize(facts: readonly LedgerFact[], converter: Converter): S
   };
 }
 
+export interface MonthSummary extends Summary {
+  /** "2026-03". */
+  month: string;
+  from: LocalDate;
+  to: LocalDate;
+}
+
+/** Each calendar month that [from, to] touches, clipped to the range. */
+export function monthsBetween(from: LocalDate, to: LocalDate) {
+  const months: { month: string; from: LocalDate; to: LocalDate }[] = [];
+  let [y, m] = from.split('-').map(Number) as [number, number];
+  for (let month = from.slice(0, 7); month <= to.slice(0, 7); ) {
+    const last = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10) as LocalDate;
+    months.push({
+      month,
+      from: month === from.slice(0, 7) ? from : (`${month}-01` as LocalDate),
+      to: last < to ? last : to,
+    });
+    [y, m] = m === 12 ? [y + 1, 1] : [y, m + 1];
+    month = `${y}-${String(m).padStart(2, '0')}`;
+  }
+  return months;
+}
+
+/**
+ * One summary per calendar month of [from, to], months without movements included. Each
+ * fact is converted exactly as in `summarize`, so the months always add up to the summary of
+ * the whole range.
+ */
+export function summarizeByMonth(
+  facts: readonly LedgerFact[],
+  converter: Converter,
+  from: LocalDate,
+  to: LocalDate,
+): MonthSummary[] {
+  const byMonth = new Map<string, LedgerFact[]>();
+  for (const f of facts) {
+    const key = f.occurredOn.slice(0, 7);
+    const list = byMonth.get(key);
+    if (list) list.push(f);
+    else byMonth.set(key, [f]);
+  }
+  return monthsBetween(from, to).map((range) => ({
+    ...range,
+    ...summarize(byMonth.get(range.month) ?? [], converter),
+  }));
+}
+
 export interface NetWorth {
   total: bigint;
   assets: bigint;
