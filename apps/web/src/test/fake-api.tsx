@@ -7,6 +7,8 @@ export interface Call {
   method: string;
   path: string;
   body: unknown;
+  /** Request headers other than Content-Type, e.g. Idempotency-Key. */
+  headers?: Record<string, string>;
 }
 
 /** Keys are "METHOD /path" under /api, e.g. "GET /auth/get-session". */
@@ -28,9 +30,36 @@ export const signedOut = {
     json({ error: { code: 'auth.required', message: 'Sign in required' } }, 401),
 } satisfies Handlers;
 
+const nothingYet = { currency: 'COP', complete: true, excluded: [], rateIds: [], staleRateIds: [] };
+
 export const signedIn = {
   'GET /auth/get-session': () => json({ session: {}, user: USER }),
   'GET /me/preferences': () => json(PREFERENCES),
+  // A new user: no accounts or movements yet.
+  'GET /ledger/accounts': () => json([]),
+  'GET /ledger/transactions': () => json([]),
+  'GET /categories': () => json([]),
+  'GET /currency/rates': () => json([]),
+  'GET /reports/net-worth': () =>
+    json({
+      on: '2026-10-14',
+      totalMinor: '0',
+      assetsMinor: '0',
+      liabilitiesMinor: '0',
+      byAccount: [],
+      ...nothingYet,
+    }),
+  'GET /reports/summary': () =>
+    json({
+      from: '2026-10-01',
+      to: '2026-10-31',
+      incomeMinor: '0',
+      expensesMinor: '0',
+      netMinor: '0',
+      incomeByCategory: [],
+      expensesByCategory: [],
+      ...nothingYet,
+    }),
 } satisfies Handlers;
 
 /**
@@ -43,18 +72,26 @@ export function fakeApi(handlers: Handlers) {
     const method = init.method ?? 'GET';
     const path = new URL(input, 'http://localhost').pathname.replace(/^\/api/, '');
     const body = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
-    calls.push({ method, path, body });
+    const headers = Object.fromEntries(
+      Object.entries((init.headers ?? {}) as Record<string, string>).filter(
+        ([name]) => name.toLowerCase() !== 'content-type',
+      ),
+    );
+    const search = new URL(input, 'http://localhost').search;
+    calls.push({
+      method,
+      path: path + search,
+      body,
+      ...(Object.keys(headers).length ? { headers } : {}),
+    });
     const handler = handlers[`${method} ${path}`];
-    if (!handler) throw new Error(`Unexpected API call: ${method} ${path}`);
+    if (!handler) throw new Error(`Unexpected API call: ${method} ${path}${search}`);
     return handler(body);
   });
   return {
     calls,
-    /** Calls other than the session and preferences checks every page load makes. */
-    actions: () =>
-      calls.filter(
-        (c) => !(c.method === 'GET' && ['/auth/get-session', '/me/preferences'].includes(c.path)),
-      ),
+    /** Calls that change something (every GET left out). */
+    actions: () => calls.filter((c) => c.method !== 'GET'),
   };
 }
 

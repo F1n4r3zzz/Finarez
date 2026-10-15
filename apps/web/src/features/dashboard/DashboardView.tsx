@@ -36,8 +36,11 @@ export interface RecentRow {
   id: string;
   date: LocalDate;
   description: string;
+  /** Category name, or "From → To" for a transfer. */
   category: string;
   amount: Money;
+  /** Money moved between the user's own accounts: shown without a sign or color. */
+  transfer?: boolean;
 }
 
 export interface CategorySpend {
@@ -266,7 +269,7 @@ export function DashboardView({
                         <span className="block truncate text-sm font-medium">{r.description}</span>
                         <span className="block truncate text-sm text-subtle">{r.category}</span>
                       </span>
-                      <Amount value={r.amount} signed />
+                      <Amount value={r.amount} signed={!r.transfer} />
                     </li>
                   ))}
                 </ul>

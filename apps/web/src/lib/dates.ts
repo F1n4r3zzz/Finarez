@@ -20,3 +20,15 @@ export function formatMonthName(date: LocalDate, locale = formattingLocale()): s
     toUtcDate(date),
   );
 }
+
+/** "martes, 10 de marzo", with the year when it isn't the current one. */
+export function formatLongDate(date: LocalDate, locale = formattingLocale()): string {
+  const value = toUtcDate(date);
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    ...(value.getUTCFullYear() === new Date().getUTCFullYear() ? {} : { year: 'numeric' }),
+    timeZone: 'UTC',
+  }).format(value);
+}

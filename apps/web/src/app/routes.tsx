@@ -10,12 +10,25 @@ import {
 import { SignInPage, signInAction } from '../features/auth/SignInPage';
 import { SignUpPage, signUpAction } from '../features/auth/SignUpPage';
 import { signOutAction } from '../features/auth/sign-out';
-import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { DashboardPage, dashboardLoader } from '../features/dashboard/DashboardPage';
 import { ErrorPage } from '../features/errors/ErrorPage';
 import { NotFoundPage } from '../features/errors/NotFoundPage';
+import {
+  AccountsPage,
+  accountsLoader,
+  NewAccountPage,
+  newAccountAction,
+} from '../features/ledger/AccountsPage';
+import {
+  TransactionFormPage,
+  transactionFormAction,
+  transactionFormLoader,
+} from '../features/ledger/TransactionFormPage';
+import { TransactionsPage, transactionsLoader } from '../features/ledger/TransactionsPage';
 import { ImportPage } from '../features/modules/ImportPage';
 import { ModulePage } from '../features/modules/ModulePage';
 import { MorePage } from '../features/more/MorePage';
+import { ratesAction, ratesLoader } from '../features/settings/RatesSection';
 import { SettingsPage, settingsAction } from '../features/settings/SettingsPage';
 import { WelcomePage, welcomeAction } from '../features/welcome/WelcomePage';
 import { AppShell } from './AppShell';
@@ -94,9 +107,22 @@ export const routes: RouteObject[] = [
         loader: accountLoader,
         element: <AppShell />,
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: 'accounts', element: <ModulePage id="accounts" /> },
-          { path: 'transactions', element: <ModulePage id="transactions" /> },
+          { index: true, loader: dashboardLoader, element: <DashboardPage /> },
+          { path: 'accounts', loader: accountsLoader, element: <AccountsPage /> },
+          { path: 'accounts/new', action: newAccountAction, element: <NewAccountPage /> },
+          { path: 'transactions', loader: transactionsLoader, element: <TransactionsPage /> },
+          {
+            path: 'transactions/new',
+            loader: transactionFormLoader,
+            action: transactionFormAction,
+            element: <TransactionFormPage />,
+          },
+          {
+            path: 'transactions/:id',
+            loader: transactionFormLoader,
+            action: transactionFormAction,
+            element: <TransactionFormPage />,
+          },
           { path: 'import', element: <ImportPage /> },
           { path: 'budgets', element: <ModulePage id="budgets" /> },
           { path: 'savings', element: <ModulePage id="savings" /> },
@@ -105,6 +131,7 @@ export const routes: RouteObject[] = [
           { path: 'reports', element: <ModulePage id="reports" /> },
           { path: 'investments', element: <ModulePage id="investments" /> },
           { path: 'settings', action: settingsAction, element: <SettingsPage /> },
+          { path: 'settings/rates', loader: ratesLoader, action: ratesAction },
           { path: 'more', element: <MorePage /> },
           { path: '*', element: <NotFoundPage /> },
         ],

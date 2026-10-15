@@ -5,8 +5,6 @@ import { PageHeader } from '../../components/PageHeader';
 import { UnderConstruction } from '../../components/UnderConstruction';
 
 export type SimpleModuleId =
-  | 'accounts'
-  | 'transactions'
   | 'budgets'
   | 'savings'
   | 'debts'

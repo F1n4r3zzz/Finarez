@@ -23,6 +23,7 @@ import { formattingLocale } from '../../lib/locale';
 import { formatMoney } from '../../lib/money';
 import { preferencesFromForm } from '../preferences/defaults';
 import { PreferencesFields } from '../preferences/PreferencesFields';
+import { RatesSection } from './RatesSection';
 
 const FORMAT_SAMPLES = [
   money(123_456_789n, 'COP'),
@@ -149,6 +150,9 @@ export function SettingsPage() {
         </Section>
         <Section title={t('settings.currencyAndZone')}>
           <PreferencesForm />
+        </Section>
+        <Section title={t('settings.rates')}>
+          <RatesSection />
         </Section>
         <Section title={t('settings.appearance')}>
           <ThemeChoice />

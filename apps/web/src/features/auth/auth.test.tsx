@@ -11,6 +11,7 @@ const click = (name: string) => fireEvent.click(screen.getByRole('button', { nam
 function signInSucceeds() {
   const handlers = { ...signedOut };
   return {
+    ...signedIn, // the app's own data, used once signed in
     ...handlers,
     'POST /auth/sign-in/email': () => {
       Object.assign(handlers, signedIn);
