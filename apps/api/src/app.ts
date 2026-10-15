@@ -5,6 +5,7 @@ import type { Database } from './db/client';
 import { handleError } from './http/errors';
 import { jsonBodiesOnly, sameOriginMutations } from './http/guards';
 import { healthRoutes } from './http/health';
+import { categoryRoutes } from './modules/categories';
 import { currencyRoutes } from './modules/currency';
 import { type Auth, meRoutes } from './modules/identity';
 import { withEmailReservations } from './platform/email/budget';
@@ -38,5 +39,6 @@ export function createApp({ db, auth, appUrl }: AppDeps) {
   });
   app.route('/me', meRoutes({ auth, db }));
   app.route('/currency', currencyRoutes({ auth, db }));
+  app.route('/categories', categoryRoutes({ auth, db }));
   return app;
 }
