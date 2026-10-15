@@ -38,11 +38,69 @@ describe('default categories', () => {
   it('are created in Spanish the first time, exactly once, even under concurrent requests', async () => {
     const { client } = await signedInUser(ctx);
     const [a, b, c] = await Promise.all([list(client), list(client), list(client)]);
-    const expected = DEFAULT_CATEGORIES.income.length + DEFAULT_CATEGORIES.expense.length;
+    const expected = [...DEFAULT_CATEGORIES.income, ...DEFAULT_CATEGORIES.expense].reduce(
+      (n, d) => n + 1 + (d.children?.length ?? 0),
+      0,
+    );
     for (const result of [a, b, c]) expect(result).toHaveLength(expected);
     expect(byName(a, 'Mercado').kind).toBe('expense');
     expect(byName(a, 'Salario', 'income').parentId).toBeNull();
     expect(await list(client)).toEqual(a);
+  });
+});
+
+describe('household bills', () => {
+  const childNames = (all: Category[], parent: Category) =>
+    all
+      .filter((c) => c.parentId === parent.id)
+      .map((c) => c.name)
+      .sort();
+
+  it('each have their own subcategory, apart from the home itself', async () => {
+    const { client } = await signedInUser(ctx);
+    const all = await list(client);
+    expect(childNames(all, byName(all, 'Servicios del hogar'))).toEqual(
+      ['Agua', 'Aseo', 'Celular', 'Gas', 'Internet', 'Luz', 'Televisión'].sort(),
+    );
+    expect(childNames(all, byName(all, 'Vivienda'))).toEqual(
+      ['Administración', 'Arriendo', 'Reparaciones y mantenimiento'].sort(),
+    );
+  });
+
+  it('are split out for earlier users once, without moving any past movement', async () => {
+    const { client } = await signedInUser(ctx);
+    const session = (await (await client.request('GET', '/api/auth/get-session')).json()) as {
+      user: { id: string };
+    };
+    const userId = session.user.id;
+    const id = (n: number) => `01900000-0000-7000-8000-${String(n).padStart(12, '0')}`;
+    // How version 1 left this user: flat bills, plus a subcategory they made themselves.
+    await ctx.db.execute(
+      sql`insert into categories.seeded_users (user_id, version) values (${userId}, 1)`,
+    );
+    await ctx.db.execute(sql`insert into categories.categories (user_id, id, kind, name) values
+      (${userId}, ${id(1)}, 'expense', 'Servicios públicos'),
+      (${userId}, ${id(2)}, 'expense', 'Internet y celular'),
+      (${userId}, ${id(3)}, 'expense', 'Vivienda'),
+      (${userId}, ${id(4)}, 'expense', 'Mercado')`);
+    await ctx.db.execute(sql`insert into categories.categories (user_id, id, kind, name, parent_id)
+      values (${userId}, ${id(5)}, 'expense', 'agua', ${id(1)})`);
+
+    const results = await Promise.all([list(client), list(client), list(client)]);
+    for (const r of results) expect(r).toHaveLength(12);
+    const all = await list(client);
+    const services = all.find((c) => c.id === id(1));
+    expect(services).toMatchObject({ name: 'Servicios del hogar', parentId: null });
+    expect(all.find((c) => c.id === id(2))).toMatchObject({
+      name: 'Internet y celular',
+      parentId: id(1),
+    });
+    expect(childNames(all, services as Category)).toEqual(
+      ['agua', 'Aseo', 'Gas', 'Internet y celular', 'Luz', 'Televisión'].sort(),
+    );
+    expect(childNames(all, byName(all, 'Vivienda'))).toEqual(
+      ['Administración', 'Arriendo', 'Reparaciones y mantenimiento'].sort(),
+    );
   });
 });
 

@@ -1,10 +1,10 @@
 import type { Category, CategoryInput, CategoryUpdate } from '@finanz/contracts';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull, lt } from 'drizzle-orm';
 import type { Executor } from '../../../db/client';
 import { ownedBy } from '../../../db/tenancy';
 import { uuidv7 } from '../../../platform/ids';
 import { categories, seededUsers } from '../infra/schema';
-import { DEFAULT_CATEGORIES } from './defaults';
+import { DEFAULT_CATEGORIES, DEFAULTS_VERSION, V1_TELECOM, V1_UTILITIES } from './defaults';
 
 export class CategoryNotFoundError extends Error {
   constructor() {
@@ -35,19 +35,127 @@ function toCategory(row: Row): Category {
   };
 }
 
-/** Creates the default categories the first time; a no-op afterwards (safe under races). */
+type Kind = 'income' | 'expense';
+
+/** Adds the subcategories in `names` that `parent` doesn't have yet (ignoring case). */
+async function addChildren(
+  tx: Executor,
+  userId: string,
+  parent: { id: string; kind: Kind },
+  existing: readonly Row[],
+  names: readonly string[],
+) {
+  const taken = new Set(
+    existing.filter((c) => c.parentId === parent.id).map((c) => c.name.toLowerCase()),
+  );
+  const rows = names
+    .filter((name) => !taken.has(name.toLowerCase()))
+    .map((name) => ({ userId, id: uuidv7(), kind: parent.kind, name, parentId: parent.id }));
+  if (rows.length) await tx.insert(categories).values(rows);
+}
+
+async function insertDefaults(tx: Executor, userId: string) {
+  for (const kind of ['income', 'expense'] as const) {
+    const roots = DEFAULT_CATEGORIES[kind].map((d) => ({
+      userId,
+      id: uuidv7(),
+      kind,
+      name: d.name,
+    }));
+    await tx.insert(categories).values(roots);
+    for (const [i, d] of DEFAULT_CATEGORIES[kind].entries()) {
+      const root = roots[i];
+      if (root && d.children) await addChildren(tx, userId, root, [], d.children);
+    }
+  }
+}
+
+const childrenOf = (name: string) =>
+  DEFAULT_CATEGORIES.expense.find((d) => d.name === name)?.children ?? [];
+
+/**
+ * Version 1 → 2 for users seeded before the household bills were split out. Nothing is
+ * deleted and every category keeps its id, so past movements stay where they were:
+ * "Servicios públicos" becomes "Servicios del hogar", an untouched "Internet y celular" moves
+ * under it, and the new subcategories are added next to whatever the user already has.
+ */
+async function upgradeDefaultsToV2(tx: Executor, userId: string) {
+  const mine = await tx
+    .select()
+    .from(categories)
+    .where(
+      ownedBy(
+        categories.userId,
+        userId,
+        and(eq(categories.kind, 'expense'), isNull(categories.archivedAt)),
+      ),
+    );
+  const root = (name: string) =>
+    mine.find((c) => c.parentId === null && c.name.toLowerCase() === name.toLowerCase());
+  const SERVICES = 'Servicios del hogar';
+
+  let services = root(SERVICES);
+  const utilities = root(V1_UTILITIES);
+  if (!services && utilities) {
+    await tx
+      .update(categories)
+      .set({ name: SERVICES })
+      .where(ownedBy(categories.userId, userId, eq(categories.id, utilities.id)));
+    services = { ...utilities, name: SERVICES };
+  }
+  if (!services) {
+    const [created] = await tx
+      .insert(categories)
+      .values({ userId, id: uuidv7(), kind: 'expense', name: SERVICES })
+      .returning();
+    if (!created) throw new Error('Insert returned no row');
+    services = created;
+  }
+
+  // A root with subcategories of its own can't become a subcategory (one level); leave it.
+  const telecom = root(V1_TELECOM);
+  const moveTelecom = telecom !== undefined && !mine.some((c) => c.parentId === telecom.id);
+  if (telecom && moveTelecom) {
+    await tx
+      .update(categories)
+      .set({ parentId: services.id })
+      .where(ownedBy(categories.userId, userId, eq(categories.id, telecom.id)));
+    mine.push({ ...telecom, parentId: services.id });
+  }
+  await addChildren(
+    tx,
+    userId,
+    services,
+    mine,
+    // Its movements already mix internet and phone, so they keep their shared subcategory.
+    childrenOf(SERVICES).filter((n) => !(moveTelecom && (n === 'Internet' || n === 'Celular'))),
+  );
+
+  const vivienda = root('Vivienda');
+  if (vivienda) await addChildren(tx, userId, vivienda, mine, childrenOf('Vivienda'));
+}
+
+/**
+ * Creates the default categories the first time and upgrades users seeded by an earlier
+ * version, each exactly once: concurrent calls wait on the user's seed row, then skip.
+ */
 export async function ensureDefaultCategories(db: Executor, userId: string): Promise<void> {
   await db.transaction(async (tx) => {
     const claimed = await tx
       .insert(seededUsers)
-      .values({ userId })
+      .values({ userId, version: DEFAULTS_VERSION })
       .onConflictDoNothing()
       .returning({ userId: seededUsers.userId });
-    if (claimed.length === 0) return;
-    const rows = (['income', 'expense'] as const).flatMap((kind) =>
-      DEFAULT_CATEGORIES[kind].map((name) => ({ userId, id: uuidv7(), kind, name })),
-    );
-    await tx.insert(categories).values(rows);
+    if (claimed.length > 0) {
+      await insertDefaults(tx, userId);
+      return;
+    }
+    const outdated = await tx
+      .update(seededUsers)
+      .set({ version: DEFAULTS_VERSION })
+      .where(and(eq(seededUsers.userId, userId), lt(seededUsers.version, DEFAULTS_VERSION)))
+      .returning({ userId: seededUsers.userId });
+    if (outdated.length > 0) await upgradeDefaultsToV2(tx, userId);
   });
 }
 

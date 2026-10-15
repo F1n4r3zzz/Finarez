@@ -62,8 +62,16 @@ export function reportsShouldRevalidate({
 
 const UNCATEGORIZED = 'none';
 const sum = (values: readonly bigint[]) => values.reduce((a, b) => a + b, 0n);
-/** a / b, rounded half up to the minor unit. */
+/** a / b, rounded half up. */
 const divide = (a: bigint, b: bigint) => (b === 0n ? 0n : (a * 2n + b) / (2n * b));
+/** A monthly average, in whole pesos for COP (cents aren't used day to day). */
+const average = (total: bigint, months: number, currency: CurrencyCode) => {
+  const unit = currency === 'COP' ? 100n : 1n;
+  return divide(total, BigInt(months) * unit) * unit;
+};
+/** A bar's length as a percentage of the longest one, never quite zero. */
+const barWidth = (amount: bigint, max: bigint) =>
+  max <= 0n ? 0 : Math.max(1, Number((amount * 1000n) / max) / 10);
 
 function monthLabels(months: MonthlyReport['months']) {
   const locale = formattingLocale();
@@ -109,6 +117,17 @@ function spendingByCategory(report: MonthlyReport, categories: readonly Category
       ),
     );
   return { ranked, perMonth };
+}
+
+/**
+ * A category's subcategories by amount. What was filed on the category itself (keyed by its
+ * own id) is listed too, so the parts always add up to the category's total.
+ */
+function breakdown(category: { id: string; total: bigint; children: Map<string, bigint> }) {
+  const rows = [...category.children];
+  const own = category.total - sum(rows.map(([, amount]) => amount));
+  if (own !== 0n) rows.push([category.id, own]);
+  return rows.sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0));
 }
 
 function PeriodPicker({ period, invalid }: { period: Period; invalid: boolean }) {
@@ -248,7 +267,7 @@ function CategoryList({
                 <span aria-hidden="true" className="h-2 rounded-full bg-bar-track">
                   <span
                     className="block h-2 rounded-full bg-bar"
-                    style={{ width: `${Math.max(1, Number((c.total * 1000n) / max) / 10)}%` }}
+                    style={{ width: `${barWidth(c.total, max)}%` }}
                   />
                 </span>
               </button>
@@ -406,7 +425,7 @@ export function ReportsPage() {
           </Panel>
 
           {selected && (
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
               <CategoryList
                 ranked={ranked}
                 total={expenses}
@@ -432,7 +451,7 @@ export function ReportsPage() {
                     ]}
                     average={{
                       label: t('reports.average'),
-                      value: divide(selected.total, BigInt(months.length)),
+                      value: average(selected.total, months.length, currency),
                     }}
                   />
                 ) : (
@@ -441,15 +460,23 @@ export function ReportsPage() {
                 {selected.children.size > 0 && (
                   <div className="mt-4 border-line border-t pt-4">
                     <h3 className="mb-2 font-medium text-sm">{t('reports.subcategories')}</h3>
-                    <ul className="grid gap-1.5 text-sm">
-                      {[...selected.children]
-                        .sort(([, a], [, b]) => (b > a ? 1 : b < a ? -1 : 0))
-                        .map(([id, amount]) => (
-                          <li key={id} className="flex justify-between gap-4">
-                            <span className="text-muted">{name(id)}</span>
+                    <ul className="grid gap-2.5 text-sm">
+                      {breakdown(selected).map(([id, amount], _i, rows) => (
+                        <li key={id} className="grid gap-1">
+                          <span className="flex justify-between gap-4">
+                            <span className="text-muted">
+                              {id === selected.id ? t('reports.noSubcategory') : name(id)}
+                            </span>
                             <Amount value={as(amount)} />
-                          </li>
-                        ))}
+                          </span>
+                          <span aria-hidden="true" className="h-1.5 rounded-full bg-bar-track">
+                            <span
+                              className="block h-1.5 rounded-full bg-bar"
+                              style={{ width: `${barWidth(amount, rows[0]?.[1] ?? amount)}%` }}
+                            />
+                          </span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}

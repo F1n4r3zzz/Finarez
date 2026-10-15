@@ -96,8 +96,13 @@ describe.skipIf(!file)(
           c.id,
         ]),
       );
+      // The fixture predates the version 2 categories, where both bill groups became one.
+      const renamed: Record<string, string> = {
+        'Servicios públicos': 'Servicios del hogar',
+        'Internet y celular': 'Servicios del hogar',
+      };
       const categoryId = (kind: string, name: string) => {
-        const id = categories.get(`${kind}:${name}`);
+        const id = categories.get(`${kind}:${renamed[name] ?? name}`);
         if (!id) throw new Error(`Missing category ${kind}:${name}`);
         return id;
       };

@@ -129,6 +129,7 @@ export const es = {
     categoryTitle: 'Gasto en {{category}} por mes',
     average: 'Promedio mensual',
     subcategories: 'Por subcategoría',
+    noSubcategory: 'Sin subcategoría',
     uncategorized: 'Sin categoría',
     emptyTitle: 'No hay movimientos en este periodo',
     emptyBody: 'Elige otro periodo, o registra tus ingresos y gastos en Movimientos.',

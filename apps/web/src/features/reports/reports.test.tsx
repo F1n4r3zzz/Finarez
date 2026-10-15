@@ -125,6 +125,10 @@ describe('Reportes', () => {
     fireEvent.click(within(ranking).getByRole('button', { name: /^Transporte/ }));
     const transporte = await screen.findByRole('region', { name: 'Gasto en Transporte por mes' });
     expect(within(transporte).getByText('Gasolina')).toBeTruthy();
+    // 300.000 was filed on Transporte itself: listed so the parts add up to 700.000.
+    expect(within(transporte).getByText('Sin subcategoría').parentElement?.textContent).toMatch(
+      /300\.000/,
+    );
     expect(within(transporte).getByText(/233\.333/)).toBeTruthy();
     expect(router.state.location.search).toContain('category=c-transporte');
     // Picking a category doesn't reload the report.

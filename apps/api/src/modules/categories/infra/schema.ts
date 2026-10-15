@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   foreignKey,
+  integer,
   pgSchema,
   primaryKey,
   text,
@@ -52,10 +53,14 @@ export const categories = categoriesSchema.table(
   ],
 );
 
-/** Marks users whose default categories were created, so seeding happens exactly once. */
+/**
+ * Marks users whose default categories were created, and from which version of the defaults,
+ * so seeding and each upgrade happen exactly once.
+ */
 export const seededUsers = categoriesSchema.table('seeded_users', {
   userId: text()
     .primaryKey()
     .references(() => usersTable.id, { onDelete: 'cascade' }),
   seededAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  version: integer().notNull().default(1),
 });
