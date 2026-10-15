@@ -7,6 +7,7 @@ import { jsonBodiesOnly, sameOriginMutations } from './http/guards';
 import { healthRoutes } from './http/health';
 import { categoryRoutes } from './modules/categories';
 import { currencyRoutes } from './modules/currency';
+import { debtRoutes } from './modules/debts';
 import { type Auth, meRoutes } from './modules/identity';
 import { ledgerRoutes } from './modules/ledger';
 import { reportRoutes } from './modules/reporting';
@@ -44,5 +45,6 @@ export function createApp({ db, auth, appUrl }: AppDeps) {
   app.route('/categories', categoryRoutes({ auth, db }));
   app.route('/ledger', ledgerRoutes({ auth, db }));
   app.route('/reports', reportRoutes({ auth, db }));
+  app.route('/debts', debtRoutes({ auth, db }));
   return app;
 }

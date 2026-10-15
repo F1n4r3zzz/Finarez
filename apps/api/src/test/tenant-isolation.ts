@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { signedInUser, TestClient, type TestContext } from './context';
 
@@ -68,7 +69,9 @@ export async function findIsolationViolations(
   for (const probe of probes) {
     const label = `${probe.kind}: ${probe.method} ${probe.path}`;
 
-    const anon = await anonymous.request(probe.method, probe.path, probe.body);
+    // Like a real client, every request carries a fresh Idempotency-Key.
+    const headers = { headers: { 'Idempotency-Key': randomUUID() } };
+    const anon = await anonymous.request(probe.method, probe.path, probe.body, headers);
     const anonText = await anon.text();
     const anonLeaked = secrets.filter((secret) => anonText.includes(secret));
     if (anonLeaked.length > 0) {
@@ -84,7 +87,7 @@ export async function findIsolationViolations(
       });
     }
 
-    const res = await intruder.request(probe.method, probe.path, probe.body);
+    const res = await intruder.request(probe.method, probe.path, probe.body, headers);
     const text = await res.text();
     if (MUST_BE_NOT_FOUND.has(probe.kind) && res.status !== 404) {
       violations.push({ probe: label, reason: `intruder got ${res.status}, expected 404` });

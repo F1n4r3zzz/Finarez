@@ -95,3 +95,40 @@ export async function balancesAsOf(
     balanceMinor: BigInt(r.balanceMinor),
   }));
 }
+
+export interface AccountSummary {
+  id: string;
+  name: string;
+  kind: AccountKind;
+  subtype: string | null;
+  currency: CurrencyCode;
+  archived: boolean;
+  systemRole: SystemRole | null;
+}
+
+/** The named accounts of one user (others' ids are simply absent). */
+export async function accountsById(
+  tx: Executor,
+  userId: string,
+  ids: readonly string[],
+): Promise<Map<string, AccountSummary>> {
+  if (ids.length === 0) return new Map();
+  const rows = await tx
+    .select()
+    .from(accounts)
+    .where(ownedBy(accounts.userId, userId, inArray(accounts.id, [...ids])));
+  return new Map(
+    rows.map((a) => [
+      a.id,
+      {
+        id: a.id,
+        name: a.name,
+        kind: a.kind,
+        subtype: a.subtype,
+        currency: parseCurrencyCode(a.currency),
+        archived: a.archivedAt !== null,
+        systemRole: a.systemRole,
+      },
+    ]),
+  );
+}

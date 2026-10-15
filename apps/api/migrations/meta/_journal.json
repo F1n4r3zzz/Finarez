@@ -43,6 +43,13 @@
       "when": 1792025023395,
       "tag": "0005_account_shape_is_true",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792026027873,
+      "tag": "0006_debts",
+      "breakpoints": true
     }
   ]
 }

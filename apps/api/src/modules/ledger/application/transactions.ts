@@ -197,13 +197,17 @@ export async function editTransaction(
   actor: Actor,
   id: string,
   expectedVersion: number,
-  draft: Draft,
+  input: Draft | PlannedTransaction,
   options: EditOptions = {},
 ): Promise<void> {
   const before = await lockVersion(tx, actor, id, expectedVersion);
   if (before.status !== 'posted') throw new LedgerError('ledger.already_void');
   const oldEntries = await entriesOf(tx, actor.userId, id);
-  const { planned, entries: wanted } = await plan(tx, actor.userId, draft);
+  // A managing module passes entries it prepared; the UI passes a draft to plan.
+  const { planned, entries: wanted } =
+    'entries' in input
+      ? { planned: input, entries: await resolveEntries(tx, actor.userId, input.entries) }
+      : await plan(tx, actor.userId, input);
 
   // A date change touches every line (reconciliation certified the old date).
   const dateChanged = planned.occurredOn !== before.occurredOn;

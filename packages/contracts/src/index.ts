@@ -6,6 +6,18 @@ export {
   categoryInputSchema,
   categoryUpdateSchema,
 } from './categories';
+export {
+  type DebtInput,
+  type DebtView,
+  debtInputSchema,
+  debtTermsSchema,
+  type PaymentInput,
+  type PaymentView,
+  type ProposalView,
+  paymentEditSchema,
+  paymentInputSchema,
+  type ScheduleView,
+} from './debts';
 export type { ApiError } from './errors';
 export {
   ACCOUNT_SUBTYPES,
