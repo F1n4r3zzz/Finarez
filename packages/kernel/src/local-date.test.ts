@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DomainError } from './errors';
-import { compareLocalDate, parseLocalDate, todayIn } from './local-date';
+import { compareLocalDate, daysBetween, parseLocalDate, todayIn } from './local-date';
 
 describe('LocalDate', () => {
   it('accepts real calendar dates, including leap days', () => {
@@ -31,5 +31,14 @@ describe('LocalDate', () => {
     expect(compareLocalDate(a, b)).toBe(-1);
     expect(compareLocalDate(b, a)).toBe(1);
     expect(compareLocalDate(a, a)).toBe(0);
+  });
+});
+
+describe('daysBetween', () => {
+  it('counts calendar days across months, leap days and years', () => {
+    expect(daysBetween(parseLocalDate('2026-09-30'), parseLocalDate('2026-10-01'))).toBe(1);
+    expect(daysBetween(parseLocalDate('2028-02-28'), parseLocalDate('2028-03-01'))).toBe(2);
+    expect(daysBetween(parseLocalDate('2026-01-01'), parseLocalDate('2025-12-31'))).toBe(-1);
+    expect(daysBetween(parseLocalDate('2025-10-01'), parseLocalDate('2026-10-01'))).toBe(365);
   });
 });

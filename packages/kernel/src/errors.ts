@@ -3,6 +3,7 @@ export type DomainErrorCode =
   | 'money.invalid_amount'
   | 'money.out_of_range'
   | 'money.unknown_currency'
+  | 'rate.invalid'
   | 'date.invalid'
   | 'date.invalid_time_zone';
 

@@ -6,7 +6,13 @@ export {
   parseCurrencyCode,
 } from './currency';
 export { DomainError, type DomainErrorCode } from './errors';
-export { compareLocalDate, type LocalDate, parseLocalDate, todayIn } from './local-date';
+export {
+  compareLocalDate,
+  daysBetween,
+  type LocalDate,
+  parseLocalDate,
+  todayIn,
+} from './local-date';
 export {
   add,
   compare,
@@ -25,3 +31,14 @@ export {
   sum,
   toWire,
 } from './money';
+export {
+  convert,
+  convertMinor,
+  divRoundHalfEven,
+  type ExactRate,
+  formatRate,
+  invertRate,
+  multiplyRates,
+  parseRate,
+  RATE_SCALE,
+} from './rate';

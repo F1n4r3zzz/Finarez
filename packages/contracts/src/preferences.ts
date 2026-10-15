@@ -1,5 +1,5 @@
-import { type CurrencyCode, isCurrencyCode } from '@finanz/kernel';
 import { z } from 'zod';
+import { currencyCodeSchema } from './primitives';
 
 export const SUPPORTED_LANGUAGES = ['es'] as const;
 
@@ -16,9 +16,7 @@ function isTimeZone(value: string): boolean {
 export const preferencesSchema = z.object({
   language: z.enum(SUPPORTED_LANGUAGES),
   timeZone: z.string().refine(isTimeZone, { message: 'Unknown IANA time zone' }),
-  primaryCurrency: z.custom<CurrencyCode>((v) => typeof v === 'string' && isCurrencyCode(v), {
-    message: 'Unsupported currency',
-  }),
+  primaryCurrency: currencyCodeSchema,
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;

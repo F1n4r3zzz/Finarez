@@ -45,3 +45,13 @@ export function compareLocalDate(a: LocalDate, b: LocalDate): -1 | 0 | 1 {
   if (a === b) return 0;
   return a < b ? -1 : 1;
 }
+
+function epochDay(date: LocalDate): number {
+  const [year, month, day] = date.split('-').map(Number) as [number, number, number];
+  return Date.UTC(year, month - 1, day) / 86_400_000;
+}
+
+/** Whole days from `from` to `to` (negative when `to` is earlier). */
+export function daysBetween(from: LocalDate, to: LocalDate): number {
+  return epochDay(to) - epochDay(from);
+}

@@ -1,3 +1,4 @@
+import { DomainError } from '@finanz/kernel';
 import type { ErrorHandler } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { ZodError } from 'zod';
@@ -15,6 +16,9 @@ export const handleError: ErrorHandler = (err, c) => {
       },
       400,
     );
+  }
+  if (err instanceof DomainError) {
+    return c.json({ error: { code: err.code, message: err.message } }, 422);
   }
   if (err instanceof SyntaxError) {
     return c.json({ error: { code: 'invalid_json', message: 'Body must be valid JSON' } }, 400);

@@ -14,7 +14,14 @@ export default async function setup(): Promise<void> {
   }
   const { db, pool } = createDatabase(url, { max: 1 });
   try {
-    await db.execute(sql`drop schema if exists identity, platform, drizzle cascade`);
+    // Every schema the migrations own (one per module, plus drizzle's bookkeeping).
+    const schemas = await db.execute<{ name: string }>(
+      sql`select nspname as name from pg_namespace
+          where nspname not like 'pg\_%' and nspname not in ('public', 'information_schema')`,
+    );
+    for (const { name } of schemas.rows) {
+      await db.execute(sql`drop schema ${sql.identifier(name)} cascade`);
+    }
     await runMigrations(db);
   } finally {
     await pool.end();
