@@ -15,7 +15,23 @@ describe('loadConfig', () => {
       NODE_ENV: 'development',
       EMAIL_TRANSPORT: 'console',
       EMAIL_DAILY_LIMIT: 90,
+      AUTH_SIGN_IN_LIMIT: 5,
     });
+  });
+
+  it('never loosens the sign-in limit in production', () => {
+    const production = {
+      ...valid,
+      NODE_ENV: 'production',
+      EMAIL_TRANSPORT: 'resend',
+      RESEND_API_KEY: 'k',
+    };
+    expect(() => loadConfig({ ...production, AUTH_SIGN_IN_LIMIT: '50' })).toThrow(
+      /AUTH_SIGN_IN_LIMIT/,
+    );
+    expect(
+      loadConfig({ ...valid, NODE_ENV: 'test', AUTH_SIGN_IN_LIMIT: '50' }).AUTH_SIGN_IN_LIMIT,
+    ).toBe(50);
   });
 
   it('rejects a missing or non-PostgreSQL URL without echoing its value', () => {

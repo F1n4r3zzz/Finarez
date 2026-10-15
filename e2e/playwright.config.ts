@@ -44,6 +44,8 @@ export default defineConfig({
         APP_URL: WEB_URL,
         AUTH_SECRET: randomBytes(32).toString('base64'),
         EMAIL_DAILY_LIMIT: '1000',
+        // Every spec signs in a new user from this machine; the API's own tests cover the limit.
+        AUTH_SIGN_IN_LIMIT: '50',
       },
       reuseExistingServer: false,
       timeout: 60_000,

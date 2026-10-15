@@ -16,10 +16,19 @@ const ConfigSchema = z
     EMAIL_FROM: z.string().min(3).default('Finanz <onboarding@resend.dev>'),
     /** Hard cap on emails sent per UTC day across all instances (provider free tier). */
     EMAIL_DAILY_LIMIT: z.coerce.number().int().min(0).default(90),
+    /**
+     * Sign-in attempts per address every 15 minutes. Raised only for end-to-end runs, where
+     * every test user signs in from the same machine.
+     */
+    AUTH_SIGN_IN_LIMIT: z.coerce.number().int().min(1).default(5),
   })
   .refine((c) => !(c.NODE_ENV === 'production' && c.EMAIL_TRANSPORT === 'console'), {
     path: ['EMAIL_TRANSPORT'],
     message: 'The console transport prints email links and is not allowed in production',
+  })
+  .refine((c) => !(c.NODE_ENV === 'production' && c.AUTH_SIGN_IN_LIMIT > 5), {
+    path: ['AUTH_SIGN_IN_LIMIT'],
+    message: 'Production keeps the sign-in limit at 5 or fewer attempts',
   })
   .refine((c) => c.EMAIL_TRANSPORT !== 'resend' || c.RESEND_API_KEY !== undefined, {
     path: ['RESEND_API_KEY'],
