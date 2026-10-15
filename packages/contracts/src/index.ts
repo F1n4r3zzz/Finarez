@@ -53,3 +53,14 @@ export type {
   NetWorthReport,
   SummaryReport,
 } from './reports';
+export {
+  type AllocationInput,
+  type AllocationView,
+  allocationInputSchema,
+  type GoalInput,
+  type GoalUpdate,
+  type GoalView,
+  goalInputSchema,
+  goalUpdateSchema,
+  type SavingsAccountView,
+} from './savings';

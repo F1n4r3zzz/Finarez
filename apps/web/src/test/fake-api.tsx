@@ -41,6 +41,8 @@ export const signedIn = {
   'GET /categories': () => json([]),
   'GET /currency/rates': () => json([]),
   'GET /debts': () => json([]),
+  'GET /savings/goals': () => json([]),
+  'GET /savings/accounts': () => json([]),
   'GET /reports/net-worth': () =>
     json({
       on: '2026-10-14',

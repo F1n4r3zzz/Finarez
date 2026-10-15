@@ -11,6 +11,7 @@ import { debtRoutes } from './modules/debts';
 import { type Auth, meRoutes } from './modules/identity';
 import { ledgerRoutes } from './modules/ledger';
 import { reportRoutes } from './modules/reporting';
+import { savingsRoutes } from './modules/savings';
 import { withEmailReservations } from './platform/email/budget';
 
 export interface AppDeps {
@@ -46,5 +47,6 @@ export function createApp({ db, auth, appUrl }: AppDeps) {
   app.route('/ledger', ledgerRoutes({ auth, db }));
   app.route('/reports', reportRoutes({ auth, db }));
   app.route('/debts', debtRoutes({ auth, db }));
+  app.route('/savings', savingsRoutes({ auth, db }));
   return app;
 }

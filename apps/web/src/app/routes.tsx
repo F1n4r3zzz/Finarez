@@ -43,6 +43,16 @@ import {
   reportsLoader,
   reportsShouldRevalidate,
 } from '../features/reports/ReportsPage';
+import { GoalPage, goalAction, goalLoader } from '../features/savings/GoalPage';
+import {
+  EditGoalPage,
+  editGoalAction,
+  editGoalLoader,
+  NewGoalPage,
+  newGoalAction,
+  SavingsPage,
+  savingsLoader,
+} from '../features/savings/SavingsPage';
 import { ratesAction, ratesLoader } from '../features/settings/RatesSection';
 import { SettingsPage, settingsAction } from '../features/settings/SettingsPage';
 import { WelcomePage, welcomeAction } from '../features/welcome/WelcomePage';
@@ -140,7 +150,20 @@ export const routes: RouteObject[] = [
           },
           { path: 'import', element: <ImportPage /> },
           { path: 'budgets', element: <ModulePage id="budgets" /> },
-          { path: 'savings', element: <ModulePage id="savings" /> },
+          { path: 'savings', loader: savingsLoader, element: <SavingsPage /> },
+          { path: 'savings/new', action: newGoalAction, element: <NewGoalPage /> },
+          {
+            path: 'savings/:id',
+            loader: goalLoader,
+            action: goalAction,
+            element: <GoalPage />,
+          },
+          {
+            path: 'savings/:id/edit',
+            loader: editGoalLoader,
+            action: editGoalAction,
+            element: <EditGoalPage />,
+          },
           { path: 'debts', loader: debtsLoader, element: <DebtsPage /> },
           { path: 'debts/new', action: newDebtAction, element: <NewDebtPage /> },
           {

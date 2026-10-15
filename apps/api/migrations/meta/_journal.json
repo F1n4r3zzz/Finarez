@@ -57,6 +57,13 @@
       "when": 1792090012316,
       "tag": "0007_category_defaults_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792098867390,
+      "tag": "0008_savings",
+      "breakpoints": true
     }
   ]
 }

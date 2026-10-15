@@ -20,7 +20,14 @@ export interface Failure {
     | 'currencyMismatch'
     | 'splitExceedsPayment'
     | 'interestCategoryMissing'
-    | 'feeCategoryMissing';
+    | 'feeCategoryMissing'
+    | 'goalNameTaken'
+    | 'withdrawExceeds'
+    | 'voidBreaksBalance'
+    | 'goalNotEmpty'
+    | 'goalArchived'
+    | 'savingsAccount'
+    | 'transferCurrency';
   minutes?: number;
 }
 
@@ -41,6 +48,14 @@ const BY_CODE: Record<string, Failure['key']> = {
   'debt.split_exceeds_payment': 'splitExceedsPayment',
   'debt.interest_category_missing': 'interestCategoryMissing',
   'debt.fee_category': 'feeCategoryMissing',
+  'savings.duplicate_name': 'goalNameTaken',
+  'savings.withdraw_exceeds': 'withdrawExceeds',
+  'savings.void_breaks_balance': 'voidBreaksBalance',
+  'savings.goal_not_empty': 'goalNotEmpty',
+  'savings.goal_archived': 'goalArchived',
+  'savings.account': 'savingsAccount',
+  'savings.same_account': 'sameAccount',
+  'savings.transfer_currency': 'transferCurrency',
 };
 
 export function describeFailure(error: unknown): Failure {

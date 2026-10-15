@@ -81,7 +81,7 @@ describe('unfinished sections', () => {
   });
 
   it('say they are under construction, so nobody expects them to work yet', async () => {
-    for (const path of ['/savings', '/import', '/budgets']) {
+    for (const path of ['/import', '/budgets']) {
       renderApp(path);
       expect(
         await screen.findByText(/Esta sección todavía está en construcción y no funciona/),

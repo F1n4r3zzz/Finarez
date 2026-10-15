@@ -4,6 +4,7 @@ import type {
   AccountView,
   BridgeReport,
   Category,
+  GoalView,
   NetWorthReport,
   SummaryReport,
 } from '@finanz/contracts';
@@ -29,6 +30,14 @@ interface Fixture {
     openingBalanceMinor: string;
   }[];
   rates: { base: string; quote: string; validFrom: string; rate: string }[];
+  /** Savings goals; their contributions are the drafts described "Aporte — <name>". */
+  goals?: {
+    name: string;
+    currency: string;
+    targetMinor: string;
+    targetDate: string;
+    account: string;
+  }[];
   drafts: (
     | {
         kind: 'expense' | 'income';
@@ -57,6 +66,8 @@ interface Fixture {
     closingBalances: Record<string, string>;
     netWorth: Record<string, string>;
     bridge: Record<string, string>;
+    /** Contributed per goal, as the workbook states it. */
+    goals?: Record<string, string>;
   };
 }
 
@@ -117,7 +128,29 @@ describe.skipIf(!file)(
         return found;
       };
 
+      // Contributions go through savings, which records the same transfer as its own.
+      const goalIds = new Map<string, string>();
+      for (const g of fixture.goals ?? []) {
+        const { account: _account, ...body } = g;
+        goalIds.set(g.name, (await json<GoalView>(client, 'POST', '/api/savings/goals', body)).id);
+      }
+      const contribution = (d: Fixture['drafts'][number]) =>
+        d.kind === 'transfer' && d.description.startsWith('Aporte — ')
+          ? goalIds.get(d.description.slice('Aporte — '.length))
+          : undefined;
+
       for (const d of fixture.drafts) {
+        const goalId = contribution(d);
+        if (goalId && d.kind === 'transfer') {
+          await json(client, 'POST', `/api/savings/goals/${goalId}/allocations`, {
+            direction: 'contribute',
+            accountId: account(d.to.account).id,
+            fromAccountId: account(d.from.account).id,
+            amountMinor: d.to.amountMinor,
+            occurredOn: d.occurredOn,
+          });
+          continue;
+        }
         const occurredOn = parseLocalDate(d.occurredOn);
         await inUnitOfWork(ctx.db, (tx) => {
           const actor = { userId };
@@ -221,6 +254,16 @@ describe.skipIf(!file)(
       for (const [on, total] of Object.entries(c.netWorth)) {
         const nw = await json<NetWorthReport>(client, 'GET', `/api/reports/net-worth?on=${on}`);
         expect({ on, total: nw.totalMinor }).toEqual({ on, total });
+      }
+
+      if (c.goals) {
+        const saved = Object.fromEntries(
+          (await json<GoalView[]>(client, 'GET', '/api/savings/goals')).map((g) => [
+            g.name,
+            g.savedMinor,
+          ]),
+        );
+        expect(saved).toEqual(c.goals);
       }
 
       const b = await json<BridgeReport>(
