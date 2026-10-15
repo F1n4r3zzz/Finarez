@@ -14,7 +14,13 @@ export interface Failure {
     | 'accountArchived'
     | 'amountsDiffer'
     | 'sameAccount'
-    | 'amountZero';
+    | 'amountZero'
+    | 'overpayment'
+    | 'debtSource'
+    | 'currencyMismatch'
+    | 'splitExceedsPayment'
+    | 'interestCategoryMissing'
+    | 'feeCategoryMissing';
   minutes?: number;
 }
 
@@ -29,6 +35,12 @@ const BY_CODE: Record<string, Failure['key']> = {
   'ledger.amounts_differ': 'amountsDiffer',
   'ledger.same_account': 'sameAccount',
   'ledger.amount_zero': 'amountZero',
+  'debt.overpayment': 'overpayment',
+  'debt.source_account': 'debtSource',
+  'debt.currency_mismatch': 'currencyMismatch',
+  'debt.split_exceeds_payment': 'splitExceedsPayment',
+  'debt.interest_category_missing': 'interestCategoryMissing',
+  'debt.fee_category': 'feeCategoryMissing',
 };
 
 export function describeFailure(error: unknown): Failure {

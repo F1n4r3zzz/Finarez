@@ -17,6 +17,7 @@ import { FailureNotice } from '../../components/FailureNotice';
 import { SelectField, TextField } from '../../components/Field';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
+import { Segmented } from '../../components/Segmented';
 import { formatAmountInput, parseAmountInput } from '../../lib/amount-input';
 import { describeFailure, type Failure } from '../../lib/failure';
 import { formattingLocale } from '../../lib/locale';
@@ -239,31 +240,14 @@ export function TransactionFormPage() {
             <input type="hidden" name="intent" value="save" />
             <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
             <input type="hidden" name="version" value={transaction?.version ?? 0} />
-            <fieldset>
-              <legend className="mb-1.5 font-medium text-sm">
-                {t('ledger.transactions.form.type')}
-              </legend>
-              <div className="inline-flex gap-1 rounded-lg border border-line bg-paper p-1">
-                {KINDS.map((k) => (
-                  <label
-                    key={k}
-                    className="flex min-h-10 cursor-pointer items-center rounded-md px-3 text-muted text-sm transition-colors duration-150 hover:text-ink has-checked:bg-surface has-checked:font-medium has-checked:text-ink has-checked:ring-1 has-checked:ring-line has-focus-visible:outline-2 has-focus-visible:outline-brand"
-                  >
-                    <input
-                      type="radio"
-                      name="kind"
-                      value={k}
-                      checked={kind === k}
-                      disabled={Boolean(transaction)}
-                      onChange={() => setKind(k)}
-                      className="sr-only"
-                    />
-                    {t(`ledger.transactions.kinds.${k}`)}
-                  </label>
-                ))}
-              </div>
-              {transaction && <input type="hidden" name="kind" value={kind} />}
-            </fieldset>
+            <Segmented
+              legend={t('ledger.transactions.form.type')}
+              name="kind"
+              options={KINDS.map((k) => ({ value: k, label: t(`ledger.transactions.kinds.${k}`) }))}
+              value={kind}
+              onChange={setKind}
+              disabled={Boolean(transaction)}
+            />
             <TextField
               label={t('ledger.transactions.form.date')}
               name="occurredOn"

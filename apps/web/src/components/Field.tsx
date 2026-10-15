@@ -54,7 +54,7 @@ function Frame({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-1.5">
+    <div className="grid content-start gap-1.5">
       <div className="flex items-baseline justify-between gap-4">
         <label htmlFor={controlId} className="font-medium text-sm">
           {label}

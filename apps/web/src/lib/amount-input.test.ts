@@ -1,6 +1,12 @@
 import { money } from '@finanz/kernel';
 import { describe, expect, it } from 'vitest';
-import { formatAmountInput, parseAmountInput, parseRateInput } from './amount-input';
+import {
+  formatAmountInput,
+  fractionToPercent,
+  parseAmountInput,
+  parseRateInput,
+  percentToFraction,
+} from './amount-input';
 
 describe('parseAmountInput', () => {
   it.each([
@@ -49,5 +55,33 @@ describe('parseRateInput', () => {
 
   it.each(['', '0', '-4000', 'abc', '1,2,3'])('rejects %j', (text) => {
     expect(parseRateInput(text, 'es-CO')).toBeUndefined();
+  });
+});
+
+describe('percentToFraction', () => {
+  it.each([
+    ['1,2', 'es-CO', '0.012'],
+    ['26,8242', 'es-CO', '0.268242'],
+    ['12', 'es-CO', '0.12'],
+    ['100', 'es-CO', '1'],
+    ['0,5', 'es-CO', '0.005'],
+    ['1.2', 'en-US', '0.012'],
+  ])('%s %% (%s) → %s', (text, locale, fraction) => {
+    expect(percentToFraction(text, locale)).toBe(fraction);
+  });
+});
+
+describe('fractionToPercent', () => {
+  it.each([
+    ['0.012', 'es-CO', '1,2'],
+    ['0.268242', 'es-CO', '26,8242'],
+    ['0.12', 'es-CO', '12'],
+    ['1', 'es-CO', '100'],
+    ['0.005', 'es-CO', '0,5'],
+    ['0', 'es-CO', '0'],
+    ['0.012', 'en-US', '1.2'],
+  ])('%s (%s) → %s %%', (fraction, locale, text) => {
+    expect(fractionToPercent(fraction, locale)).toBe(text);
+    expect(percentToFraction(text, locale)).toBe(fraction);
   });
 });

@@ -8,6 +8,7 @@ export {
 } from './categories';
 export {
   type DebtInput,
+  type DebtTermsInput,
   type DebtView,
   debtInputSchema,
   debtTermsSchema,

@@ -40,6 +40,7 @@ export const signedIn = {
   'GET /ledger/transactions': () => json([]),
   'GET /categories': () => json([]),
   'GET /currency/rates': () => json([]),
+  'GET /debts': () => json([]),
   'GET /reports/net-worth': () =>
     json({
       on: '2026-10-14',

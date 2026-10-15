@@ -69,3 +69,27 @@ export function parseRateInput(text: string, locale: string): string | undefined
     ? normalized
     : undefined;
 }
+
+/** "1,2" (percent, as typed) → "0.012" (the fraction the API stores), exactly. */
+export function percentToFraction(text: string, locale: string): string | undefined {
+  const value = text.trim() === '0' ? '0' : parseRateInput(text, locale);
+  if (value === undefined) return undefined;
+  // Dividing by 100 moves the decimal point two places left.
+  const [whole = '0', fraction = ''] = value.split('.');
+  const digits = whole.padStart(3, '0') + fraction;
+  const point = digits.length - fraction.length - 2;
+  const result = `${digits.slice(0, point).replace(/^0+(?=\d)/, '')}.${digits.slice(point)}`;
+  return result.replace(/\.?0+$/, '') || '0';
+}
+
+/** "0.012" (the fraction the API stores) → "1,2" in this locale, exactly. */
+export function fractionToPercent(fraction: string, locale: string): string {
+  const [whole = '0', part = ''] = fraction.split('.');
+  // Multiplying by 100 moves the decimal point two places right.
+  const digits = whole + part.padEnd(2, '0');
+  const point = whole.length + 2;
+  const value = `${digits.slice(0, point)}.${digits.slice(point)}`
+    .replace(/^0+(?=\d)/, '')
+    .replace(/\.?0*$/, '');
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 20 }).format(value as `${number}`);
+}

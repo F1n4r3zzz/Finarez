@@ -11,6 +11,16 @@ import { SignInPage, signInAction } from '../features/auth/SignInPage';
 import { SignUpPage, signUpAction } from '../features/auth/SignUpPage';
 import { signOutAction } from '../features/auth/sign-out';
 import { DashboardPage, dashboardLoader } from '../features/dashboard/DashboardPage';
+import { DebtPage, debtAction, debtLoader, proposalLoader } from '../features/debts/DebtPage';
+import {
+  DebtsPage,
+  debtsLoader,
+  EditDebtPage,
+  editDebtAction,
+  editDebtLoader,
+  NewDebtPage,
+  newDebtAction,
+} from '../features/debts/DebtsPage';
 import { ErrorPage } from '../features/errors/ErrorPage';
 import { NotFoundPage } from '../features/errors/NotFoundPage';
 import {
@@ -126,7 +136,21 @@ export const routes: RouteObject[] = [
           { path: 'import', element: <ImportPage /> },
           { path: 'budgets', element: <ModulePage id="budgets" /> },
           { path: 'savings', element: <ModulePage id="savings" /> },
-          { path: 'debts', element: <ModulePage id="debts" /> },
+          { path: 'debts', loader: debtsLoader, element: <DebtsPage /> },
+          { path: 'debts/new', action: newDebtAction, element: <NewDebtPage /> },
+          {
+            path: 'debts/:id',
+            loader: debtLoader,
+            action: debtAction,
+            element: <DebtPage />,
+          },
+          {
+            path: 'debts/:id/edit',
+            loader: editDebtLoader,
+            action: editDebtAction,
+            element: <EditDebtPage />,
+          },
+          { path: 'debts/:id/proposal', loader: proposalLoader },
           { path: 'net-worth', element: <ModulePage id="networth" /> },
           { path: 'reports', element: <ModulePage id="reports" /> },
           { path: 'investments', element: <ModulePage id="investments" /> },

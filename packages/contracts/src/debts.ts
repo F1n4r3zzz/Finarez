@@ -51,6 +51,7 @@ export const paymentInputSchema = z.object({
 export const paymentEditSchema = paymentInputSchema.extend({ version: z.number().int().min(1) });
 
 export type DebtInput = z.input<typeof debtInputSchema>;
+export type DebtTermsInput = z.input<typeof debtTermsSchema>;
 export type PaymentInput = z.input<typeof paymentInputSchema>;
 
 export interface DebtView {

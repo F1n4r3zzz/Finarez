@@ -15,6 +15,16 @@ export function formatShortDate(date: LocalDate, locale = formattingLocale()): s
   }).format(toUtcDate(date));
 }
 
+/** "28 oct 2026": for lists that span several years. */
+export function formatMediumDate(date: LocalDate, locale = formattingLocale()): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(toUtcDate(date));
+}
+
 export function formatMonthName(date: LocalDate, locale = formattingLocale()): string {
   return new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(
     toUtcDate(date),
