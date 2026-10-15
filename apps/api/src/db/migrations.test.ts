@@ -4,9 +4,9 @@ import { join } from 'node:path';
 import { sql } from 'drizzle-orm';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { describe, expect, it } from 'vitest';
-import { testDatabaseUrl } from '../test/database';
+import { pgErrorCode, testDatabaseUrl } from '../test/database';
 import { createDatabase, type Database } from './client';
-import { MIGRATIONS_FOLDER, runMigrations } from './migrations';
+import { APP_ROLE, BACKUP_ROLE, MIGRATIONS_FOLDER, runMigrations } from './migrations';
 
 /** A throwaway database for one test, dropped afterwards. */
 async function withFreshDatabase(work: (db: Database) => Promise<void>): Promise<void> {
@@ -121,6 +121,95 @@ describe('migrations', () => {
           ('u1', '01900000-0000-7000-8000-000000000006', '01900000-0000-7000-8000-000000000005', '2026-01-02', '01900000-0000-7000-8000-000000000003', 'asset', 'COP', -5000, null, null),
           ('u1', '01900000-0000-7000-8000-000000000007', '01900000-0000-7000-8000-000000000005', '2026-01-02', '01900000-0000-7000-8000-000000000004', 'expense', 'COP', 5000, '01900000-0000-7000-8000-000000000002', 'expense')`);
       });
+    });
+  });
+});
+
+/** Creating logins needs a superuser: true in CI, usually not for a local `finanz` role. */
+async function isSuperuser(): Promise<boolean> {
+  const { db, pool } = createDatabase(testDatabaseUrl(), { max: 1 });
+  try {
+    const me = await db.execute<{ yes: boolean }>(
+      sql`select rolsuper as yes from pg_roles where rolname = current_user`,
+    );
+    return me.rows[0]?.yes === true;
+  } finally {
+    await pool.end();
+  }
+}
+
+/** Runs `work` as `role` inside a transaction that is always rolled back. */
+async function as(db: Database, role: string, work: (tx: Database) => Promise<unknown>) {
+  const rollback = new Error('rollback');
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`set local role ${sql.identifier(role)}`);
+      await work(tx as unknown as Database);
+      throw rollback;
+    });
+  } catch (error) {
+    if (error !== rollback) throw error;
+  }
+}
+
+async function denied(db: Database, role: string, statement: ReturnType<typeof sql>) {
+  const error = await as(db, role, (tx) => tx.execute(statement)).then(
+    () => undefined,
+    (e: unknown) => e,
+  );
+  expect(pgErrorCode(error), String(statement.queryChunks)).toBe('42501');
+}
+
+describe.skipIf(!(await isSuperuser()))('database logins', () => {
+  it('let the app change rows but not the schema or the history, and the backup only read', async () => {
+    await withFreshDatabase(async (db) => {
+      for (const role of [APP_ROLE, BACKUP_ROLE]) {
+        await db.execute(
+          sql.raw(`do $$ begin
+          if not exists (select from pg_roles where rolname = '${role}') then create role ${role}; end if;
+          end $$`),
+        );
+      }
+      await runMigrations(db);
+
+      await as(db, APP_ROLE, async (tx) => {
+        await tx.execute(
+          sql`insert into identity.users (id, name, email) values ('u1', '', 'u1@example.com')`,
+        );
+        await tx.execute(sql`update identity.users set name = 'Ana' where id = 'u1'`);
+        await tx.execute(sql`insert into currency.user_rates (user_id, id, base, quote, valid_from, rate)
+          values ('u1', '01900000-0000-7000-8000-000000000001', 'USD', 'COP', '2026-01-01', 4000)`);
+        // Deleting the user still removes rows the app itself may never delete.
+        await tx.execute(sql`delete from identity.users where id = 'u1'`);
+        const left = await tx.execute<{ n: number }>(
+          sql`select count(*)::int as n from currency.user_rates`,
+        );
+        expect(left.rows[0]?.n).toBe(0);
+      });
+      await denied(db, APP_ROLE, sql`update currency.user_rates set rate = 1`);
+      await denied(db, APP_ROLE, sql`delete from ledger.transaction_audit`);
+      await denied(db, APP_ROLE, sql`delete from ledger.transactions`);
+      await denied(db, APP_ROLE, sql`truncate identity.users cascade`);
+      await denied(db, APP_ROLE, sql`create table ledger.extra (id int)`);
+      await denied(db, APP_ROLE, sql`drop table ledger.entries`);
+      await denied(db, APP_ROLE, sql`alter table ledger.transaction_audit disable trigger all`);
+      await denied(db, APP_ROLE, sql`select * from drizzle.__drizzle_migrations`);
+
+      // Every table, including ones later migrations add, is readable by the backup.
+      const tables = await db.execute<{ t: string }>(
+        sql`select schemaname || '.' || tablename as t from pg_tables
+            where tableowner = current_user
+              and schemaname not in ('pg_catalog', 'information_schema', 'public')`,
+      );
+      expect(tables.rows.length).toBeGreaterThan(20);
+      await as(db, BACKUP_ROLE, async (tx) => {
+        for (const { t } of tables.rows) await tx.execute(sql.raw(`select count(*) from ${t}`));
+      });
+      await denied(
+        db,
+        BACKUP_ROLE,
+        sql`insert into identity.users (id, name, email) values ('u2', '', 'u2@example.com')`,
+      );
     });
   });
 });

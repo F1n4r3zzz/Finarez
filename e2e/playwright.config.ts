@@ -39,7 +39,8 @@ export default defineConfig({
       url: `http://localhost:${API_PORT}/api/health`,
       env: {
         NODE_ENV: 'test',
-        DATABASE_URL: process.env.TEST_DATABASE_URL ?? '',
+        // CI connects the API with the limited login hosted environments use (README).
+        DATABASE_URL: process.env.E2E_APP_DATABASE_URL ?? process.env.TEST_DATABASE_URL ?? '',
         PORT: String(API_PORT),
         APP_URL: WEB_URL,
         AUTH_SECRET: randomBytes(32).toString('base64'),
