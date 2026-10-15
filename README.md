@@ -39,3 +39,17 @@ create role finanz_backup login password '...';
 ```
 
 Every migration run then grants them access to all the app's tables. Locally neither login exists and `finanz` does everything.
+
+## Backups
+
+Every night, `.github/workflows/backup.yml` dumps the hosted database as `finanz_backup` and encrypts the dump with [age](https://age-encryption.org) for the backup key (`scripts/backup-database.sh`). The encrypted file is kept as the workflow's artifact for 30 days, and copied to Cloudflare R2 when the R2 secrets are set. Only the private half of the backup key can decrypt it, and that half is kept offline: never in this repository, GitHub, Vercel or the database provider.
+
+Repository secrets: `BACKUP_DATABASE_URL` (the direct connection, not the pooler, as `finanz_backup`); for R2, also `R2_ACCOUNT_ID`, `R2_BUCKET`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`.
+
+To restore into an empty database, as its owner:
+
+```sh
+age --decrypt -i finanz-backup.agekey finanz-<time>.dump.age \
+  | pg_restore --no-owner --no-privileges --exit-on-error --dbname="$OWNER_URL"
+MIGRATION_DATABASE_URL="$OWNER_URL" pnpm db:migrate   # grants the logins again
+```

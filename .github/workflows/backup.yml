@@ -1,0 +1,63 @@
+name: Backup
+
+# Every night, an encrypted copy of the hosted database is kept outside the database provider
+# (README, "Backups"): as this workflow's artifact for 30 days, and in Cloudflare R2 once the
+# R2 secrets are set.
+on:
+  schedule:
+    - cron: '17 7 * * *' # 02:17 in Bogotá
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+# Actions are pinned to commits of releases at least a week old (same rule as npm packages).
+jobs:
+  backup:
+    name: Dump, encrypt and store
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      # Public half of the backup key: it can encrypt but not decrypt.
+      BACKUP_AGE_RECIPIENT: age1a64e3vkunalgwz85husez0nrf09adrxjxzfcqwx8sdrsuv2n4c5qfwe4f2
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pg_dump 18 and age
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y --no-install-recommends postgresql-client-18 age
+          echo /usr/lib/postgresql/18/bin >> "$GITHUB_PATH"
+      - name: Dump and encrypt
+        id: dump
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          file=$(scripts/backup-database.sh backup)
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: database-backup
+          path: ${{ steps.dump.outputs.file }}
+          retention-days: 30
+          if-no-files-found: error
+          # Encrypted data doesn't compress.
+          compression-level: 0
+      - name: Copy to Cloudflare R2
+        if: env.R2_BUCKET != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          # R2 rejects the checksums newer AWS CLIs add by default.
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          FILE: ${{ steps.dump.outputs.file }}
+        run: aws s3 cp "$FILE" "s3://$R2_BUCKET/" --endpoint-url "$R2_ENDPOINT"
