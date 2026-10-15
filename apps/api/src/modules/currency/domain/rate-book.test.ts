@@ -19,7 +19,16 @@ function row(
   source: string | null = null,
 ): RateRow {
   const [base, quote] = pair.split('/') as [CurrencyCode, CurrencyCode];
-  return { id, origin, source, base, quote, validFrom: day(validFrom), rate: parseRate(rate) };
+  return {
+    id,
+    origin,
+    source,
+    base,
+    quote,
+    validFrom: day(validFrom),
+    recordedAt: `${validFrom}T00:00:00Z`,
+    rate: parseRate(rate),
+  };
 }
 
 const found = (book: RateBook, from: CurrencyCode, to: CurrencyCode, on: string) => {
@@ -90,9 +99,8 @@ describe('RateBook', () => {
     ]);
     const quote = found(book, 'MXN', 'COP', '2026-06-15');
     expect(quote?.legs).toEqual(['usd-mxn', 'usd-cop']);
-    // 1 MXN = (1/19) USD × 3800 COP. The inverse is kept to 18 places, so the product is a
-    // hair under 200; converted amounts still round to the exact result.
-    expect(quote?.rate).toBe('199.9999999999999998');
+    // 1 MXN = (1/19) USD × 3800 COP = exactly 200: the inverse stays a fraction.
+    expect(quote?.rate).toBe('200');
     const rate = book.find('MXN', 'COP', day('2026-06-15'))?.rate;
     expect(rate && convertMinor(5_079_25n, 2, 2, rate)).toBe(1_015_850_00n);
   });
@@ -106,5 +114,16 @@ describe('RateBook', () => {
     const book = new RateBook([row('old', 'USD/COP', '3800', '2026-01-01')]);
     expect(found(book, 'USD', 'COP', '2026-02-15')?.stale).toBe(false);
     expect(found(book, 'USD', 'COP', '2026-02-16')?.stale).toBe(true);
+  });
+
+  it('picks the same rate whatever order equal-date rates arrive in', () => {
+    const a = { ...row('a', 'USD/COP', '4000', '2026-01-01'), recordedAt: '2026-01-01T10:00:00Z' };
+    const b = { ...row('b', 'USD/COP', '5000', '2026-01-01'), recordedAt: '2026-01-01T11:00:00Z' };
+    for (const rows of [
+      [a, b],
+      [b, a],
+    ]) {
+      expect(found(new RateBook(rows), 'USD', 'COP', '2026-01-02')?.legs).toEqual(['b']);
+    }
   });
 });

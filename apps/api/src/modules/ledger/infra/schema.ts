@@ -71,12 +71,13 @@ export const accounts = ledger.table(
       .where(sql`${t.systemRole} is not null`),
     check(
       'accounts_kind_shape',
-      sql`(${t.systemRole} is null and ${t.kind} = 'asset' and ${t.subtype} in (${list(ASSET_SUBTYPES)}))
+      // IS TRUE: with a NULL subtype the expression is NULL, which a plain CHECK would accept.
+      sql`((${t.systemRole} is null and ${t.kind} = 'asset' and ${t.subtype} in (${list(ASSET_SUBTYPES)}))
        or (${t.systemRole} is null and ${t.kind} = 'liability' and ${t.subtype} in (${list(LIABILITY_SUBTYPES)}))
        or (${t.systemRole} = 'income' and ${t.kind} = 'income' and ${t.subtype} is null)
        or (${t.systemRole} = 'expense' and ${t.kind} = 'expense' and ${t.subtype} is null)
        or (${t.systemRole} in ('opening_balance', 'valuation') and ${t.kind} = 'equity' and ${t.subtype} is null)
-       or (${t.systemRole} = 'fx' and ${t.kind} = 'clearing' and ${t.subtype} is null)`,
+       or (${t.systemRole} = 'fx' and ${t.kind} = 'clearing' and ${t.subtype} is null)) is true`,
     ),
     check('accounts_name', sql`length(trim(${t.name})) between 1 and 80`),
   ],

@@ -3,16 +3,17 @@ import { minorUnits } from './currency';
 import { DomainError } from './errors';
 import { type Money, money } from './money';
 
-/** Fraction digits kept for stored rates and computed inverses (`numeric(38,18)`). */
+/** Fraction digits stored rates may have (`numeric(38,18)`) and shown when a rate repeats. */
 export const RATE_SCALE = 18;
 
 /**
- * An exact positive exchange rate: value = coefficient / 10^scale. "1 base = value quote".
- * Never a float, so conversions are reproducible to the last digit.
+ * An exact positive exchange rate as a fraction: value = numerator / denominator. "1 base =
+ * value quote". Inverses and paths through USD stay exact, so a conversion is rounded once,
+ * at the end (ADR 0008).
  */
 export interface ExactRate {
-  readonly coefficient: bigint;
-  readonly scale: number;
+  readonly numerator: bigint;
+  readonly denominator: bigint;
 }
 
 const RATE = /^(\d{1,20})(?:\.(\d{1,18}))?$/;
@@ -22,15 +23,17 @@ function pow10(exponent: number): bigint {
   return TEN ** BigInt(exponent);
 }
 
-/** Drops trailing zeros so equal rates have one representation. */
-function normalize(coefficient: bigint, scale: number): ExactRate {
-  let c = coefficient;
-  let s = scale;
-  while (s > 0 && c % TEN === 0n) {
-    c /= TEN;
-    s -= 1;
-  }
-  return Object.freeze({ coefficient: c, scale: s });
+function gcd(a: bigint, b: bigint): bigint {
+  let x = a < 0n ? -a : a;
+  let y = b;
+  while (y !== 0n) [x, y] = [y, x % y];
+  return x;
+}
+
+/** Lowest terms, so equal rates have one representation. */
+function reduce(numerator: bigint, denominator: bigint): ExactRate {
+  const g = gcd(numerator, denominator);
+  return Object.freeze({ numerator: numerator / g, denominator: denominator / g });
 }
 
 /** Parses "4000.5" exactly. No signs, exponents, separators or zero. */
@@ -38,15 +41,9 @@ export function parseRate(input: string): ExactRate {
   const match = RATE.exec(input);
   if (!match) throw new DomainError('rate.invalid', `Invalid exchange rate: "${input}"`);
   const [, whole = '', fraction = ''] = match;
-  const coefficient = BigInt(whole + fraction);
-  if (coefficient === 0n) throw new DomainError('rate.invalid', 'An exchange rate must be above 0');
-  return normalize(coefficient, fraction.length);
-}
-
-export function formatRate(rate: ExactRate): string {
-  const digits = rate.coefficient.toString().padStart(rate.scale + 1, '0');
-  if (rate.scale === 0) return digits;
-  return `${digits.slice(0, -rate.scale)}.${digits.slice(-rate.scale)}`;
+  const numerator = BigInt(whole + fraction);
+  if (numerator === 0n) throw new DomainError('rate.invalid', 'An exchange rate must be above 0');
+  return reduce(numerator, pow10(fraction.length));
 }
 
 /** n / d rounded to the nearest integer, ties to even (d must be positive). */
@@ -61,18 +58,26 @@ export function divRoundHalfEven(n: bigint, d: bigint): bigint {
   return q % 2n === 0n ? q : away;
 }
 
-/** Exact product, for conversions through an intermediate currency. */
-export function multiplyRates(a: ExactRate, b: ExactRate): ExactRate {
-  return normalize(a.coefficient * b.coefficient, a.scale + b.scale);
+/**
+ * Decimal text of a rate: exact when it terminates within 18 places, otherwise rounded to 18
+ * (display only; arithmetic always uses the fraction).
+ */
+export function formatRate(rate: ExactRate): string {
+  const scaled = divRoundHalfEven(rate.numerator * pow10(RATE_SCALE), rate.denominator);
+  const digits = scaled.toString().padStart(RATE_SCALE + 1, '0');
+  const whole = digits.slice(0, -RATE_SCALE);
+  const fraction = digits.slice(-RATE_SCALE).replace(/0+$/, '');
+  return fraction ? `${whole}.${fraction}` : whole;
 }
 
-/** 1 / rate, kept at 18 decimal places (half to even). */
+/** Exact product, for conversions through an intermediate currency. */
+export function multiplyRates(a: ExactRate, b: ExactRate): ExactRate {
+  return reduce(a.numerator * b.numerator, a.denominator * b.denominator);
+}
+
+/** Exact 1 / rate. */
 export function invertRate(rate: ExactRate): ExactRate {
-  const coefficient = divRoundHalfEven(pow10(rate.scale + RATE_SCALE), rate.coefficient);
-  if (coefficient === 0n) {
-    throw new DomainError('rate.invalid', 'The inverse of this rate is below 18 decimal places');
-  }
-  return normalize(coefficient, RATE_SCALE);
+  return reduce(rate.denominator, rate.numerator);
 }
 
 /**
@@ -86,8 +91,8 @@ export function convertMinor(
   toUnits: number,
   rate: ExactRate,
 ): bigint {
-  const numerator = amountMinor * rate.coefficient * pow10(Math.max(0, toUnits - fromUnits));
-  const denominator = pow10(rate.scale + Math.max(0, fromUnits - toUnits));
+  const numerator = amountMinor * rate.numerator * pow10(Math.max(0, toUnits - fromUnits));
+  const denominator = rate.denominator * pow10(Math.max(0, fromUnits - toUnits));
   return divRoundHalfEven(numerator, denominator);
 }
 

@@ -15,6 +15,14 @@ export class RateNotFoundError extends Error {
   }
 }
 
+/** A rate for this pair already starts that day: correct it instead of adding another. */
+export class RateSameDayError extends Error {
+  constructor() {
+    super('A rate for this pair already starts that day');
+    this.name = 'RateSameDayError';
+  }
+}
+
 /** The rate was corrected already: correct the newer revision instead. */
 export class RateAlreadyRevisedError extends Error {
   constructor() {
@@ -62,6 +70,14 @@ export async function addUserRate(
   input: RateInput,
 ): Promise<UserRate> {
   parseRate(input.rate); // same rule as the contract, checked where the value is stored
+  const current = await listUserRates(db, userId);
+  if (
+    current.some(
+      (r) => r.base === input.base && r.quote === input.quote && r.validFrom === input.validFrom,
+    )
+  ) {
+    throw new RateSameDayError();
+  }
   const [row] = await db
     .insert(userRates)
     .values({ userId, id: uuidv7(), ...input, note: input.note ?? null })
@@ -122,6 +138,7 @@ export async function loadRateBook(
       base: r.base,
       quote: r.quote,
       validFrom: r.validFrom,
+      recordedAt: r.recordedAt,
       rate: parseRate(r.rate),
     })),
     ...shared.map(({ rate: r }) => ({
@@ -131,6 +148,7 @@ export async function loadRateBook(
       base: parseCurrencyCode(r.base),
       quote: parseCurrencyCode(r.quote),
       validFrom: parseLocalDate(r.validFrom),
+      recordedAt: r.recordedAt.toISOString(),
       rate: parseRate(normalizeRate(r.rate)),
     })),
   ];

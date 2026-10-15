@@ -208,6 +208,23 @@ describe('reports in the primary currency', () => {
   });
 });
 
+describe('stale rates', () => {
+  it('says which rates were older than 45 days when used (CP2 code #8)', async () => {
+    const { client } = await signedInUser(ctx);
+    await freelancer(client);
+    // The last USD/COP rate starts 2025-11-01: valid but stale by late December.
+    const { body } = await json<NetWorthReport>(
+      client,
+      'GET',
+      '/api/reports/net-worth?on=2025-12-31',
+    );
+    expect(body.complete).toBe(true);
+    expect(body.staleRateIds).toHaveLength(1);
+    const fresh = await json<NetWorthReport>(client, 'GET', '/api/reports/net-worth?on=2025-11-15');
+    expect(fresh.body.staleRateIds).toEqual([]);
+  });
+});
+
 describe('reports: tenant isolation', () => {
   it("never counts another user's money", async () => {
     const violations = await findIsolationViolations(ctx, async (owner, intruder) => {
@@ -217,7 +234,13 @@ describe('reports: tenant isolation', () => {
         timeZone: 'America/Bogota',
         primaryCurrency: 'COP',
       });
-      const empty = { currency: 'COP', complete: true, excluded: [], rateIds: [] };
+      const empty = {
+        currency: 'COP',
+        complete: true,
+        excluded: [],
+        rateIds: [],
+        staleRateIds: [],
+      };
       return {
         secrets: ['1200000000', '1850000000'],
         probes: [

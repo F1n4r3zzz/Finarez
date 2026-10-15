@@ -10,6 +10,7 @@ import {
   listUserRates,
   RateAlreadyRevisedError,
   RateNotFoundError,
+  RateSameDayError,
   reviseUserRate,
 } from '../application/rates';
 import { currencies } from '../infra/schema';
@@ -33,7 +34,17 @@ export function currencyRoutes({ auth, db }: { auth: Auth; db: Database }) {
     .get('/rates', async (c) => c.json(await listUserRates(db, c.var.userId)))
     .post('/rates', async (c) => {
       const input = rateInputSchema.parse(await c.req.json());
-      return c.json(await addUserRate(db, c.var.userId, input), 201);
+      try {
+        return c.json(await addUserRate(db, c.var.userId, input), 201);
+      } catch (error) {
+        if (error instanceof RateSameDayError) {
+          return c.json(
+            { error: { code: 'rate.same_day_exists', message: 'Correct the existing rate' } },
+            409,
+          );
+        }
+        throw error;
+      }
     })
     .post('/rates/:id/revisions', async (c) => {
       const input = rateRevisionSchema.parse(await c.req.json());

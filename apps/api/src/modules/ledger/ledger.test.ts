@@ -21,8 +21,15 @@ async function post(client: TestClient, draft: unknown, key: string = randomUUID
   };
 }
 
-async function json<T>(client: TestClient, method: string, path: string, body?: unknown) {
-  const res = await client.request(method, path, body);
+/** Every request carries a fresh Idempotency-Key; routes that don't need one ignore it. */
+async function json<T>(
+  client: TestClient,
+  method: string,
+  path: string,
+  body?: unknown,
+  key = randomUUID(),
+) {
+  const res = await client.request(method, path, body, { headers: { 'Idempotency-Key': key } });
   return { status: res.status, body: (await res.json()) as T & { error?: { code: string } } };
 }
 
@@ -79,6 +86,46 @@ describe('accounts', () => {
       ['equity', 'COP', '234000000', false],
       ['liability', 'COP', '-234000000', false],
     ]);
+  });
+
+  it('answers a new account with its real balance (CP2 code #7)', async () => {
+    const { client } = await signedInUser(ctx);
+    const created = await json<AccountView>(client, 'POST', '/api/ledger/accounts', {
+      name: 'Ahorros',
+      subtype: 'savings',
+      currency: 'COP',
+      openedOn: '2025-09-30',
+      openingBalanceMinor: '123400',
+    });
+    expect(created.body.balanceMinor).toBe('123400');
+  });
+
+  it('creating an account twice with one key makes one account and one opening balance (CP2 code #1)', async () => {
+    const { client } = await signedInUser(ctx);
+    const body = {
+      name: 'Davivienda',
+      subtype: 'bank',
+      currency: 'COP',
+      openedOn: '2025-09-30',
+      openingBalanceMinor: '500000',
+    };
+    const key = randomUUID();
+    const [a, b] = await Promise.all([
+      json<AccountView>(client, 'POST', '/api/ledger/accounts', body, key),
+      json<AccountView>(client, 'POST', '/api/ledger/accounts', body, key),
+    ]);
+    expect(a.body.id).toBe(b.body.id);
+    expect((await json<AccountView[]>(client, 'GET', '/api/ledger/accounts')).body).toHaveLength(1);
+    const openings = (
+      await json<TransactionView[]>(
+        client,
+        'GET',
+        `/api/ledger/transactions?accountId=${a.body.id}`,
+      )
+    ).body;
+    expect(openings).toHaveLength(1);
+    const noKey = await client.request('POST', '/api/ledger/accounts', body);
+    expect(noKey.status).toBe(400);
   });
 
   it('lists only the user’s own accounts, never the hidden ones', async () => {
@@ -219,8 +266,7 @@ describe('idempotency', () => {
     const other = await post(client, draft(bank.id, cat('Mercado')), key);
     expect(other.status).toBe(422);
     expect(other.body.error?.code).toBe('idempotency.key_reused');
-    const noKey = await json(
-      client,
+    const noKey = await client.request(
       'POST',
       '/api/ledger/transactions',
       draft(bank.id, cat('Mercado')),
@@ -315,6 +361,24 @@ describe('edit, void and restore', () => {
     const confirmed = await edit(s, 2, amount, { confirmReconciledChange: true });
     expect(confirmed.status).toBe(200);
     expect(confirmed.body.entries.every((e) => !e.reconciled)).toBe(true);
+  });
+
+  it('saves a note-only change on a line and keeps it reconciled (CP2 code #5)', async () => {
+    const s = await coffee();
+    await ctx.db.execute(
+      sql`update ledger.entries set reconciled_at = now() where transaction_id = ${s.txn.id}`,
+    );
+    const lines = (memo: string) => ({
+      lines: [{ categoryId: s.cat('Restaurantes y domicilios'), amountMinor: '850000', memo }],
+    });
+    const res = await edit(s, 1, lines('con Ana'));
+    expect(res.status).toBe(200);
+    const line = res.body.entries.find((e) => e.categoryId);
+    expect(line).toMatchObject({ memo: 'con Ana', reconciled: true });
+    const audit = await ctx.db.execute<{ after: { entries: { memo: string | null }[] } }>(
+      sql`select after from ledger.transaction_audit where transaction_id = ${s.txn.id} and action = 'update'`,
+    );
+    expect(audit.rows[0]?.after.entries.map((e) => e.memo)).toContain('con Ana');
   });
 
   it('void removes the effect but keeps the record; restore brings it back; the history has all of it', async () => {

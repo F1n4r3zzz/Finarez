@@ -15,6 +15,8 @@ interface Completeness {
   excluded: ExcludedView[];
   /** Rates used, so any figure can be reproduced. */
   rateIds: string[];
+  /** Rates used although more than 45 days old on the day they applied to. */
+  staleRateIds: string[];
 }
 
 export interface SummaryReport extends Completeness {

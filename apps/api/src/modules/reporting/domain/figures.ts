@@ -14,6 +14,8 @@ export interface Excluded {
 export class Converter {
   readonly excluded: Excluded[] = [];
   readonly rateIds = new Set<string>();
+  /** Rates used although older than the staleness limit on that day (still exact, maybe outdated). */
+  readonly staleRateIds = new Set<string>();
 
   constructor(
     private readonly book: RateBook,
@@ -26,7 +28,10 @@ export class Converter {
       this.excluded.push({ date: on, currency, component, amountMinor });
       return 0n;
     }
-    for (const leg of quote.legs) this.rateIds.add(leg.rateId);
+    for (const leg of quote.legs) {
+      this.rateIds.add(leg.rateId);
+      if (quote.stale) this.staleRateIds.add(leg.rateId);
+    }
     return convertMinor(amountMinor, minorUnits(currency), minorUnits(this.target), quote.rate);
   }
 

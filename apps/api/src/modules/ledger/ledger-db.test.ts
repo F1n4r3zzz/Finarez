@@ -354,6 +354,17 @@ describe('dates, accounts and history', () => {
     ).toMatch(/entries_account_fk/);
   });
 
+  it('account shapes can not be left half empty (CP2 code #6)', async () => {
+    const user = await newUser();
+    expect(await failure(account(user, 'asset', 'COP', null))).toMatch(/accounts_kind_shape/);
+    expect(
+      await failure(
+        db.execute(sql`insert into ledger.accounts (user_id, id, kind, subtype, currency, name, opened_on, system_role)
+          values (${user}, ${uuidv7()}, 'equity', null, 'COP', 'Equity', '2026-01-01', null)`),
+      ),
+    ).toMatch(/accounts_kind_shape/);
+  });
+
   it('account shapes: asset and liability subtypes, system accounts once per role and currency', async () => {
     const user = await newUser();
     expect(await failure(account(user, 'asset', 'COP', 'loan'))).toMatch(/accounts_kind_shape/);

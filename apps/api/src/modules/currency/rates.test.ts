@@ -109,7 +109,18 @@ describe('user exchange rates', () => {
     const book = await loadRateBook(ctx.db, await userId(client));
     const quote = book.find('USD', 'COP', '2026-03-01' as never);
     expect(quote?.legs.map((l) => l.rateId)).not.toContain(first.id);
-    expect(quote?.rate).toEqual({ coefficient: 4015n, scale: 0 });
+    expect(quote?.rate).toEqual({ numerator: 4015n, denominator: 1n });
+  });
+});
+
+describe('one rate per pair and day', () => {
+  it('refuses a second rate starting the same day: correct the first one instead', async () => {
+    const { client } = await signedInUser(ctx);
+    expect((await addRate(client)).status).toBe(201);
+    const again = await addRate(client, { ...USD_COP, rate: '5000' });
+    expect(again.status).toBe(409);
+    expect(again.body).toMatchObject({ error: { code: 'rate.same_day_exists' } });
+    expect((await addRate(client, { ...USD_COP, validFrom: '2026-01-02' })).status).toBe(201);
   });
 });
 

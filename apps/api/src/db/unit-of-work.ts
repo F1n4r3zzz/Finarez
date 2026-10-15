@@ -25,3 +25,11 @@ export async function inUnitOfWork<T>(
     }
   }
 }
+
+/**
+ * Runs related reads against one consistent snapshot (read-only, REPEATABLE READ), so a write
+ * committed between them can't make a report mix two states of the ledger (CP2 code #2).
+ */
+export function inSnapshot<T>(db: Database, work: (tx: Executor) => Promise<T>): Promise<T> {
+  return db.transaction(work, { isolationLevel: 'repeatable read', accessMode: 'read only' });
+}

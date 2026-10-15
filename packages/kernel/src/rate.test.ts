@@ -80,14 +80,20 @@ describe('rate arithmetic', () => {
     expect(formatRate(multiplyRates(parseRate('0.5'), parseRate('4000.5')))).toBe('2000.25');
   });
 
-  it('inverts to 18 decimal places, half to even', () => {
+  it('inverts exactly; the text shows 18 places when the inverse repeats', () => {
     expect(formatRate(invertRate(parseRate('4000')))).toBe('0.00025');
     expect(formatRate(invertRate(parseRate('3')))).toBe('0.333333333333333333');
     expect(formatRate(invertRate(parseRate('1.5')))).toBe('0.666666666666666667');
+    expect(invertRate(invertRate(parseRate('17.2')))).toEqual(parseRate('17.2'));
   });
 
-  it('refuses to invert a rate whose inverse would round to zero', () => {
-    expect(() => invertRate(parseRate('10000000000000000000'))).toThrow(/rate/i);
+  it('rounds a conversion once, even through an inverse (CP2 code #3)', () => {
+    // 1 minor unit at the exact inverse of 1.999999999999999999 is 0.5000000000000000003 → 1.
+    expect(convertMinor(1n, 2, 2, invertRate(parseRate('1.999999999999999999')))).toBe(1n);
+    // Through USD: 1 MXN = 3800/19 COP = exactly 200.
+    const mxnCop = multiplyRates(invertRate(parseRate('19')), parseRate('3800'));
+    expect(formatRate(mxnCop)).toBe('200');
+    expect(convertMinor(5_079_25n, 2, 2, mxnCop)).toBe(1_015_850_00n);
   });
 });
 
@@ -111,7 +117,7 @@ describe('conversion properties', () => {
     fc.assert(
       fc.property(amount, rateText, (a, r) => {
         const rate = parseRate(r);
-        const exactTimes2 = (2n * a * rate.coefficient) / 10n ** BigInt(rate.scale);
+        const exactTimes2 = (2n * a * rate.numerator) / rate.denominator;
         const diff = 2n * convertMinor(a, 2, 2, rate) - exactTimes2;
         expect(diff >= -2n && diff <= 2n).toBe(true);
       }),

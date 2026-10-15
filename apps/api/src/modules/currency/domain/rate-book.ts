@@ -17,6 +17,8 @@ export interface RateRow {
   base: CurrencyCode;
   quote: CurrencyCode;
   validFrom: LocalDate;
+  /** ISO timestamp; breaks ties between rates valid from the same day. */
+  recordedAt: string;
   rate: ExactRate;
 }
 
@@ -57,9 +59,12 @@ export class RateBook {
       list.push(row);
       this.byKey.set(key, list);
     }
-    for (const list of this.byKey.values()) {
-      list.sort((a, b) => (a.validFrom < b.validFrom ? 1 : -1)); // newest first
-    }
+    // Newest first, with a total order: date, then when it was recorded, then id (CP2 code #4).
+    const newestFirst = (a: RateRow, b: RateRow) =>
+      b.validFrom.localeCompare(a.validFrom) ||
+      b.recordedAt.localeCompare(a.recordedAt) ||
+      b.id.localeCompare(a.id);
+    for (const list of this.byKey.values()) list.sort(newestFirst);
   }
 
   find(from: CurrencyCode, to: CurrencyCode, on: LocalDate): RateQuote | undefined {

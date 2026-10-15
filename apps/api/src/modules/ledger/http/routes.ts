@@ -15,7 +15,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
 import type { Database, Executor } from '../../../db/client';
 import { ownedBy } from '../../../db/tenancy';
-import { inUnitOfWork } from '../../../db/unit-of-work';
+import { inSnapshot, inUnitOfWork } from '../../../db/unit-of-work';
 import { isUuid } from '../../../http/ids';
 import { type Auth, getPreferences, requireUser, type UserVariables } from '../../identity';
 import {
@@ -38,6 +38,9 @@ import { LedgerError } from '../domain/posting';
 import { entries, transactions } from '../infra/schema';
 
 const notFound = { error: { code: 'not_found', message: 'Not found' } } as const;
+const keyRequired = {
+  error: { code: 'idempotency.key_required', message: 'Send an Idempotency-Key header' },
+} as const;
 
 const STATUS: Partial<Record<LedgerError['code'], ContentfulStatusCode>> = {
   'ledger.not_found': 404,
@@ -64,7 +67,7 @@ function accountView(row: AccountRow, balanceMinor = 0n): AccountView {
 
 /** Today's balances, as seen in the user's time zone. */
 async function withBalances(
-  db: Database,
+  db: Executor,
   userId: string,
   rows: AccountRow[],
 ): Promise<AccountView[]> {
@@ -138,14 +141,28 @@ export function ledgerRoutes({ auth, db }: { auth: Auth; db: Database }) {
     })
 
     .get('/accounts', async (c) =>
-      c.json(await withBalances(db, c.var.userId, await listAccounts(db, c.var.userId))),
+      c.json(
+        await inSnapshot(db, async (tx) =>
+          withBalances(tx, c.var.userId, await listAccounts(tx, c.var.userId)),
+        ),
+      ),
     )
     .post('/accounts', async (c) => {
-      const input = accountInputSchema.parse(await c.req.json());
-      const row = await inUnitOfWork(db, (tx) =>
-        createAccount(tx, { userId: c.var.userId }, input),
+      const key = c.req.header('Idempotency-Key');
+      if (!key || key.length > 200) return c.json(keyRequired, 400);
+      const body = await c.req.json();
+      const input = accountInputSchema.parse(body);
+      const userId = c.var.userId;
+      const hash = commandHash({ method: 'POST', route: '/ledger/accounts', params: {}, body });
+      // Creating an account can post its opening balance: a retry must never do it twice.
+      const result = await inUnitOfWork(db, (tx) =>
+        onceForKey(tx, userId, key, hash, async () => {
+          const row = await createAccount(tx, { userId }, input);
+          const [view] = await withBalances(tx, userId, [row]);
+          return { status: 201, body: view };
+        }),
       );
-      return c.json(accountView(row), 201);
+      return c.json(result.body as AccountView, result.status as ContentfulStatusCode);
     })
     .patch('/accounts/:id', async (c) => {
       const input = accountUpdateSchema.parse(await c.req.json());
@@ -176,51 +193,46 @@ export function ledgerRoutes({ auth, db }: { auth: Auth; db: Database }) {
             )
           : undefined,
       ];
-      const headers = await db
-        .select()
-        .from(transactions)
-        .where(ownedBy(transactions.userId, c.var.userId, ...conditions))
-        .orderBy(desc(transactions.occurredOn), desc(transactions.id))
-        .limit(q.limit);
-      const rows = headers.length
-        ? await db
-            .select()
-            .from(entries)
-            .where(
-              ownedBy(
-                entries.userId,
-                c.var.userId,
-                inArray(
-                  entries.transactionId,
-                  headers.map((h) => h.id),
+      // Headers and their entries from one snapshot: never a posted header without its lines.
+      const views = await inSnapshot(db, async (tx) => {
+        const headers = await tx
+          .select()
+          .from(transactions)
+          .where(ownedBy(transactions.userId, c.var.userId, ...conditions))
+          .orderBy(desc(transactions.occurredOn), desc(transactions.id))
+          .limit(q.limit);
+        const rows = headers.length
+          ? await tx
+              .select()
+              .from(entries)
+              .where(
+                ownedBy(
+                  entries.userId,
+                  c.var.userId,
+                  inArray(
+                    entries.transactionId,
+                    headers.map((h) => h.id),
+                  ),
                 ),
-              ),
-            )
-        : [];
-      return c.json(
-        headers.map((h) =>
+              )
+          : [];
+        return headers.map((h) =>
           transactionView(
             h,
             rows.filter((e) => e.transactionId === h.id),
           ),
-        ),
-      );
+        );
+      });
+      return c.json(views);
     })
     .get('/transactions/:id', async (c) => {
       const id = c.req.param('id');
       if (!isUuid(id)) return c.json(notFound, 404);
-      return c.json(await loadView(db, c.var.userId, id));
+      return c.json(await inSnapshot(db, (tx) => loadView(tx, c.var.userId, id)));
     })
     .post('/transactions', async (c) => {
       const key = c.req.header('Idempotency-Key');
-      if (!key || key.length > 200) {
-        return c.json(
-          {
-            error: { code: 'idempotency.key_required', message: 'Send an Idempotency-Key header' },
-          },
-          400,
-        );
-      }
+      if (!key || key.length > 200) return c.json(keyRequired, 400);
       const body = await c.req.json();
       const draft = draftSchema.parse(body);
       const userId = c.var.userId;

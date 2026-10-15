@@ -208,12 +208,14 @@ export async function editTransaction(
   // A date change touches every line (reconciliation certified the old date).
   const dateChanged = planned.occurredOn !== before.occurredOn;
   const remaining = [...oldEntries];
-  const kept: EntryRow[] = [];
+  // Kept lines keep their id and reconciliation; only their note (memo) may still change.
+  const renotes: { id: string; memo: string | null }[] = [];
   const added: typeof wanted = [];
   for (const line of wanted) {
     const match = dateChanged ? -1 : remaining.findIndex((old) => sameLine(old, line));
-    if (match >= 0) kept.push(...remaining.splice(match, 1));
-    else added.push(line);
+    const [old] = match >= 0 ? remaining.splice(match, 1) : [];
+    if (!old) added.push(line);
+    else if (old.memo !== line.memo) renotes.push({ id: old.id, memo: line.memo });
   }
   const removed = remaining;
   const reconciledChange = removed.some((e) => e.reconciledAt !== null);
@@ -243,6 +245,12 @@ export async function editTransaction(
       notes: planned.notes,
     })
     .where(ownedBy(transactions.userId, actor.userId, eq(transactions.id, id)));
+  for (const { id: entryId, memo } of renotes) {
+    await tx
+      .update(entries)
+      .set({ memo })
+      .where(ownedBy(entries.userId, actor.userId, eq(entries.id, entryId)));
+  }
   await insertEntries(tx, actor.userId, id, planned.occurredOn, added);
   const after = await headerOf(tx, actor.userId, id);
   if (!after) throw new Error('Transaction vanished during edit');

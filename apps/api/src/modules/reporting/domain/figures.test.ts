@@ -17,6 +17,7 @@ function book(rates: [string, string, string][]): RateBook {
         base: pair.split('/')[0] as CurrencyCode,
         quote: pair.split('/')[1] as CurrencyCode,
         validFrom: d(validFrom),
+        recordedAt: `${validFrom}T00:00:00Z`,
         rate: parseRate(rate),
       }),
     ),
