@@ -21,6 +21,8 @@ const ConfigSchema = z
      * every test user signs in from the same machine.
      */
     AUTH_SIGN_IN_LIMIT: z.coerce.number().int().min(1).default(5),
+    /** Sign-ups per address every hour; raised only for end-to-end runs, like the above. */
+    AUTH_SIGN_UP_LIMIT: z.coerce.number().int().min(1).default(5),
   })
   .refine((c) => !(c.NODE_ENV === 'production' && c.EMAIL_TRANSPORT === 'console'), {
     path: ['EMAIL_TRANSPORT'],
@@ -29,6 +31,10 @@ const ConfigSchema = z
   .refine((c) => !(c.NODE_ENV === 'production' && c.AUTH_SIGN_IN_LIMIT > 5), {
     path: ['AUTH_SIGN_IN_LIMIT'],
     message: 'Production keeps the sign-in limit at 5 or fewer attempts',
+  })
+  .refine((c) => !(c.NODE_ENV === 'production' && c.AUTH_SIGN_UP_LIMIT > 5), {
+    path: ['AUTH_SIGN_UP_LIMIT'],
+    message: 'Production keeps the sign-up limit at 5 or fewer an hour',
   })
   .refine((c) => c.EMAIL_TRANSPORT !== 'resend' || c.RESEND_API_KEY !== undefined, {
     path: ['RESEND_API_KEY'],

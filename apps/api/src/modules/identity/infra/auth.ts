@@ -12,7 +12,8 @@ import { accounts, rateLimits, sessions, users, verifications } from './schema';
 
 export interface AuthDeps {
   db: Database;
-  config: Pick<Config, 'APP_URL' | 'AUTH_SECRET'> & Partial<Pick<Config, 'AUTH_SIGN_IN_LIMIT'>>;
+  config: Pick<Config, 'APP_URL' | 'AUTH_SECRET'> &
+    Partial<Pick<Config, 'AUTH_SIGN_IN_LIMIT' | 'AUTH_SIGN_UP_LIMIT'>>;
   /** Must draw from `emailBudget` (e.g. a BudgetedEmailSender). */
   email: EmailSender;
   emailBudget: EmailBudget;
@@ -97,7 +98,7 @@ export function createAuth({ db, config, email, emailBudget }: AuthDeps) {
       max: 100,
       customRules: {
         '/sign-in/email': { window: 15 * MINUTE, max: config.AUTH_SIGN_IN_LIMIT ?? 5 },
-        '/sign-up/email': { window: HOUR, max: 5 },
+        '/sign-up/email': { window: HOUR, max: config.AUTH_SIGN_UP_LIMIT ?? 5 },
         '/request-password-reset': { window: HOUR, max: 3 },
         '/reset-password': { window: HOUR, max: 5 },
         '/send-verification-email': { window: HOUR, max: 3 },

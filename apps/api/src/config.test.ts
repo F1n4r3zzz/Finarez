@@ -16,10 +16,11 @@ describe('loadConfig', () => {
       EMAIL_TRANSPORT: 'console',
       EMAIL_DAILY_LIMIT: 90,
       AUTH_SIGN_IN_LIMIT: 5,
+      AUTH_SIGN_UP_LIMIT: 5,
     });
   });
 
-  it('never loosens the sign-in limit in production', () => {
+  it('never loosens the sign-in or sign-up limits in production', () => {
     const production = {
       ...valid,
       NODE_ENV: 'production',
@@ -29,8 +30,14 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...production, AUTH_SIGN_IN_LIMIT: '50' })).toThrow(
       /AUTH_SIGN_IN_LIMIT/,
     );
+    expect(() => loadConfig({ ...production, AUTH_SIGN_UP_LIMIT: '50' })).toThrow(
+      /AUTH_SIGN_UP_LIMIT/,
+    );
     expect(
       loadConfig({ ...valid, NODE_ENV: 'test', AUTH_SIGN_IN_LIMIT: '50' }).AUTH_SIGN_IN_LIMIT,
+    ).toBe(50);
+    expect(
+      loadConfig({ ...valid, NODE_ENV: 'test', AUTH_SIGN_UP_LIMIT: '50' }).AUTH_SIGN_UP_LIMIT,
     ).toBe(50);
   });
 
