@@ -10,10 +10,10 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import type { Database, Executor } from '../../../db/client';
 import { inSnapshot } from '../../../db/unit-of-work';
-import { loadRateBook } from '../../currency';
+import { Converter, loadRateBook } from '../../currency';
 import { type Auth, getPreferences, requireUser, type UserVariables } from '../../identity';
 import { balancesAsOf, factsBetween } from '../../ledger';
-import { bridge, Converter, netWorth, summarize, summarizeByMonth } from '../domain/figures';
+import { bridge, netWorth, summarize, summarizeByMonth } from '../domain/figures';
 
 const range = z.object({ from: z.string(), to: z.string() });
 const day = z.object({ on: z.string().optional() });

@@ -1,9 +1,9 @@
 import { type CurrencyCode, type LocalDate, parseLocalDate, parseRate } from '@finanz/kernel';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
-import { RateBook, type RateRow } from '../../currency';
+import { Converter, RateBook, type RateRow } from '../../currency';
 import type { AccountBalance, LedgerFact } from '../../ledger';
-import { bridge, Converter, monthsBetween, netWorth, summarize, summarizeByMonth } from './figures';
+import { bridge, monthsBetween, netWorth, summarize, summarizeByMonth } from './figures';
 
 const d = parseLocalDate;
 
