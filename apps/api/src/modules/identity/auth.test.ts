@@ -1,3 +1,4 @@
+import { CONSENTS } from '@finanz/contracts';
 import { sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
@@ -20,6 +21,7 @@ async function signUp(client: TestClient, email: string, password = PASSWORD) {
     email,
     password,
     callbackURL: '/',
+    consents: CONSENTS,
   });
 }
 
@@ -90,6 +92,7 @@ describe('registration and email verification', () => {
       email,
       password: 'intruder password 123',
       callbackURL: '/',
+      consents: CONSENTS,
     });
     expect(again.status).toBe(200);
 
@@ -109,6 +112,80 @@ describe('registration and email verification', () => {
       password: PASSWORD,
     });
     expect(owner.status).toBe(200);
+  });
+});
+
+describe('terms, data authorization and age', () => {
+  const consentsOf = async (email: string) =>
+    (
+      await ctx.db.execute<{ kind: string; version: string }>(
+        sql`select c.kind, c.version from identity.consents c
+            join identity.users u on u.id = c.user_id where u.email = ${email}
+            order by c.kind`,
+      )
+    ).rows;
+
+  it('creates no account without all three, each at its current version', async () => {
+    for (const consents of [
+      undefined,
+      { terms: CONSENTS.terms, privacy: CONSENTS.privacy },
+      { ...CONSENTS, terms: '0.1' },
+    ]) {
+      const email = uniqueEmail();
+      const res = await new TestClient(ctx.app).request('POST', '/api/auth/sign-up/email', {
+        name: '',
+        email,
+        password: PASSWORD,
+        callbackURL: '/',
+        consents,
+      });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ code: 'CONSENTS_REQUIRED' });
+      expect(ctx.emails.to(email)).toHaveLength(0);
+      const users = await ctx.db.execute(sql`select 1 from identity.users where email = ${email}`);
+      expect(users.rows).toHaveLength(0);
+    }
+  });
+
+  it('records what the new user accepted, and asks for nothing more', async () => {
+    const { client, email } = await signedInUser(ctx);
+    expect(await consentsOf(email)).toEqual([
+      { kind: 'adult', version: CONSENTS.adult },
+      { kind: 'privacy', version: CONSENTS.privacy },
+      { kind: 'terms', version: CONSENTS.terms },
+    ]);
+    const status = await client.request('GET', '/api/me/consents');
+    expect(await status.json()).toEqual({ pending: [] });
+  });
+
+  it('asks again for a version the user has not accepted, and records it once accepted', async () => {
+    const { client, email } = await signedInUser(ctx);
+    // As if the terms and privacy texts had moved on since this user accepted them.
+    await ctx.db.execute(
+      sql`update identity.consents set version = '0.1'
+          where kind in ('terms', 'privacy')
+            and user_id = (select id from identity.users where email = ${email})`,
+    );
+    const before = await client.request('GET', '/api/me/consents');
+    expect(await before.json()).toEqual({ pending: ['terms', 'privacy'] });
+
+    const stale = await client.request('POST', '/api/me/consents', { ...CONSENTS, terms: '0.1' });
+    expect(stale.status).toBe(409);
+    const accepted = await client.request('POST', '/api/me/consents', CONSENTS);
+    expect(await accepted.json()).toEqual({ pending: [] });
+    expect((await consentsOf(email)).map((c) => `${c.kind}@${c.version}`)).toEqual([
+      `adult@${CONSENTS.adult}`,
+      'privacy@0.1',
+      `privacy@${CONSENTS.privacy}`,
+      'terms@0.1',
+      `terms@${CONSENTS.terms}`,
+    ]);
+  });
+
+  it('needs a session to read or accept', async () => {
+    const client = new TestClient(ctx.app);
+    expect((await client.request('GET', '/api/me/consents')).status).toBe(401);
+    expect((await client.request('POST', '/api/me/consents', CONSENTS)).status).toBe(401);
   });
 });
 

@@ -17,6 +17,7 @@ const NEVER_CHANGED = [
   'ledger.transaction_audit',
   'currency.user_rates',
   'currency.provider_rates',
+  'identity.consents',
 ];
 /**
  * Rows the app never deletes: they are voided, archived or ended instead, and module rows are the

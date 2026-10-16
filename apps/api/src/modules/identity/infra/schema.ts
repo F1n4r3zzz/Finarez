@@ -1,10 +1,14 @@
+import { CONSENT_KINDS } from '@finanz/contracts';
+import { sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
   char,
+  check,
   index,
   integer,
   pgSchema,
+  primaryKey,
   text,
   timestamp,
 } from 'drizzle-orm/pg-core';
@@ -96,3 +100,24 @@ export const preferences = identity.table('preferences', {
   primaryCurrency: char({ length: 3 }).notNull(),
   updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * What each user accepted, and when: the terms, the data authorization and being an adult, one
+ * row per version. Kept as evidence, so rows are only ever added (the app's login can't change
+ * or delete them).
+ */
+export const consents = identity.table(
+  'consents',
+  {
+    userId: text()
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    kind: text({ enum: CONSENT_KINDS as [string, ...string[]] }).notNull(),
+    version: text().notNull(),
+    acceptedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.kind, t.version] }),
+    check('consents_kind', sql.raw(`kind in (${CONSENT_KINDS.map((k) => `'${k}'`).join(', ')})`)),
+  ],
+);

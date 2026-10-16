@@ -1,3 +1,4 @@
+import { CONSENTS } from '@finanz/contracts';
 import { api } from '../../lib/api';
 
 export interface SessionUser {
@@ -19,6 +20,7 @@ export async function signIn(email: string, password: string): Promise<void> {
   await api('POST', '/auth/sign-in/email', { email, password });
 }
 
+/** Only after the person checked every consent box: the API records them with the account. */
 export async function signUp(email: string, password: string): Promise<void> {
   // Finarez doesn't ask for a name; the auth library requires the field.
   await api('POST', '/auth/sign-up/email', {
@@ -26,6 +28,7 @@ export async function signUp(email: string, password: string): Promise<void> {
     email,
     password,
     callbackURL: VERIFIED_CALLBACK,
+    consents: CONSENTS,
   });
 }
 

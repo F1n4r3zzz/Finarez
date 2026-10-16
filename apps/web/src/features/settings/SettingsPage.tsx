@@ -21,6 +21,7 @@ import { isApiFailure } from '../../lib/api';
 import { describeFailure, type Failure } from '../../lib/failure';
 import { formattingLocale } from '../../lib/locale';
 import { formatMoney } from '../../lib/money';
+import { LegalLinks } from '../legal/LegalLinks';
 import { preferencesFromForm } from '../preferences/defaults';
 import { PreferencesFields } from '../preferences/PreferencesFields';
 import { RatesSection } from './RatesSection';
@@ -199,6 +200,10 @@ export function SettingsPage() {
               />
             </button>
           </div>
+        </Section>
+        <Section title={t('legal.title')}>
+          <p className="mb-3 text-sm">{t('legal.settingsDescription')}</p>
+          <LegalLinks />
         </Section>
         <p className="border-line border-t pt-6 text-muted text-sm">{t('settings.deviceNote')}</p>
       </div>

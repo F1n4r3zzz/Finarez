@@ -11,6 +11,9 @@ test('a goal takes money moved from the bank to the fund, without changing what 
   await page.goto('/sign-up');
   await page.getByLabel('Correo').fill(email);
   await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD);
+  await page.getByRole('checkbox', { name: /^Acepto los Términos/ }).check();
+  await page.getByRole('checkbox', { name: /^Autorizo el tratamiento/ }).check();
+  await page.getByRole('checkbox', { name: /^Tengo 18 años/ }).check();
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
   await expect(page.getByRole('heading', { name: 'Revisa tu correo' })).toBeVisible();
   await expect.poll(() => emailedLinks(email).length).toBe(1);

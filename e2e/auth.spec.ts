@@ -26,6 +26,9 @@ async function signUp(page: Page, email: string) {
   await expect(page.getByRole('heading', { name: 'Crea tu cuenta' })).toBeVisible();
   await page.getByLabel('Correo').fill(email);
   await page.getByLabel('Contraseña', { exact: true }).fill(PASSWORD);
+  await page.getByRole('checkbox', { name: /^Acepto los Términos/ }).check();
+  await page.getByRole('checkbox', { name: /^Autorizo el tratamiento/ }).check();
+  await page.getByRole('checkbox', { name: /^Tengo 18 años/ }).check();
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
   await expect(page.getByRole('heading', { name: 'Revisa tu correo' })).toBeVisible();
 }

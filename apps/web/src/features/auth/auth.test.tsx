@@ -1,3 +1,4 @@
+import { CONSENTS } from '@finanz/contracts';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { fakeApi, json, renderApp, signedIn, signedOut } from '../../test/fake-api';
@@ -6,6 +7,11 @@ const field = (label: string) => screen.getByLabelText(label) as HTMLInputElemen
 const type = (label: string, value: string) =>
   fireEvent.change(field(label), { target: { value } });
 const click = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+const check = (label: RegExp) => fireEvent.click(screen.getByRole('checkbox', { name: label }));
+const BOXES = [/^Acepto los Términos/, /^Autorizo el tratamiento/, /^Tengo 18 años/];
+const checkAll = () => {
+  for (const box of BOXES) check(box);
+};
 
 /** After a successful sign-in the app loads: answer as a signed-in user from then on. */
 function signInSucceeds() {
@@ -177,6 +183,7 @@ describe('sign up', () => {
     await screen.findByRole('heading', { name: 'Crea tu cuenta' });
     type('Correo', 'ana@example.com');
     type('Contraseña', 'una frase larga');
+    checkAll();
     click('Crear cuenta');
     expect(await screen.findByRole('heading', { name: 'Revisa tu correo' })).toBeTruthy();
     expect(screen.getByText(/Te enviamos un enlace a ana@example.com/)).toBeTruthy();
@@ -188,6 +195,7 @@ describe('sign up', () => {
         email: 'ana@example.com',
         password: 'una frase larga',
         callbackURL: '/sign-in?verified=1',
+        consents: CONSENTS,
       },
     });
 
@@ -206,10 +214,45 @@ describe('sign up', () => {
     await screen.findByRole('heading', { name: 'Crea tu cuenta' });
     type('Correo', 'ana@example.com');
     type('Contraseña', 'una frase larga');
+    checkAll();
     click('Crear cuenta');
     expect((await screen.findByRole('alert')).textContent).toBe(
       'Ahora mismo no podemos enviar correos. Inténtalo de nuevo más tarde.',
     );
+  });
+
+  it('creates nothing until the terms, the data authorization and the age are all checked', async () => {
+    const api = fakeApi(signedOut);
+    renderApp('/sign-up');
+    await screen.findByRole('heading', { name: 'Crea tu cuenta' });
+    type('Correo', 'ana@example.com');
+    type('Contraseña', 'una frase larga');
+    check(BOXES[0] as RegExp);
+    check(BOXES[2] as RegExp);
+    click('Crear cuenta');
+    expect(await screen.findByText('Marca todas las casillas para continuar.')).toBeTruthy();
+    const privacy = screen.getByRole('checkbox', { name: BOXES[1] as RegExp });
+    expect(privacy.getAttribute('aria-invalid')).toBe('true');
+    expect(
+      screen.getByRole('checkbox', { name: BOXES[0] as RegExp }).getAttribute('aria-invalid'),
+    ).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(privacy));
+    expect(api.actions()).toEqual([]);
+  });
+
+  it('opens the terms and the privacy policy in another tab, keeping what was typed', async () => {
+    fakeApi(signedOut);
+    renderApp('/sign-up');
+    await screen.findByRole('heading', { name: 'Crea tu cuenta' });
+    const terms = screen.getByRole('link', {
+      name: 'Términos y condiciones (se abre en otra pestaña)',
+    });
+    expect(terms.getAttribute('href')).toBe('/legal/terms');
+    expect(terms.getAttribute('target')).toBe('_blank');
+    const privacy = screen.getByRole('link', {
+      name: 'Política de privacidad (se abre en otra pestaña)',
+    });
+    expect(privacy.getAttribute('href')).toBe('/legal/privacy');
   });
 
   it('lets the visitor see the password they typed', async () => {

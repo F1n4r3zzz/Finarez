@@ -28,6 +28,8 @@ export const signedOut = {
   'GET /auth/get-session': () => json(null),
   'GET /me/preferences': () =>
     json({ error: { code: 'auth.required', message: 'Sign in required' } }, 401),
+  'GET /me/consents': () =>
+    json({ error: { code: 'auth.required', message: 'Sign in required' } }, 401),
 } satisfies Handlers;
 
 const nothingYet = { currency: 'COP', complete: true, excluded: [], rateIds: [], staleRateIds: [] };
@@ -35,6 +37,8 @@ const nothingYet = { currency: 'COP', complete: true, excluded: [], rateIds: [],
 export const signedIn = {
   'GET /auth/get-session': () => json({ session: {}, user: USER }),
   'GET /me/preferences': () => json(PREFERENCES),
+  // Everything accepted at its current version.
+  'GET /me/consents': () => json({ pending: [] }),
   // A new user: no accounts or movements yet.
   'GET /ledger/accounts': () => json([]),
   'GET /ledger/transactions': () => json([]),

@@ -1,5 +1,8 @@
+import { legalEs } from './legal.es';
+
 /** Spanish UI strings. Every visible text goes through here; English will mirror this shape. */
 export const es = {
+  legal: legalEs,
   app: {
     name: 'Finarez',
     loading: 'Cargando…',
@@ -546,6 +549,8 @@ export const es = {
     nextInPast: 'La próxima vez no puede ser antes de hoy.',
     endsBeforeNext: 'La fecha final debe ser igual o posterior a la próxima vez.',
     secondDay: 'Elige un segundo día distinto del primero.',
+    consentsOutdated:
+      'Los términos cambiaron mientras tenías la página abierta. Recárgala para ver la versión actual.',
     amountNotAdjustable:
       'Este recurrente mueve varios valores o monedas; su valor no se puede ajustar.',
     feeCategoryMissing:

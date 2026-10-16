@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { Wordmark } from '../../components/Wordmark';
+import { LegalLinks } from '../legal/LegalLinks';
 
 /** Frame for pages outside the app: sign in, sign up, password reset, first setup. */
 export function AuthLayout() {
@@ -28,6 +29,11 @@ export function AuthLayout() {
           <Outlet />
         </div>
       </main>
+      <footer className="border-line border-t px-4 py-5 md:px-8">
+        <div className="mx-auto max-w-3xl">
+          <LegalLinks />
+        </div>
+      </footer>
     </div>
   );
 }

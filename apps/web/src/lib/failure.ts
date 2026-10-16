@@ -36,7 +36,8 @@ export interface Failure {
     | 'nextInPast'
     | 'endsBeforeNext'
     | 'secondDay'
-    | 'amountNotAdjustable';
+    | 'amountNotAdjustable'
+    | 'consentsOutdated';
   minutes?: number;
 }
 
@@ -74,6 +75,9 @@ const BY_CODE: Record<string, Failure['key']> = {
   'recurring.ends_before_next': 'endsBeforeNext',
   'recurring.second_day': 'secondDay',
   'recurring.amount_not_adjustable': 'amountNotAdjustable',
+  // The terms changed while the page was open: an old page sends the old version.
+  'consents.outdated': 'consentsOutdated',
+  CONSENTS_REQUIRED: 'consentsOutdated',
 };
 
 /** The message for an error code kept with a record (say, why a recurring movement waits). */

@@ -1,3 +1,4 @@
+import { CONSENTS } from '@finanz/contracts';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createTestContext, signedInUser, TestClient, uniqueEmail } from '../test/context';
 
@@ -95,6 +96,7 @@ describe('auth responses', () => {
       email,
       password: 'correct horse battery',
       callbackURL: '/',
+      consents: CONSENTS,
     });
     const redirect = await newcomer.open(ctx.emails.lastLink(email));
     expect(redirect.status).toBe(302);

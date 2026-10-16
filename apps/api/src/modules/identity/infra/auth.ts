@@ -1,12 +1,13 @@
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@finanz/contracts';
+import { consentsSchema, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@finanz/contracts';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware, isAPIError } from 'better-auth/api';
 import type { Config } from '../../../config';
 import type { Database } from '../../../db/client';
 import { type EmailBudget, reserveEmail } from '../../../platform/email/budget';
 import type { EmailMessage, EmailSender } from '../../../platform/email/email';
 import { EmailDeliveryError } from '../../../platform/email/resend';
+import { recordConsents } from '../application/consents';
 import { resetPasswordEmail, verificationEmail } from './emails';
 import { accounts, rateLimits, sessions, users, verifications } from './schema';
 
@@ -107,11 +108,33 @@ export function createAuth({ db, config, email, emailBudget }: AuthDeps) {
     hooks: {
       // Runs after the rate limit and before the endpoint looks at the account.
       before: createAuthMiddleware(async (ctx) => {
+        // No account without accepting the terms, authorizing the data and being an adult,
+        // each at its current version.
+        if (
+          ctx.path === '/sign-up/email' &&
+          !consentsSchema.safeParse(ctx.body?.consents).success
+        ) {
+          throw new APIError('BAD_REQUEST', {
+            code: 'CONSENTS_REQUIRED',
+            message: 'Accept the current terms and data authorization to create an account.',
+          });
+        }
         if (EMAIL_SENDING_PATHS.has(ctx.path) && !(await reserveEmail(emailBudget))) {
           throw new APIError('SERVICE_UNAVAILABLE', {
             code: 'EMAIL_UNAVAILABLE',
             message: 'Email is temporarily unavailable. Try again later.',
           });
+        }
+      }),
+      // After sign-up has saved the account: record what its owner accepted, as evidence.
+      after: createAuthMiddleware(async (ctx) => {
+        if (ctx.path !== '/sign-up/email') return;
+        const returned = ctx.context.returned;
+        if (!returned || isAPIError(returned)) return;
+        const userId = (returned as { user?: { id?: unknown } }).user?.id;
+        const accepted = consentsSchema.safeParse(ctx.body?.consents);
+        if (typeof userId === 'string' && accepted.success) {
+          await recordConsents(db, userId, accepted.data);
         }
       }),
     },

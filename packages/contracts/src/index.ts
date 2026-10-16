@@ -47,6 +47,15 @@ export {
   type TransactionView,
   voidTransactionSchema,
 } from './ledger';
+export {
+  CONSENT_KINDS,
+  CONSENTS,
+  type ConsentKind,
+  type ConsentStatus,
+  type Consents,
+  consentsSchema,
+  LEGAL_VERSION,
+} from './legal';
 export { type Preferences, preferencesSchema, SUPPORTED_LANGUAGES } from './preferences';
 export { currencyCodeSchema, localDateSchema } from './primitives';
 export {

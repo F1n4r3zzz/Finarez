@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto';
+import { CONSENTS } from '@finanz/contracts';
 import { createApp } from '../app';
 import { createDatabase } from '../db/client';
 import { createAuth } from '../modules/identity';
@@ -126,6 +127,7 @@ export async function signedInUser(
     email,
     password: TEST_PASSWORD,
     callbackURL: '/',
+    consents: CONSENTS,
   });
   if (res.status !== 200) throw new Error(`sign-up failed: ${res.status}`);
   const verified = await client.open(ctx.emails.lastLink(email));

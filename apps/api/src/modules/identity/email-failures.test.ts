@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import { CONSENTS } from '@finanz/contracts';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';
 import { emailSends } from '../../platform/email/schema';
@@ -28,6 +29,7 @@ const signUpBody = (email: string) => ({
   email,
   password: TEST_PASSWORD,
   callbackURL: '/',
+  consents: CONSENTS,
 });
 
 /** Status and body, to compare answers for different addresses. */

@@ -1,3 +1,4 @@
+import { CONSENT_KINDS } from '@finanz/contracts';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,6 +15,7 @@ import { Notice } from '../../components/Notice';
 import { TextLink } from '../../components/TextLink';
 import { isApiFailure } from '../../lib/api';
 import { describeFailure, type Failure } from '../../lib/failure';
+import { allChecked, ConsentChecks } from '../legal/ConsentChecks';
 import { AuthCard } from './AuthLayout';
 import { resendVerification, signUp } from './auth-api';
 import { useFieldError, useFocusFirstInvalid } from './feedback';
@@ -29,6 +31,8 @@ import {
 interface SignUpResult {
   fieldErrors?: FieldErrors;
   failure?: Failure;
+  /** Some consent box was left unchecked. */
+  consentsMissing?: boolean;
   /** Signed up: the address the confirmation link went to. */
   sentTo?: string;
   resent?: boolean;
@@ -49,7 +53,10 @@ export async function signUpAction({ request }: ActionFunctionArgs): Promise<Sig
 
   const password = readField(form, 'password');
   const invalid = fieldErrors({ email: checkEmail(email), password: checkNewPassword(password) });
-  if (invalid) return { fieldErrors: invalid };
+  const consentsMissing = !allChecked(form, CONSENT_KINDS);
+  if (invalid || consentsMissing) {
+    return { fieldErrors: invalid, consentsMissing: consentsMissing || undefined };
+  }
 
   try {
     await signUp(email, password);
@@ -96,7 +103,7 @@ export function SignUpPage() {
   const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const fieldError = useFieldError();
-  useFocusFirstInvalid(formRef, result?.fieldErrors);
+  useFocusFirstInvalid(formRef, result?.fieldErrors ?? (result?.consentsMissing && result));
   const submitting = navigation.state !== 'idle' && navigation.formMethod === 'POST';
 
   if (result?.sentTo) return <CheckEmail email={result.sentTo} />;
@@ -129,6 +136,8 @@ export function SignUpPage() {
           hint={t('auth.passwordHint', PASSWORD_LIMITS)}
           error={fieldError(result?.fieldErrors?.password)}
         />
+        <p className="text-muted text-sm">{t('legal.signupNotice')}</p>
+        <ConsentChecks kinds={CONSENT_KINDS} missing={result?.consentsMissing} />
         <FailureNotice failure={result?.failure} />
         <Button type="submit" pending={submitting} wide>
           {t(submitting ? 'auth.signUp.submitting' : 'auth.signUp.submit')}

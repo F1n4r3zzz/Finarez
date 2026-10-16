@@ -45,6 +45,12 @@ import {
   transactionFormLoader,
 } from '../features/ledger/TransactionFormPage';
 import { TransactionsPage, transactionsLoader } from '../features/ledger/TransactionsPage';
+import {
+  AcceptTermsPage,
+  acceptTermsAction,
+  acceptTermsLoader,
+} from '../features/legal/AcceptTermsPage';
+import { LegalDocumentPage, LegalIndexPage, LegalLayout } from '../features/legal/LegalPage';
 import { ImportPage } from '../features/modules/ImportPage';
 import { ModulePage } from '../features/modules/ModulePage';
 import { MorePage } from '../features/more/MorePage';
@@ -110,6 +116,16 @@ export const routes: RouteObject[] = [
     hydrateFallbackElement: <Loading />,
     children: [
       {
+        path: 'legal',
+        element: <LegalLayout />,
+        children: [
+          { index: true, element: <LegalIndexPage /> },
+          { path: 'terms', element: <LegalDocumentPage documentId="terms" /> },
+          { path: 'privacy', element: <LegalDocumentPage documentId="privacy" /> },
+          { path: 'cookies', element: <LegalDocumentPage documentId="cookies" /> },
+        ],
+      },
+      {
         element: <AuthLayout />,
         children: [
           {
@@ -132,6 +148,12 @@ export const routes: RouteObject[] = [
             loader: resetPasswordLoader,
             action: resetPasswordAction,
             element: <ResetPasswordPage />,
+          },
+          {
+            path: 'accept-terms',
+            loader: acceptTermsLoader,
+            action: acceptTermsAction,
+            element: <AcceptTermsPage />,
           },
           {
             path: 'welcome',

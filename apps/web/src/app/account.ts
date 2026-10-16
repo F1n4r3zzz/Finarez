@@ -1,4 +1,4 @@
-import type { Preferences } from '@finanz/contracts';
+import type { ConsentStatus, Preferences } from '@finanz/contracts';
 import { type LoaderFunctionArgs, redirect, useRouteLoaderData } from 'react-router';
 import { getSession, type SessionUser } from '../features/auth/auth-api';
 import { api, isApiFailure } from '../lib/api';
@@ -23,6 +23,16 @@ async function getPreferences(): Promise<Preferences | null | undefined> {
   }
 }
 
+/** What the user still has to accept; `undefined` when signed out. */
+async function getConsents(): Promise<ConsentStatus | undefined> {
+  try {
+    return await api<ConsentStatus>('GET', '/me/consents');
+  } catch (error) {
+    if (isApiFailure(error, 401)) return undefined;
+    throw error;
+  }
+}
+
 export async function savePreferences(preferences: Preferences): Promise<Preferences> {
   return api<Preferences>('PUT', '/me/preferences', preferences);
 }
@@ -41,23 +51,32 @@ export function nextPath(request: Request): string {
   return safeNextPath(new URL(request.url).searchParams.get('next'));
 }
 
-async function loadAccount() {
-  const [user, preferences] = await Promise.all([getSession(), getPreferences()]);
-  return { user: preferences === undefined ? null : user, preferences };
+export async function loadAccount() {
+  const [user, preferences, consents] = await Promise.all([
+    getSession(),
+    getPreferences(),
+    getConsents(),
+  ]);
+  return { user: preferences === undefined ? null : user, preferences, consents };
 }
 
-/** The app needs a session and saved preferences; otherwise sign in or set them up first. */
+/**
+ * The app needs a session, the current terms accepted and saved preferences; otherwise sign
+ * in, accept or set them up first.
+ */
 export async function accountLoader({ request }: LoaderFunctionArgs): Promise<Account> {
-  const { user, preferences } = await loadAccount();
+  const { user, preferences, consents } = await loadAccount();
   if (!user) throw redirect(signInPath(request));
+  if (consents?.pending.length) throw redirect(returningHere('/accept-terms', request));
   if (!preferences) throw redirect(returningHere('/welcome', request));
   return { user, preferences };
 }
 
 /** First-time setup: only for signed-in users who haven't saved preferences yet. */
 export async function welcomeLoader({ request }: LoaderFunctionArgs): Promise<null> {
-  const { user, preferences } = await loadAccount();
+  const { user, preferences, consents } = await loadAccount();
   if (!user) throw redirect(signInPath(request));
+  if (consents?.pending.length) throw redirect(returningHere('/accept-terms', request));
   if (preferences) throw redirect(nextPath(request));
   return null;
 }

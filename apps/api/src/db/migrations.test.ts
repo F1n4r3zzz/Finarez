@@ -69,6 +69,7 @@ describe('migrations', () => {
         'debts.debt_payments',
         'debts.debts',
         'identity.accounts',
+        'identity.consents',
         'identity.preferences',
         'identity.rate_limits',
         'identity.sessions',
@@ -188,6 +189,8 @@ describe.skipIf(!(await isSuperuser()))('database logins', () => {
       });
       await denied(db, APP_ROLE, sql`update currency.user_rates set rate = 1`);
       await denied(db, APP_ROLE, sql`delete from ledger.transaction_audit`);
+      await denied(db, APP_ROLE, sql`update identity.consents set version = '0'`);
+      await denied(db, APP_ROLE, sql`delete from identity.consents`);
       await denied(db, APP_ROLE, sql`delete from ledger.transactions`);
       for (const table of [
         'ledger.accounts',
