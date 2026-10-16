@@ -78,7 +78,7 @@ describe('Ajustes', () => {
       'PUT /me/preferences': () => json({ error: { code: 'auth.required', message: '' } }, 401),
     });
     fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     expect(router.state.location.search).toBe('?next=%2Fsettings');
   });
 });

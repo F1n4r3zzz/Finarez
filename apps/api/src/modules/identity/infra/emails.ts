@@ -5,14 +5,14 @@ import type { EmailMessage } from '../../../platform/email/email';
 export function verificationEmail(to: string, url: string): EmailMessage {
   return {
     to,
-    subject: 'Confirma tu correo en Finanz',
+    subject: 'Confirma tu correo en Finarez',
     text: [
       'Hola:',
       '',
-      'Para activar tu cuenta de Finanz, abre este enlace:',
+      'Para activar tu cuenta de Finarez, abre este enlace:',
       url,
       '',
-      'El enlace vence en 24 horas. Si no creaste una cuenta en Finanz, ignora este correo.',
+      'El enlace vence en 24 horas. Si no creaste una cuenta en Finarez, ignora este correo.',
     ].join('\n'),
   };
 }
@@ -20,7 +20,7 @@ export function verificationEmail(to: string, url: string): EmailMessage {
 export function resetPasswordEmail(to: string, url: string): EmailMessage {
   return {
     to,
-    subject: 'Elige una contraseña nueva para Finanz',
+    subject: 'Elige una contraseña nueva para Finarez',
     text: [
       'Hola:',
       '',

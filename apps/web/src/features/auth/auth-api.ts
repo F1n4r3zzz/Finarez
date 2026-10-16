@@ -20,7 +20,7 @@ export async function signIn(email: string, password: string): Promise<void> {
 }
 
 export async function signUp(email: string, password: string): Promise<void> {
-  // Finanz doesn't ask for a name; the auth library requires the field.
+  // Finarez doesn't ask for a name; the auth library requires the field.
   await api('POST', '/auth/sign-up/email', {
     name: '',
     email,

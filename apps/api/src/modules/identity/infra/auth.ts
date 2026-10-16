@@ -49,7 +49,7 @@ export function createAuth({ db, config, email, emailBudget }: AuthDeps) {
   };
 
   return betterAuth({
-    appName: 'Finanz',
+    appName: 'Finarez',
     baseURL: config.APP_URL,
     basePath: '/api/auth',
     secret: config.AUTH_SECRET,

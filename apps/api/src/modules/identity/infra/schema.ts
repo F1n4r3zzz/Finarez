@@ -85,7 +85,7 @@ export const rateLimits = identity.table('rate_limits', {
   lastRequest: bigint({ mode: 'number' }).notNull(),
 });
 
-// Finanz's own identity data.
+// Finarez's own identity data.
 
 export const preferences = identity.table('preferences', {
   userId: text()

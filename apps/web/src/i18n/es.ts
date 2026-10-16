@@ -1,7 +1,7 @@
 /** Spanish UI strings. Every visible text goes through here; English will mirror this shape. */
 export const es = {
   app: {
-    name: 'Finanz',
+    name: 'Finarez',
     loading: 'Cargando…',
     skipToContent: 'Saltar al contenido',
     mainNav: 'Navegación principal',
@@ -44,9 +44,9 @@ export const es = {
     },
     settings: {
       title: 'Ajustes',
-      description: 'Tu cuenta, tu moneda, tu zona horaria y cómo se ve Finanz.',
+      description: 'Tu cuenta, tu moneda, tu zona horaria y cómo se ve Finarez.',
     },
-    more: { title: 'Más', description: 'Todas las secciones de Finanz.' },
+    more: { title: 'Más', description: 'Todas las secciones de Finarez.' },
   },
   empty: {
     accounts: {
@@ -232,7 +232,7 @@ export const es = {
       date: 'Fecha',
       transfer: 'Mover el dinero desde otra cuenta',
       from: 'Desde',
-      fromHint: 'Finanz registra la transferencia por ti.',
+      fromHint: 'Finarez registra la transferencia por ti.',
       sending: 'Guardando…',
       done: 'Listo.',
       noAccounts:
@@ -263,12 +263,12 @@ export const es = {
   recurring: {
     title: 'Recurrentes',
     description:
-      'Lo que se repite, como el arriendo, el salario o las suscripciones. Finanz lo registra en su fecha.',
+      'Lo que se repite, como el arriendo, el salario o las suscripciones. Finarez lo registra en su fecha.',
     add: 'Nuevo recurrente',
     link: 'Recurrentes',
     emptyTitle: 'Nada se repite todavía',
     emptyBody:
-      'Al crear un movimiento, marca «Repetir» y Finanz lo registrará cada mes, quincena, semana o año.',
+      'Al crear un movimiento, marca «Repetir» y Finarez lo registrará cada mes, quincena, semana o año.',
     active: 'Activos',
     endedList: 'Terminados',
     ended: 'Terminado',
@@ -296,7 +296,7 @@ export const es = {
       legend: 'Repetir',
       toggle: 'Repetir este movimiento',
       toggleHint:
-        'Para el arriendo, el salario o una suscripción: Finanz lo registra en cada fecha.',
+        'Para el arriendo, el salario o una suscripción: Finarez lo registra en cada fecha.',
       frequency: 'Cada cuánto',
       secondDay: 'Segundo día del mes',
       secondDayHint: 'El primero es el {{day}}, el día de la fecha.',
@@ -450,7 +450,7 @@ export const es = {
     showPassword: 'Mostrar contraseña',
     hidePassword: 'Ocultar contraseña',
     signIn: {
-      title: 'Entra a Finanz',
+      title: 'Entra a Finarez',
       submit: 'Entrar',
       submitting: 'Entrando…',
       forgot: '¿Olvidaste tu contraseña?',
@@ -487,7 +487,7 @@ export const es = {
         'Escribe el correo de tu cuenta y te enviaremos un enlace para elegir una contraseña nueva.',
       submit: 'Enviar enlace',
       submitting: 'Enviando…',
-      sent: 'Si {{email}} tiene una cuenta en Finanz, te llegará un enlace para elegir una contraseña nueva. Vence en 1 hora.',
+      sent: 'Si {{email}} tiene una cuenta en Finarez, te llegará un enlace para elegir una contraseña nueva. Vence en 1 hora.',
       back: 'Volver a entrar',
     },
     reset: {
@@ -513,13 +513,13 @@ export const es = {
     tooManyAttempts_one: 'Demasiados intentos. Inténtalo de nuevo en {{count}} minuto.',
     tooManyAttempts_other: 'Demasiados intentos. Inténtalo de nuevo en {{count}} minutos.',
     emailUnavailable: 'Ahora mismo no podemos enviar correos. Inténtalo de nuevo más tarde.',
-    network: 'No hay conexión con Finanz. Revisa tu internet e inténtalo de nuevo.',
+    network: 'No hay conexión con Finarez. Revisa tu internet e inténtalo de nuevo.',
     unexpected: 'Algo falló de nuestro lado. Inténtalo de nuevo en un momento.',
     staleVersion:
       'Este movimiento cambió mientras lo editabas. Vuelve a abrirlo para ver la última versión.',
     reconciledChange:
       'Este movimiento ya está conciliado con tu extracto. Cambiarlo quitará esa marca.',
-    managedTransaction: 'Este movimiento lo maneja otra sección de Finanz.',
+    managedTransaction: 'Este movimiento lo maneja otra sección de Finarez.',
     accountArchived: 'Esa cuenta está archivada. Elige otra o desarchívala.',
     amountsDiffer: 'Entre cuentas de la misma moneda, lo enviado y lo recibido deben ser iguales.',
     sameAccount: 'Elige dos cuentas distintas.',
@@ -632,7 +632,7 @@ export const es = {
         void: 'Anular movimiento',
         voidHint: 'Deja de contar en tus saldos y reportes. Puedes restaurarlo.',
         restore: 'Restaurar movimiento',
-        managed: 'Este movimiento lo crea otra sección de Finanz y se edita desde allí.',
+        managed: 'Este movimiento lo crea otra sección de Finarez y se edita desde allí.',
       },
       fields: {
         required: 'Completa este campo.',
@@ -651,7 +651,7 @@ export const es = {
     installment: 'Cuota: {{amount}}',
     emptyTitle: 'No tienes deudas registradas',
     emptyBody:
-      'Agrega tus préstamos y tarjetas. Al pagar, Finanz separa lo que reduce tu deuda de los intereses, que sí cuentan como gasto.',
+      'Agrega tus préstamos y tarjetas. Al pagar, Finarez separa lo que reduce tu deuda de los intereses, que sí cuentan como gasto.',
     form: {
       title: 'Nueva deuda',
       type: 'Tipo',
@@ -785,7 +785,7 @@ export const es = {
     themeDark: 'Oscuro',
     themeOled: 'Negro (OLED)',
     themeHint:
-      'Con «Como el sistema», Finanz cambia solo según tu dispositivo. Negro (OLED) usa un fondo negro puro, que ahorra batería en pantallas OLED.',
+      'Con «Como el sistema», Finarez cambia solo según tu dispositivo. Negro (OLED) usa un fondo negro puro, que ahorra batería en pantallas OLED.',
     language: 'Idioma',
     languageValue: 'Español',
     languageNote: 'El inglés estará disponible más adelante.',
@@ -805,7 +805,7 @@ export const es = {
   error: {
     title: 'No se pudo cargar esta página',
     body: 'Recarga la página. Si sigue fallando, vuelve al inicio.',
-    offlineTitle: 'No pudimos conectar con Finanz',
+    offlineTitle: 'No pudimos conectar con Finarez',
     offlineBody: 'Revisa tu conexión a internet e inténtalo de nuevo.',
     retry: 'Reintentar',
   },

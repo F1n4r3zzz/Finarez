@@ -24,7 +24,7 @@ export const allocationInputSchema = z.object({
   accountId: z.uuid(),
   amountMinor: minor,
   occurredOn: localDateSchema,
-  /** Contribute only: move the money from this account first; Finanz records the transfer. */
+  /** Contribute only: move the money from this account first; Finarez records the transfer. */
   fromAccountId: z.uuid().optional(),
   note: z.string().trim().min(1).max(200).optional(),
 });
@@ -58,7 +58,7 @@ export interface AllocationView {
   amountMinor: string;
   occurredOn: LocalDate;
   note: string | null;
-  /** The transfer Finanz recorded when the contribution moved money. */
+  /** The transfer Finarez recorded when the contribution moved money. */
   transactionId: string | null;
   voided: boolean;
 }

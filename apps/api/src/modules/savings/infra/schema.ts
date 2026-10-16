@@ -52,7 +52,7 @@ export const goals = savingsSchema.table(
 /**
  * Money set aside for a goal in one account (positive) or released from it (negative). An
  * earmark over the account's balance, not a movement: it never touches the ledger, except the
- * transfer Finanz records when a contribution also moved the money (`transaction_id`).
+ * transfer Finarez records when a contribution also moved the money (`transaction_id`).
  */
 export const allocations = savingsSchema.table(
   'allocations',

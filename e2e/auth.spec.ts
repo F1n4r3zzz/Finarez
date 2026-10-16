@@ -96,7 +96,7 @@ test('a user who forgot the password chooses a new one and returns to the page t
   await expect(page.getByRole('heading', { name: 'Recupera tu contraseña' })).toBeVisible();
   await page.getByLabel('Correo').fill(email);
   await page.getByRole('button', { name: 'Enviar enlace' }).click();
-  await expect(page.getByText(`Si ${email} tiene una cuenta en Finanz`)).toBeVisible();
+  await expect(page.getByText(`Si ${email} tiene una cuenta en Finarez`)).toBeVisible();
 
   const resetLink = await emailedLink(email, 2);
   await page.goto(resetLink);

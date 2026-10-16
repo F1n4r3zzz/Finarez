@@ -13,7 +13,7 @@ const ConfigSchema = z
     EMAIL_TRANSPORT: z.enum(['console', 'resend']).default('console'),
     RESEND_API_KEY: z.string().min(1).optional(),
     /** Sender. Without a verified domain, Resend only delivers to the account owner. */
-    EMAIL_FROM: z.string().min(3).default('Finanz <onboarding@resend.dev>'),
+    EMAIL_FROM: z.string().min(3).default('Finarez <onboarding@resend.dev>'),
     /** Hard cap on emails sent per UTC day across all instances (provider free tier). */
     EMAIL_DAILY_LIMIT: z.coerce.number().int().min(0).default(90),
     /**

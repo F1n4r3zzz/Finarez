@@ -27,7 +27,7 @@ describe('api', () => {
     });
   });
 
-  it('reads the error code from Finanz errors and from auth errors', async () => {
+  it('reads the error code from Finarez errors and from auth errors', async () => {
     answer('{"error":{"code":"preferences.not_set","message":"x"}}', 404);
     expect(await failure()).toMatchObject({ status: 404, code: 'preferences.not_set' });
     answer('{"code":"EMAIL_NOT_VERIFIED","message":"x"}', 403);

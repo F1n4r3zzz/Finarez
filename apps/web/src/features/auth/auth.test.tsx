@@ -26,7 +26,7 @@ describe('sign in', () => {
   it('checks the fields before calling the API and focuses the first one to fix', async () => {
     const api = fakeApi(signedOut);
     renderApp('/sign-in');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     type('Correo', 'ana@');
     click('Entrar');
     expect(
@@ -41,7 +41,7 @@ describe('sign in', () => {
   it('signs in and continues to the page that was asked for', async () => {
     const api = fakeApi(signInSucceeds());
     const router = renderApp('/sign-in?next=%2Fdebts');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     type('Correo', ' ana@example.com ');
     type('Contraseña', 'una frase larga');
     click('Entrar');
@@ -59,7 +59,7 @@ describe('sign in', () => {
   it('never follows a "next" address that leaves the app', async () => {
     fakeApi(signInSucceeds());
     const router = renderApp('/sign-in?next=%2F%2Fevil.example%2Fphish');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     type('Correo', 'ana@example.com');
     type('Contraseña', 'una frase larga');
     click('Entrar');
@@ -74,7 +74,7 @@ describe('sign in', () => {
         json({ code: 'INVALID_EMAIL_OR_PASSWORD', message: 'Invalid email or password' }, 401),
     });
     renderApp('/sign-in');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     type('Correo', 'ana@example.com');
     type('Contraseña', 'otra cosa distinta');
     click('Entrar');
@@ -90,7 +90,7 @@ describe('sign in', () => {
         json({ message: 'Too many requests' }, 429, { 'X-Retry-After': '540' }),
     });
     renderApp('/sign-in');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     type('Correo', 'ana@example.com');
     type('Contraseña', 'una frase larga');
     click('Entrar');
@@ -107,7 +107,7 @@ describe('sign in', () => {
       'POST /auth/send-verification-email': () => json({ status: true }),
     });
     renderApp('/sign-in');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     type('Correo', 'ana@example.com');
     type('Contraseña', 'una frase larga');
     click('Entrar');
@@ -140,7 +140,7 @@ describe('sign in', () => {
   it('reports a lost connection instead of failing silently', async () => {
     fakeApi(signedOut);
     renderApp('/sign-in');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     // The API was reachable for the page, then the network dropped.
     const offline = async () => {
       throw new TypeError('Failed to fetch');
@@ -150,7 +150,7 @@ describe('sign in', () => {
     type('Contraseña', 'una frase larga');
     click('Entrar');
     expect((await screen.findByRole('alert')).textContent).toBe(
-      'No hay conexión con Finanz. Revisa tu internet e inténtalo de nuevo.',
+      'No hay conexión con Finarez. Revisa tu internet e inténtalo de nuevo.',
     );
   });
 });
@@ -231,7 +231,7 @@ describe('password reset', () => {
     await screen.findByRole('heading', { name: 'Recupera tu contraseña' });
     type('Correo', 'ana@example.com');
     click('Enviar enlace');
-    expect(await screen.findByText(/Si ana@example.com tiene una cuenta en Finanz/)).toBeTruthy();
+    expect(await screen.findByText(/Si ana@example.com tiene una cuenta en Finarez/)).toBeTruthy();
     expect(api.actions()).toEqual([
       {
         method: 'POST',
@@ -297,7 +297,7 @@ describe('sign out', () => {
     const router = renderApp('/settings');
     expect(await screen.findByText('Entraste con ana@example.com.')).toBeTruthy();
     click('Cerrar sesión');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     expect(router.state.location.pathname).toBe('/sign-in');
     await waitFor(() => expect(api.actions().map((c) => c.path)).toEqual(['/auth/sign-out']));
   });

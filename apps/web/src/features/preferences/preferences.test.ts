@@ -54,7 +54,7 @@ describe('preferencesFromForm', () => {
     ).toEqual({ language: 'es', primaryCurrency: 'MXN', timeZone: 'America/Merida' });
   });
 
-  it('rejects a currency Finanz does not offer', () => {
+  it('rejects a currency Finarez does not offer', () => {
     expect(preferencesFromForm(form({ primaryCurrency: 'BTC', timeZone: 'UTC' }), 'es')).toBe(
       undefined,
     );

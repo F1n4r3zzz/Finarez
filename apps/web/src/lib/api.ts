@@ -1,6 +1,6 @@
 /**
  * A failed API call. `status` is 0 when the API could not be reached at all. `code` is the
- * stable error code from the body (Finanz errors and auth errors use different shapes).
+ * stable error code from the body (Finarez errors and auth errors use different shapes).
  */
 export class ApiFailure extends Error {
   constructor(
@@ -16,7 +16,7 @@ export class ApiFailure extends Error {
 
 function errorCode(body: unknown): string | undefined {
   if (typeof body !== 'object' || body === null) return undefined;
-  // Finanz: { error: { code } }. Auth endpoints: { code }.
+  // Finarez: { error: { code } }. Auth endpoints: { code }.
   const nested = (body as { error?: { code?: unknown } }).error?.code;
   const flat = (body as { code?: unknown }).code;
   const code = nested ?? flat;
@@ -38,7 +38,7 @@ async function readJson(res: Response): Promise<unknown> {
   }
 }
 
-/** Calls the Finanz API (same origin, session cookie) and returns the parsed JSON body. */
+/** Calls the Finarez API (same origin, session cookie) and returns the parsed JSON body. */
 export async function api<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,

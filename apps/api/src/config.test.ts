@@ -65,7 +65,7 @@ describe('loadConfig', () => {
     expect(() => loadConfig(production)).toThrow(/RESEND_API_KEY/);
     expect(loadConfig({ ...production, RESEND_API_KEY: 're_test' })).toMatchObject({
       EMAIL_TRANSPORT: 'resend',
-      EMAIL_FROM: 'Finanz <onboarding@resend.dev>',
+      EMAIL_FROM: 'Finarez <onboarding@resend.dev>',
     });
   });
 });

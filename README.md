@@ -1,4 +1,4 @@
-# Finanz
+# Finarez
 
 Personal finance web app: accounts, income and expenses, transfers, budgets, savings, debts and net worth. Spanish first, multi-currency (USD, EUR, COP, MXN). Work in progress.
 

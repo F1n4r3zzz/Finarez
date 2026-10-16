@@ -163,7 +163,7 @@ export interface NewAllocation {
 
 /**
  * Sets money aside for a goal, or releases it. A contribution can also move the money first
- * (`fromAccountId`): Finanz records that transfer as its own, savings-managed movement.
+ * (`fromAccountId`): Finarez records that transfer as its own, savings-managed movement.
  * Releasing never takes out more than the goal holds in that account.
  */
 export async function allocate(

@@ -6,7 +6,7 @@ describe('who can see the app', () => {
   it('sends signed-out visitors to sign in, and back to the page they wanted afterwards', async () => {
     fakeApi(signedOut);
     const router = renderApp('/accounts?view=all');
-    expect(await screen.findByRole('heading', { name: 'Entra a Finanz' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Entra a Finarez' })).toBeTruthy();
     expect(router.state.location.pathname).toBe('/sign-in');
     expect(router.state.location.search).toBe(`?next=${encodeURIComponent('/accounts?view=all')}`);
   });
@@ -40,7 +40,7 @@ describe('who can see the app', () => {
   it('treats a session that ends between the two checks as signed out', async () => {
     fakeApi({ ...signedOut, 'GET /auth/get-session': () => json({ session: {}, user: USER }) });
     const router = renderApp('/');
-    await screen.findByRole('heading', { name: 'Entra a Finanz' });
+    await screen.findByRole('heading', { name: 'Entra a Finarez' });
     expect(router.state.location.pathname).toBe('/sign-in');
   });
 
@@ -51,7 +51,7 @@ describe('who can see the app', () => {
     });
     renderApp('/');
     expect(
-      await screen.findByRole('heading', { name: 'No pudimos conectar con Finanz' }),
+      await screen.findByRole('heading', { name: 'No pudimos conectar con Finarez' }),
     ).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy();
   });
@@ -59,6 +59,6 @@ describe('who can see the app', () => {
   it('still shows the sign-in form when the session check cannot reach the API', async () => {
     fakeApi({ 'GET /auth/get-session': () => json({ message: 'down' }, 503) });
     renderApp('/sign-in');
-    expect(await screen.findByRole('heading', { name: 'Entra a Finanz' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Entra a Finarez' })).toBeTruthy();
   });
 });

@@ -1,7 +1,7 @@
 // Retires the service worker of the old FinanzLog prototype, which answered every request
 // from its own cache. Browsers that still have it fetch this file when checking for an
 // update, install it, and it deletes the old caches, unregisters itself and reloads open
-// tabs so they load the current app from the network. Finanz itself registers no worker.
+// tabs so they load the current app from the network. Finarez itself registers no worker.
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', (event) => {

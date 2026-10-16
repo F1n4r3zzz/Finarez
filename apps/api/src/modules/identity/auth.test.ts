@@ -32,7 +32,7 @@ describe('registration and email verification', () => {
 
     expect((await signUp(client, email)).status).toBe(200);
     const [message] = ctx.emails.to(email);
-    expect(message?.subject).toBe('Confirma tu correo en Finanz');
+    expect(message?.subject).toBe('Confirma tu correo en Finarez');
     expect(ctx.emails.lastLink(email).pathname).toBe('/api/auth/verify-email');
 
     const early = await client.request('POST', '/api/auth/sign-in/email', {
@@ -188,7 +188,7 @@ describe('password reset', () => {
       redirectTo: '/restablecer',
     });
     expect(requested.status).toBe(200);
-    expect(ctx.emails.to(email).at(-1)?.subject).toBe('Elige una contraseña nueva para Finanz');
+    expect(ctx.emails.to(email).at(-1)?.subject).toBe('Elige una contraseña nueva para Finarez');
 
     const token = ctx.emails.lastLink(email).pathname.split('/').at(-1);
     const NEW_PASSWORD = 'a brand new passphrase';
