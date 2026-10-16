@@ -30,7 +30,13 @@ export interface Failure {
     | 'transferCurrency'
     | 'budgetCategory'
     | 'budgetDuplicate'
-    | 'budgetArchived';
+    | 'budgetArchived'
+    | 'occurrenceHandled'
+    | 'ruleEnded'
+    | 'nextInPast'
+    | 'endsBeforeNext'
+    | 'secondDay'
+    | 'amountNotAdjustable';
   minutes?: number;
 }
 
@@ -62,7 +68,16 @@ const BY_CODE: Record<string, Failure['key']> = {
   'budgets.category': 'budgetCategory',
   'budgets.duplicate_category': 'budgetDuplicate',
   'budgets.archived': 'budgetArchived',
+  'recurring.not_pending': 'occurrenceHandled',
+  'recurring.ended': 'ruleEnded',
+  'recurring.next_in_past': 'nextInPast',
+  'recurring.ends_before_next': 'endsBeforeNext',
+  'recurring.second_day': 'secondDay',
+  'recurring.amount_not_adjustable': 'amountNotAdjustable',
 };
+
+/** The message for an error code kept with a record (say, why a recurring movement waits). */
+export const failureForCode = (code: string): Failure => ({ key: BY_CODE[code] ?? 'unexpected' });
 
 export function describeFailure(error: unknown): Failure {
   if (!isApiFailure(error)) return { key: 'unexpected' };

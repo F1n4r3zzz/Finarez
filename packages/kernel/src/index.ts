@@ -42,3 +42,10 @@ export {
   parseRate,
   RATE_SCALE,
 } from './rate';
+export {
+  FREQUENCIES,
+  type Frequency,
+  nextOccurrence,
+  occurrencesFrom,
+  type Schedule,
+} from './recurrence';

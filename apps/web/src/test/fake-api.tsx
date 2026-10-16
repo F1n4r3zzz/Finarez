@@ -44,6 +44,9 @@ export const signedIn = {
   'GET /savings/goals': () => json([]),
   'GET /savings/accounts': () => json([]),
   'GET /budgets': () => json([]),
+  'POST /recurring/run': () => json({ posted: 0, pending: 0 }),
+  'GET /recurring/pending': () => json([]),
+  'GET /recurring/rules': () => json([]),
   'GET /reports/net-worth': () =>
     json({
       on: '2026-10-14',
@@ -94,8 +97,8 @@ export function fakeApi(handlers: Handlers) {
   });
   return {
     calls,
-    /** Calls that change something (every GET left out). */
-    actions: () => calls.filter((c) => c.method !== 'GET'),
+    /** Calls that change something (every GET, and the run on app open, left out). */
+    actions: () => calls.filter((c) => c.method !== 'GET' && c.path !== '/recurring/run'),
   };
 }
 

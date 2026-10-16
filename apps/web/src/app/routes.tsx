@@ -49,6 +49,13 @@ import { ImportPage } from '../features/modules/ImportPage';
 import { ModulePage } from '../features/modules/ModulePage';
 import { MorePage } from '../features/more/MorePage';
 import {
+  RecurringPage,
+  recurringAction,
+  recurringLoader,
+} from '../features/recurring/RecurringPage';
+import { EditRulePage, editRuleAction, editRuleLoader } from '../features/recurring/RuleFormPage';
+import { RulePage, ruleLoader } from '../features/recurring/RulePage';
+import {
   ReportsPage,
   reportsLoader,
   reportsShouldRevalidate,
@@ -157,6 +164,19 @@ export const routes: RouteObject[] = [
             loader: transactionFormLoader,
             action: transactionFormAction,
             element: <TransactionFormPage />,
+          },
+          {
+            path: 'transactions/recurring',
+            loader: recurringLoader,
+            action: recurringAction,
+            element: <RecurringPage />,
+          },
+          { path: 'transactions/recurring/:id', loader: ruleLoader, element: <RulePage /> },
+          {
+            path: 'transactions/recurring/:id/edit',
+            loader: editRuleLoader,
+            action: editRuleAction,
+            element: <EditRulePage />,
           },
           { path: 'import', element: <ImportPage /> },
           { path: 'budgets', loader: budgetsLoader, element: <BudgetsPage /> },

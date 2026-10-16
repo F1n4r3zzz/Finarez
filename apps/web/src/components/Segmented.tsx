@@ -19,7 +19,7 @@ export function Segmented<T extends string>({
   return (
     <fieldset>
       <legend className="mb-1.5 font-medium text-sm">{legend}</legend>
-      <div className="inline-flex gap-1 rounded-lg border border-line bg-paper p-1">
+      <div className="inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-line bg-paper p-1">
         {options.map((o) => (
           <label
             key={o.value}

@@ -56,6 +56,18 @@ export {
   rateRevisionSchema,
   type UserRate,
 } from './rates';
+export {
+  type ConfirmOccurrence,
+  confirmOccurrenceSchema,
+  type OccurrenceView,
+  type RecurringTemplate,
+  type RuleInput,
+  type RuleUpdate,
+  type RuleView,
+  type RunResult,
+  ruleInputSchema,
+  ruleUpdateSchema,
+} from './recurring';
 export type {
   BridgeReport,
   ExcludedView,

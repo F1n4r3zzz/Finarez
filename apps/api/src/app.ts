@@ -11,6 +11,7 @@ import { currencyRoutes } from './modules/currency';
 import { debtRoutes } from './modules/debts';
 import { type Auth, meRoutes } from './modules/identity';
 import { ledgerRoutes } from './modules/ledger';
+import { recurringRoutes } from './modules/recurring';
 import { reportRoutes } from './modules/reporting';
 import { savingsRoutes } from './modules/savings';
 import { withEmailReservations } from './platform/email/budget';
@@ -50,5 +51,6 @@ export function createApp({ db, auth, appUrl }: AppDeps) {
   app.route('/debts', debtRoutes({ auth, db }));
   app.route('/savings', savingsRoutes({ auth, db }));
   app.route('/budgets', budgetRoutes({ auth, db }));
+  app.route('/recurring', recurringRoutes({ auth, db }));
   return app;
 }

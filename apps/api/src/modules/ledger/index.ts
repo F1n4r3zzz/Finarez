@@ -11,6 +11,7 @@ export {
 export { type EntryRow, entriesOf, type TransactionRow } from './application/store';
 export {
   type Actor,
+  checkDraft,
   editTransaction,
   getTransaction,
   postTransaction,
@@ -18,7 +19,12 @@ export {
   voidTransaction,
 } from './application/transactions';
 export type { AccountKind, SystemRole } from './domain/kinds';
-export { LedgerError, type PlannedEntry, type PlannedTransaction } from './domain/posting';
+export {
+  type Draft,
+  LedgerError,
+  type PlannedEntry,
+  type PlannedTransaction,
+} from './domain/posting';
 export { ledgerRoutes } from './http/routes';
 /** Only for foreign keys from other modules' tables. */
 export { accounts as accountsTable, transactions as transactionsTable } from './infra/schema';

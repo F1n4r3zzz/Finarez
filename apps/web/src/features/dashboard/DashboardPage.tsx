@@ -18,6 +18,7 @@ import {
   listCategories,
   listTransactions,
 } from '../ledger/api';
+import { listPending } from '../recurring/api';
 import {
   type AccountRow,
   type CategorySpend,
@@ -40,16 +41,18 @@ export async function dashboardLoader() {
   const today = todayIn(preferences.timeZone);
   const current = monthRange(today);
   const previous = monthRange(today, 1);
-  const [accounts, categories, worth, thisMonth, lastMonth, recent] = await Promise.all([
+  const [accounts, categories, worth, thisMonth, lastMonth, recent, pending] = await Promise.all([
     listAccounts(),
     listCategories(),
     getNetWorth(today),
     getSummary(current.from, current.to),
     getSummary(previous.from, previous.to),
     listTransactions({ limit: 6 }),
+    listPending(),
   ]);
   return {
     accounts,
+    pending: pending.length,
     categories,
     worth,
     thisMonth,
@@ -121,23 +124,38 @@ export function DashboardPage() {
     balance: fromWire({ amountMinor: a.balanceMinor, currency: a.currency }),
   }));
 
+  const notices = [
+    data.pending > 0 && (
+      <Notice key="recurring" tone="info">
+        <p>
+          {t('recurring.notice', { count: data.pending })}{' '}
+          <Link
+            to="/transactions/recurring"
+            className="font-medium text-brand underline-offset-4 hover:underline"
+          >
+            {t('recurring.review')}
+          </Link>
+        </p>
+      </Notice>
+    ),
+    missing.length > 0 && (
+      <Notice key="rates" tone="info">
+        <p>
+          {t('dashboard.missingRates', { currencies: missing.join(', ') })}{' '}
+          <Link
+            to="/settings"
+            className="font-medium text-brand underline-offset-4 hover:underline"
+          >
+            {t('dashboard.addRates')}
+          </Link>
+        </p>
+      </Notice>
+    ),
+  ].filter(Boolean);
+
   return (
     <DashboardView
-      notice={
-        missing.length > 0 ? (
-          <Notice tone="info" className="mb-6">
-            <p>
-              {t('dashboard.missingRates', { currencies: missing.join(', ') })}{' '}
-              <Link
-                to="/settings"
-                className="font-medium text-brand underline-offset-4 hover:underline"
-              >
-                {t('dashboard.addRates')}
-              </Link>
-            </p>
-          </Notice>
-        ) : undefined
-      }
+      notice={notices.length > 0 ? <div className="mb-6 grid gap-3">{notices}</div> : undefined}
       summary={{
         available: money(available, currency),
         accountCount: liquid.length,

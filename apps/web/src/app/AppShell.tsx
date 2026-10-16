@@ -1,7 +1,9 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Wordmark } from '../components/Wordmark';
+import { runRecurring } from '../features/recurring/api';
 import { MODULES, MORE, type ModuleDef } from './modules';
 import { useShowInvestments } from './preferences';
 
@@ -28,8 +30,28 @@ function SidebarLink({ module }: { module: ModuleDef }) {
   );
 }
 
+/**
+ * Once per app open, records the recurring movements that came due (or queues them for
+ * confirmation) and refreshes what is on screen if anything changed. Failures stay silent: the
+ * next open tries again, and nothing on screen depends on it.
+ */
+function useRecurringRun() {
+  const { revalidate } = useRevalidator();
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    runRecurring()
+      .then((result) => {
+        if (result.posted > 0 || result.pending > 0) revalidate();
+      })
+      .catch(() => {});
+  }, [revalidate]);
+}
+
 export function AppShell() {
   const { t } = useTranslation();
+  useRecurringRun();
   const showInvestments = useShowInvestments();
   const visible = MODULES.filter((m) => !m.optional || showInvestments);
   const settings = visible.filter((m) => m.group === 'settings');

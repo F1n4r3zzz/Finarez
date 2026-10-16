@@ -1,6 +1,6 @@
 import type { AccountView, Category, TransactionView } from '@finanz/contracts';
 import { fromWire, type LocalDate, type Money, money } from '@finanz/kernel';
-import { Plus } from 'lucide-react';
+import { Plus, Repeat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Form, Link, type LoaderFunctionArgs, useLoaderData, useSubmit } from 'react-router';
 import { moduleById } from '../../app/modules';
@@ -75,7 +75,16 @@ export function TransactionsPage() {
         description={t('modules.transactions.description')}
         action={
           accounts.length > 0 && (
-            <ActionLink to="/transactions/new" label={t('ledger.transactions.add')} />
+            <div className="flex flex-col gap-3 sm:flex-row-reverse">
+              <ActionLink to="/transactions/new" label={t('ledger.transactions.add')} />
+              <Link
+                to="/transactions/recurring"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 font-medium transition-colors duration-150 hover:bg-hover"
+              >
+                <Repeat size={18} aria-hidden="true" />
+                {t('recurring.link')}
+              </Link>
+            </div>
           )
         }
       />

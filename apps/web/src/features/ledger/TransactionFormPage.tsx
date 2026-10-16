@@ -1,5 +1,11 @@
 import type { AccountView, Category, DraftInput, TransactionView } from '@finanz/contracts';
-import { type CurrencyCode, fromWire, type LocalDate, todayIn } from '@finanz/kernel';
+import {
+  type CurrencyCode,
+  type Frequency,
+  fromWire,
+  type LocalDate,
+  todayIn,
+} from '@finanz/kernel';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -21,6 +27,9 @@ import { Segmented } from '../../components/Segmented';
 import { formatAmountInput, parseAmountInput } from '../../lib/amount-input';
 import { describeFailure, type Failure } from '../../lib/failure';
 import { formattingLocale } from '../../lib/locale';
+import { createRule } from '../recurring/api';
+import { RepeatFields } from '../recurring/RepeatFields';
+import { dayOfMonth } from '../recurring/schedule';
 import {
   createTransaction,
   editTransaction,
@@ -34,13 +43,15 @@ import {
 type Kind = 'expense' | 'income' | 'transfer';
 const KINDS: readonly Kind[] = ['expense', 'income', 'transfer'];
 
-export async function transactionFormLoader({ params }: LoaderFunctionArgs) {
+export async function transactionFormLoader({ params, request }: LoaderFunctionArgs) {
   const [accounts, categories, transaction] = await Promise.all([
     listAccounts(),
     listCategories(),
     params.id ? getTransaction(params.id) : Promise.resolve(undefined),
   ]);
-  return { accounts, categories, transaction };
+  // "Nuevo recurrente" opens the form with "Repetir" already on.
+  const repeat = new URL(request.url).searchParams.get('repeat') === '1';
+  return { accounts, categories, transaction, repeat };
 }
 
 type FieldKey =
@@ -53,7 +64,10 @@ type FieldKey =
   | 'sent'
   | 'received';
 interface FormResult {
-  fieldErrors?: Partial<Record<FieldKey, 'required' | 'amountInvalid'>>;
+  fieldErrors?: Partial<Record<FieldKey, 'required' | 'amountInvalid'>> & {
+    endsOn?: 'endsBeforeStart';
+    secondDay?: 'secondDaySame';
+  };
   failure?: Failure;
 }
 
@@ -119,7 +133,7 @@ export async function transactionFormAction({
 
   const accounts = new Map(((await listAccounts()) as AccountView[]).map((a) => [a.id, a]));
   const kind = field('kind') as Kind;
-  const errors: FormResult['fieldErrors'] = {};
+  const errors: NonNullable<FormResult['fieldErrors']> = {};
   const required = (name: FieldKey) => {
     if (!field(name)) errors[name] = 'required';
     return field(name);
@@ -168,7 +182,27 @@ export async function transactionFormAction({
         ? { ...base, kind, accountId, lines }
         : { ...base, kind: 'expense', accountId, lines };
   }
+  const repeat = !params.id && form.get('repeat') === 'on';
+  const frequency = field('frequency') as Frequency;
+  const secondDay = frequency === 'twice_monthly' ? Number(field('secondDay')) : null;
+  const endsOn = (field('endsOn') || null) as LocalDate | null;
+  if (repeat && endsOn && endsOn < base.occurredOn) errors.endsOn = 'endsBeforeStart';
+  if (repeat && secondDay === dayOfMonth(base.occurredOn)) errors.secondDay = 'secondDaySame';
   if (Object.keys(errors).length) return { fieldErrors: errors };
+
+  if (repeat) {
+    let ruleId: string;
+    try {
+      const rule = await createRule(
+        { draft, frequency, secondDay, endsOn, confirm: field('mode') === 'confirm' },
+        field('idempotencyKey'),
+      );
+      ruleId = rule.id;
+    } catch (error) {
+      return { failure: describeFailure(error) };
+    }
+    return redirect(`/transactions/recurring/${ruleId}`);
+  }
 
   try {
     if (params.id) await editTransaction(params.id, { version, draft });
@@ -193,7 +227,8 @@ function categoryOptions(categories: Category[], kind: 'income' | 'expense') {
 export function TransactionFormPage() {
   const { t } = useTranslation();
   const { preferences } = useAccount();
-  const { accounts, categories, transaction } = useLoaderData<typeof transactionFormLoader>();
+  const { accounts, categories, transaction, repeat } =
+    useLoaderData<typeof transactionFormLoader>();
   const result = useActionData<FormResult>();
   const navigation = useNavigation();
   const submitting = navigation.state !== 'idle' && navigation.formMethod === 'POST';
@@ -207,6 +242,8 @@ export function TransactionFormPage() {
   const [to, setTo] = useState<string>(
     (initial && 'to' in initial ? initial.to : active[1]?.id) ?? '',
   );
+  const today = todayIn(preferences.timeZone);
+  const [date, setDate] = useState<string>(transaction?.occurredOn ?? today);
   // One key per form: a double tap on "Guardar" can never post twice.
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const error = (key: FieldKey) => {
@@ -252,7 +289,8 @@ export function TransactionFormPage() {
               label={t('ledger.transactions.form.date')}
               name="occurredOn"
               type="date"
-              defaultValue={transaction?.occurredOn ?? todayIn(preferences.timeZone)}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
             />
             <TextField
               label={t('ledger.transactions.form.description')}
@@ -337,6 +375,17 @@ export function TransactionFormPage() {
                   error={error('amount')}
                 />
               </>
+            )}
+            {!transaction && (
+              <RepeatFields
+                date={date as LocalDate}
+                today={today}
+                defaultOn={repeat}
+                error={(key) => {
+                  const code = result?.fieldErrors?.[key];
+                  return code ? t(`recurring.fields.${code}`) : undefined;
+                }}
+              />
             )}
             <FailureNotice failure={result?.failure} />
             <div>

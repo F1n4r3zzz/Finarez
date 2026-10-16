@@ -28,6 +28,8 @@ export interface Actor {
   userId: string;
   /** Set when a managing module (debts, savings…) changes its own transaction. */
   module?: ManagingModule;
+  /** Set when a recurring rule records an ordinary transaction for the user. */
+  source?: 'recurring';
 }
 
 type AuditSource = (typeof AUDIT_SOURCES)[number];
@@ -45,6 +47,15 @@ function draftIds(draft: Draft): { accounts: string[]; categories: string[] } {
     case 'adjustment':
       return { accounts: [draft.accountId], categories: [draft.categoryId] };
   }
+}
+
+/**
+ * Checks that a draft could be posted (its accounts and categories exist, are the user's, are
+ * active and fit), without writing anything. Throws the same LedgerError posting would.
+ */
+export async function checkDraft(tx: Executor, userId: string, draft: Draft): Promise<void> {
+  const ids = draftIds(draft);
+  planTransaction(draft, await loadPostingContext(tx, userId, ids.accounts, ids.categories));
 }
 
 async function plan(tx: Executor, userId: string, draft: Draft) {
@@ -72,7 +83,8 @@ async function audit(
   after: Snapshot | null,
   reconciledChange = false,
 ): Promise<void> {
-  const source: AuditSource = actor.module === 'imports' ? 'import' : (actor.module ?? 'ui');
+  const source: AuditSource =
+    actor.source ?? (actor.module === 'imports' ? 'import' : (actor.module ?? 'ui'));
   await tx.insert(transactionAudit).values({
     userId: actor.userId,
     id: uuidv7(),
