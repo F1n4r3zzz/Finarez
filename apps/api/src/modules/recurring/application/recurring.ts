@@ -47,7 +47,7 @@ export class RecurringError extends Error {
 type RuleRow = typeof rules.$inferSelect;
 type Repeating = Exclude<Draft, { kind: 'adjustment' }>;
 
-/** Most automatic occurrences one run records, so a long absence can't make a request slow. */
+/** Most dates one run takes (recorded or queued), so a long absence can't make a request slow. */
 const RUN_LIMIT = 200;
 
 const scheduleOf = (row: Pick<RuleRow, 'frequency' | 'anchorOn' | 'secondDay'>): Schedule => ({
@@ -225,8 +225,8 @@ export async function runDue(tx: Executor, userId: string, today: LocalDate): Pr
         .values({ userId, ruleId: row.id, dueOn: date, status: 'pending' })
         .onConflictDoNothing()
         .returning({ dueOn: occurrences.dueOn });
+      if (claimed) budget--;
       if (claimed && !row.confirm) {
-        budget--;
         const on = date;
         try {
           await tx.transaction(async (sp) => {
@@ -294,8 +294,9 @@ export async function confirmOccurrence(
   dueOn: LocalDate,
   change: { amountMinor?: bigint; occurredOn?: LocalDate },
 ): Promise<void> {
-  await lockPending(tx, userId, ruleId, dueOn);
+  // The rule first, then the date: the order every path that takes both uses.
   const rule = await lockRule(tx, userId, ruleId);
+  await lockPending(tx, userId, ruleId, dueOn);
   let template = rule.template as RecurringTemplate;
   if (change.amountMinor !== undefined)
     template = withAmount(template, change.amountMinor, await accountsOf(tx, userId, [template]));

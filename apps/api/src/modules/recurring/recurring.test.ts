@@ -200,6 +200,24 @@ describe('recurring rules', () => {
     ]);
   });
 
+  it('take a long absence a part at a time, also when each date waits for the user', async () => {
+    const { client } = await signedInUser(ctx);
+    const p = await payer(client);
+    const r = (
+      await rule(client, { draft: expense(p, today()), frequency: 'weekly', confirm: true })
+    ).body;
+    // 250 weeks unopened: more dates than one run takes.
+    await dueSince(r.id, daysFrom(today(), -7 * 250));
+    expect(await run(client)).toEqual({ posted: 0, pending: 200 });
+    expect(
+      (await json<RuleView>(client, 'GET', `/api/recurring/rules/${r.id}`)).body.nextDueOn,
+    ).toBe(daysFrom(today(), -7 * 50));
+    expect(await run(client)).toEqual({ posted: 0, pending: 250 });
+    expect(
+      (await json<RuleView>(client, 'GET', `/api/recurring/rules/${r.id}`)).body.nextDueOn,
+    ).toBe(daysFrom(today(), 7));
+  });
+
   it('keep an automatic one the ledger refuses waiting, with the reason', async () => {
     const { client } = await signedInUser(ctx);
     const p = await payer(client);

@@ -251,6 +251,19 @@ describe('a loan', () => {
     expect(after?.outstandingMinor).toBe(cop(38_441_578));
   });
 
+  it("two payments at the same moment can't both pay off more than is owed", async () => {
+    const { client, bank, loan } = await carLoan();
+    const body = {
+      fromAccountId: bank.id,
+      paidOn: '2025-10-28',
+      amountMinor: cop(30_000_000),
+      interestMinor: '0',
+    };
+    const results = await Promise.all([pay(client, loan.id, body), pay(client, loan.id, body)]);
+    expect(results.map((r) => r.status).sort()).toEqual([201, 422]);
+    expect(results.find((r) => r.status === 422)?.body.error?.code).toBe('debt.overpayment');
+  });
+
   it('retrying a payment with the same key records it once', async () => {
     const { client, bank, loan } = await carLoan();
     const key = randomUUID();

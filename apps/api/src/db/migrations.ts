@@ -18,8 +18,22 @@ const NEVER_CHANGED = [
   'currency.user_rates',
   'currency.provider_rates',
 ];
-/** Rows the app never deletes (transactions are voided). Deleting a user still cascades. */
-const NEVER_DELETED = ['ledger.transactions'];
+/**
+ * Rows the app never deletes: they are voided, archived or ended instead, and module rows are the
+ * history behind a goal, a debt or a recurring movement. Deleting a user still cascades.
+ */
+const NEVER_DELETED = [
+  'ledger.transactions',
+  'ledger.accounts',
+  'categories.categories',
+  'debts.debts',
+  'debts.debt_payments',
+  'savings.goals',
+  'savings.allocations',
+  'budgets.budgets',
+  'recurring.rules',
+  'recurring.occurrences',
+];
 
 export async function runMigrations(db: Database): Promise<void> {
   await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER, migrationsSchema: 'drizzle' });

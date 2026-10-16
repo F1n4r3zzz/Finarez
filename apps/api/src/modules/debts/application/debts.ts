@@ -138,11 +138,18 @@ export async function createDebt(tx: Executor, actor: Actor, input: NewDebt): Pr
   return row;
 }
 
-export async function getDebt(tx: Executor, userId: string, id: string): Promise<DebtRow> {
-  const [row] = await tx
+export async function getDebt(
+  tx: Executor,
+  userId: string,
+  id: string,
+  { lock = false } = {},
+): Promise<DebtRow> {
+  const query = tx
     .select()
     .from(debts)
     .where(ownedBy(debts.userId, userId, eq(debts.id, id)));
+  // Payments on one debt take turns, so two at once can't both pay off the same balance.
+  const [row] = lock ? await query.for('update') : await query;
   if (!row) throw new DebtError('debt.not_found');
   return row;
 }
@@ -384,7 +391,7 @@ export async function recordPayment(
   debtId: string,
   input: PaymentInput,
 ): Promise<string> {
-  const debt = await getDebt(tx, actor.userId, debtId);
+  const debt = await getDebt(tx, actor.userId, debtId, { lock: true });
   const planned = await planPayment(tx, actor.userId, debt, input);
   const id = await postTransaction(tx, { ...actor, module: 'debts' }, planned, {
     managedBy: 'debts',
@@ -415,7 +422,7 @@ export async function editPayment(
   version: number,
   input: PaymentInput,
 ) {
-  const debt = await getDebt(tx, actor.userId, debtId);
+  const debt = await getDebt(tx, actor.userId, debtId, { lock: true });
   await paymentOf(tx, actor.userId, debtId, transactionId);
   const planned = await planPayment(tx, actor.userId, debt, input, transactionId);
   await editTransaction(tx, { ...actor, module: 'debts' }, transactionId, version, planned);
@@ -428,7 +435,7 @@ export async function voidPayment(
   transactionId: string,
   version: number,
 ) {
-  await getDebt(tx, actor.userId, debtId);
+  await getDebt(tx, actor.userId, debtId, { lock: true });
   await paymentOf(tx, actor.userId, debtId, transactionId);
   await voidTransaction(tx, { ...actor, module: 'debts' }, transactionId, version);
 }

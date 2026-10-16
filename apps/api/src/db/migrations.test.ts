@@ -189,6 +189,21 @@ describe.skipIf(!(await isSuperuser()))('database logins', () => {
       await denied(db, APP_ROLE, sql`update currency.user_rates set rate = 1`);
       await denied(db, APP_ROLE, sql`delete from ledger.transaction_audit`);
       await denied(db, APP_ROLE, sql`delete from ledger.transactions`);
+      for (const table of [
+        'ledger.accounts',
+        'categories.categories',
+        'debts.debts',
+        'debts.debt_payments',
+        'savings.goals',
+        'savings.allocations',
+        'budgets.budgets',
+        'recurring.rules',
+        'recurring.occurrences',
+      ]) {
+        await denied(db, APP_ROLE, sql.raw(`delete from ${table}`));
+      }
+      // Budget limits are replaced when a limit changes from a month on.
+      await as(db, APP_ROLE, (tx) => tx.execute(sql`delete from budgets.limits`));
       await denied(db, APP_ROLE, sql`truncate identity.users cascade`);
       await denied(db, APP_ROLE, sql`create table ledger.extra (id int)`);
       await denied(db, APP_ROLE, sql`drop table ledger.entries`);
