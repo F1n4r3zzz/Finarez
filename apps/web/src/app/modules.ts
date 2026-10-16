@@ -1,5 +1,4 @@
 import {
-  ArrowLeftRight,
   ChartColumn,
   CreditCard,
   Ellipsis,
@@ -7,6 +6,7 @@ import {
   House,
   type LucideIcon,
   PiggyBank,
+  ReceiptText,
   Scale,
   Settings,
   Target,
@@ -43,7 +43,7 @@ export interface ModuleDef {
 export const MODULES: readonly ModuleDef[] = [
   { id: 'dashboard', path: '/', icon: House, group: 'daily', mobile: true },
   { id: 'accounts', path: '/accounts', icon: Wallet, group: 'daily', mobile: true },
-  { id: 'transactions', path: '/transactions', icon: ArrowLeftRight, group: 'daily', mobile: true },
+  { id: 'transactions', path: '/transactions', icon: ReceiptText, group: 'daily', mobile: true },
   { id: 'import', path: '/import', icon: FileUp, group: 'daily' },
   { id: 'budgets', path: '/budgets', icon: Target, group: 'plan' },
   { id: 'savings', path: '/savings', icon: PiggyBank, group: 'plan' },

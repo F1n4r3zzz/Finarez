@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <title>Finarez</title>
-  <rect width="64" height="64" rx="14" fill="#1e40af"/>
-  <path d="M22 16h22v7H30v7h12v7H30v11h-8z" fill="#ffffff"/>
+  <rect width="64" height="64" rx="14" fill="#152c5b"/>
+  <g transform="translate(32 32) scale(0.74) translate(-32 -32)">
+    <path d="M7 10h26V4l17 15-17 15v-6H7z" fill="#9abeff"/>
+    <path d="M57 54H31v6L14 45l17-15v6h26z" fill="#eaf1ff"/>
+  </g>
 </svg>

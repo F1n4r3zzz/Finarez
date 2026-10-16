@@ -1,0 +1,14 @@
+{
+  "name": "Finarez",
+  "short_name": "Finarez",
+  "description": "Tus cuentas, gastos, presupuestos y ahorros en un solo lugar.",
+  "lang": "es",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#f5f7fa",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -25,12 +25,13 @@
   --color-muted: #475569;
   --color-subtle: #64748b;
   --color-line: #e2e8f0;
-  --color-brand: #1e40af;
+  --color-brand: #2457c5;
   --color-brand-soft: #eff4ff;
   --color-on-brand: #ffffff;
 
-  /* The logo keeps the same blue in both themes. */
-  --color-logo: #2563eb;
+  /* The logo's two arrows: money in and out. */
+  --color-logo: #2457c5;
+  --color-logo-accent: #83afff;
 
   /* Text on money amounts. */
   --color-income: #047857;
@@ -69,6 +70,9 @@
   --color-brand: #8db0ff;
   --color-brand-soft: #1b2a4a;
   --color-on-brand: #0b1120;
+
+  --color-logo: #9abeff;
+  --color-logo-accent: #eaf1ff;
 
   --color-income: #5bd39a;
   --color-expense: #f58a8f;

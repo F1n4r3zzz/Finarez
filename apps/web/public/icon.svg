@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Finarez</title>
+  <!-- Full bleed: phones round the corners themselves. The PNG icons are renders of this. -->
+  <rect width="64" height="64" fill="#152c5b"/>
+  <g transform="translate(32 32) scale(0.62) translate(-32 -32)">
+    <path d="M7 10h26V4l17 15-17 15v-6H7z" fill="#9abeff"/>
+    <path d="M57 54H31v6L14 45l17-15v6h26z" fill="#eaf1ff"/>
+  </g>
+</svg>
