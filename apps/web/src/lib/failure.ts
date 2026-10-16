@@ -27,7 +27,10 @@ export interface Failure {
     | 'goalNotEmpty'
     | 'goalArchived'
     | 'savingsAccount'
-    | 'transferCurrency';
+    | 'transferCurrency'
+    | 'budgetCategory'
+    | 'budgetDuplicate'
+    | 'budgetArchived';
   minutes?: number;
 }
 
@@ -56,6 +59,9 @@ const BY_CODE: Record<string, Failure['key']> = {
   'savings.account': 'savingsAccount',
   'savings.same_account': 'sameAccount',
   'savings.transfer_currency': 'transferCurrency',
+  'budgets.category': 'budgetCategory',
+  'budgets.duplicate_category': 'budgetDuplicate',
+  'budgets.archived': 'budgetArchived',
 };
 
 export function describeFailure(error: unknown): Failure {

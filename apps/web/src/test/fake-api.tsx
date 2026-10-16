@@ -43,6 +43,7 @@ export const signedIn = {
   'GET /debts': () => json([]),
   'GET /savings/goals': () => json([]),
   'GET /savings/accounts': () => json([]),
+  'GET /budgets': () => json([]),
   'GET /reports/net-worth': () =>
     json({
       on: '2026-10-14',

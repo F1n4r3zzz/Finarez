@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import type {
   AccountView,
   BridgeReport,
+  BudgetView,
   Category,
   GoalView,
   NetWorthReport,
@@ -38,6 +39,14 @@ interface Fixture {
     targetDate: string;
     account: string;
   }[];
+  /** Spending limits per category; the workbook budgets each bill group on its own. */
+  budgets?: {
+    category: string;
+    period: 'monthly' | 'quarterly' | 'yearly';
+    currency: string;
+    amountMinor: string;
+    startsOn: string;
+  }[];
   drafts: (
     | {
         kind: 'expense' | 'income';
@@ -68,6 +77,8 @@ interface Fixture {
     bridge: Record<string, string>;
     /** Contributed per goal, as the workbook states it. */
     goals?: Record<string, string>;
+    /** Spent per month and budgeted category; overspent means strictly above the limit. */
+    budgets?: Record<string, Record<string, string>>;
   };
 }
 
@@ -107,13 +118,18 @@ describe.skipIf(!file)(
           c.id,
         ]),
       );
-      // The fixture predates the version 2 categories, where both bill groups became one.
-      const renamed: Record<string, string> = {
-        'Servicios públicos': 'Servicios del hogar',
-        'Internet y celular': 'Servicios del hogar',
-      };
+      // The fixture predates the version 2 categories, where both bill groups live under
+      // "Servicios del hogar"; the workbook budgets each group, so each becomes a subcategory.
+      for (const name of ['Servicios públicos', 'Internet y celular']) {
+        const sub = await json<Category>(client, 'POST', '/api/categories', {
+          kind: 'expense',
+          name,
+          parentId: categories.get('expense:Servicios del hogar'),
+        });
+        categories.set(`expense:${name}`, sub.id);
+      }
       const categoryId = (kind: string, name: string) => {
-        const id = categories.get(`${kind}:${renamed[name] ?? name}`);
+        const id = categories.get(`${kind}:${name}`);
         if (!id) throw new Error(`Missing category ${kind}:${name}`);
         return id;
       };
@@ -264,6 +280,34 @@ describe.skipIf(!file)(
           ]),
         );
         expect(saved).toEqual(c.goals);
+      }
+
+      if (fixture.budgets && c.budgets) {
+        const budgetIds = new Map<string, string>();
+        for (const { category, ...body } of fixture.budgets) {
+          const view = await json<BudgetView>(client, 'POST', '/api/budgets', {
+            ...body,
+            categoryId: categoryId('expense', category),
+          });
+          budgetIds.set(view.id, category);
+        }
+        for (const [month, expected] of Object.entries(c.budgets)) {
+          const views = await json<BudgetView[]>(client, 'GET', `/api/budgets?on=${month}-01`);
+          const limits = new Map(fixture.budgets.map((x) => [x.category, BigInt(x.amountMinor)]));
+          const actual = Object.fromEntries(
+            views.map((v) => [budgetIds.get(v.id), [v.current?.spentMinor, v.current?.overspent]]),
+          );
+          expect({ month, actual }).toEqual({
+            month,
+            actual: Object.fromEntries(
+              Object.entries(expected).map(([category, spent]) => [
+                category,
+                [spent, BigInt(spent) > (limits.get(category) ?? 0n)],
+              ]),
+            ),
+          });
+          expect(views.every((v) => v.current?.excluded.length === 0)).toBe(true);
+        }
       }
 
       const b = await json<BridgeReport>(

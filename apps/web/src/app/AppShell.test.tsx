@@ -16,7 +16,7 @@ beforeEach(() => {
 
 describe('AppShell', () => {
   it('lists every section in Spanish and marks the current one', async () => {
-    await renderAt('/budgets');
+    await renderAt('/net-worth');
     const nav = within(mainNav());
     for (const label of [
       'Inicio',
@@ -33,11 +33,9 @@ describe('AppShell', () => {
     ]) {
       expect(nav.getByRole('link', { name: label })).toBeTruthy();
     }
-    expect(nav.getByRole('link', { name: 'Presupuestos' }).getAttribute('aria-current')).toBe(
-      'page',
-    );
+    expect(nav.getByRole('link', { name: 'Patrimonio' }).getAttribute('aria-current')).toBe('page');
     expect(nav.getByRole('link', { name: 'Inicio' }).getAttribute('aria-current')).toBeNull();
-    expect(screen.getByRole('heading', { level: 1, name: 'Presupuestos' })).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1, name: 'Patrimonio' })).toBeTruthy();
   });
 
   it('hides the optional investments section when the user turns it off', async () => {
@@ -81,7 +79,7 @@ describe('unfinished sections', () => {
   });
 
   it('say they are under construction, so nobody expects them to work yet', async () => {
-    for (const path of ['/import', '/budgets']) {
+    for (const path of ['/import', '/net-worth']) {
       renderApp(path);
       expect(
         await screen.findByText(/Esta sección todavía está en construcción y no funciona/),

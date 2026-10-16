@@ -10,6 +10,16 @@ import {
 import { SignInPage, signInAction } from '../features/auth/SignInPage';
 import { SignUpPage, signUpAction } from '../features/auth/SignUpPage';
 import { signOutAction } from '../features/auth/sign-out';
+import {
+  EditBudgetPage,
+  editBudgetAction,
+  editBudgetLoader,
+  NewBudgetPage,
+  newBudgetAction,
+  newBudgetLoader,
+} from '../features/budgets/BudgetFormPage';
+import { BudgetPage, budgetAction, budgetLoader } from '../features/budgets/BudgetPage';
+import { BudgetsPage, budgetsLoader } from '../features/budgets/BudgetsPage';
 import { DashboardPage, dashboardLoader } from '../features/dashboard/DashboardPage';
 import { DebtPage, debtAction, debtLoader, proposalLoader } from '../features/debts/DebtPage';
 import {
@@ -149,7 +159,25 @@ export const routes: RouteObject[] = [
             element: <TransactionFormPage />,
           },
           { path: 'import', element: <ImportPage /> },
-          { path: 'budgets', element: <ModulePage id="budgets" /> },
+          { path: 'budgets', loader: budgetsLoader, element: <BudgetsPage /> },
+          {
+            path: 'budgets/new',
+            loader: newBudgetLoader,
+            action: newBudgetAction,
+            element: <NewBudgetPage />,
+          },
+          {
+            path: 'budgets/:id',
+            loader: budgetLoader,
+            action: budgetAction,
+            element: <BudgetPage />,
+          },
+          {
+            path: 'budgets/:id/edit',
+            loader: editBudgetLoader,
+            action: editBudgetAction,
+            element: <EditBudgetPage />,
+          },
           { path: 'savings', loader: savingsLoader, element: <SavingsPage /> },
           { path: 'savings/new', action: newGoalAction, element: <NewGoalPage /> },
           {

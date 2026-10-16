@@ -161,6 +161,11 @@ export async function ensureDefaultCategories(db: Executor, userId: string): Pro
 
 export async function listCategories(db: Executor, userId: string): Promise<Category[]> {
   await ensureDefaultCategories(db, userId);
+  return readCategories(db, userId);
+}
+
+/** The user's categories as stored, without creating the defaults: safe in read-only snapshots. */
+export async function readCategories(db: Executor, userId: string): Promise<Category[]> {
   const rows = await db
     .select()
     .from(categories)
