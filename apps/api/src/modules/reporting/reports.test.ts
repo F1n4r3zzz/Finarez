@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type {
   AccountView,
+  BalanceSeriesReport,
   BridgeReport,
   Category,
   MonthlyReport,
@@ -258,6 +259,66 @@ describe('monthly report', () => {
       );
       expect([res.status, res.body.error.code]).toEqual([400, 'reports.range_too_long']);
     }
+  });
+});
+
+describe('daily balances', () => {
+  it('give the accounts\u2019 total at the end of each day, the same as net worth does', async () => {
+    const { client } = await signedInUser(ctx);
+    const { bank, wise } = await freelancer(client);
+    const ids = `${bank.id},${wise.id}`;
+    const { status, body } = await json<BalanceSeriesReport>(
+      client,
+      'GET',
+      `/api/reports/balances?from=2025-10-04&to=2025-10-08&accounts=${ids}`,
+    );
+    expect(status).toBe(200);
+    // Bank 18.500.000 plus USD 2.150 at October's 4.010,5; then +12.000.000 and −3.500.000.
+    const wiseCop = 215000 * 4010.5;
+    expect(body.days.map((d) => [d.on, d.valueMinor])).toEqual([
+      ['2025-10-04', String(1850000000 + wiseCop)],
+      ['2025-10-05', String(3050000000 + wiseCop)],
+      ['2025-10-06', String(3050000000 + wiseCop)],
+      ['2025-10-07', String(2700000000 + wiseCop)],
+      ['2025-10-08', String(2700000000 + wiseCop)],
+    ]);
+
+    // Across a rate change each day converts at its own rate, exactly as net worth on that day.
+    const across = await json<BalanceSeriesReport>(
+      client,
+      'GET',
+      `/api/reports/balances?from=2025-10-31&to=2025-11-03&accounts=${ids}`,
+    );
+    for (const day of across.body.days) {
+      const worth = await json<NetWorthReport>(
+        client,
+        'GET',
+        `/api/reports/net-worth?on=${day.on}`,
+      );
+      const sum = worth.body.byAccount
+        .filter((a) => a.accountId === bank.id || a.accountId === wise.id)
+        .reduce((total, a) => total + BigInt(a.valueMinor), 0n);
+      expect(day.valueMinor).toBe(sum.toString());
+    }
+  });
+
+  it('refuse long or malformed requests, and count nothing for ids that are not the user\u2019s', async () => {
+    const { client } = await signedInUser(ctx);
+    const { bank } = await freelancer(client);
+    const ask = (query: string) =>
+      json<BalanceSeriesReport>(client, 'GET', `/api/reports/balances?${query}`);
+    expect((await ask(`from=2025-01-01&to=2025-06-30&accounts=${bank.id}`)).status).toBe(400);
+    expect((await ask('from=2025-10-02&to=2025-10-01&accounts=')).status).toBe(400);
+    expect((await ask('from=2025-10-01&to=2025-10-02&accounts=nope')).status).toBe(400);
+
+    const other = await signedInUser(ctx);
+    await freelancer(other.client);
+    const foreign = await json<BalanceSeriesReport>(
+      other.client,
+      'GET',
+      `/api/reports/balances?from=2025-10-01&to=2025-10-02&accounts=${bank.id}`,
+    );
+    expect(foreign.body.days.map((d) => d.valueMinor)).toEqual(['0', '0']);
   });
 });
 

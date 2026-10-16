@@ -419,6 +419,8 @@ export const es = {
     income: 'Ingresos de {{month}}',
     expenses: 'Gastos de {{month}}',
     net: 'Balance de {{month}}',
+    netCaption: 'Ingresos menos gastos',
+    summary: 'Resumen',
     versus: 'frente a {{month}}',
     spending: 'Gastos por categoría',
     spendingPeriod: 'Periodo',

@@ -1,4 +1,4 @@
-import type { LocalDate } from '@finanz/kernel';
+import { type LocalDate, parseLocalDate } from '@finanz/kernel';
 import type { Converter } from '../../currency';
 import type { AccountBalance, LedgerFact } from '../../ledger';
 
@@ -125,6 +125,51 @@ export function netWorth(
     return { accountId: b.accountId, valueMinor };
   });
   return { total: assets + liabilities, assets, liabilities, byAccount };
+}
+
+export interface DailyValue {
+  on: LocalDate;
+  valueMinor: bigint;
+}
+
+/**
+ * The total of some accounts at the end of each day from `from` to `to`: their balances the day
+ * before (`start`) moved by each day's entries, each account converted at that day's rate (as
+ * net worth is).
+ */
+export function balanceSeries(
+  start: readonly AccountBalance[],
+  facts: readonly LedgerFact[],
+  from: LocalDate,
+  to: LocalDate,
+  converter: Converter,
+): DailyValue[] {
+  const balances = new Map(start.map((b) => [b.accountId, { ...b }]));
+  const movesOn = new Map<string, LedgerFact[]>();
+  for (const fact of facts) {
+    if (!balances.has(fact.accountId)) continue;
+    movesOn.set(fact.occurredOn, [...(movesOn.get(fact.occurredOn) ?? []), fact]);
+  }
+  const days: DailyValue[] = [];
+  for (let on = from; on <= to; on = nextDay(on)) {
+    for (const move of movesOn.get(on) ?? []) {
+      const balance = balances.get(move.accountId);
+      if (balance) balance.balanceMinor += move.amountMinor;
+    }
+    let valueMinor = 0n;
+    for (const b of balances.values()) {
+      if (b.balanceMinor !== 0n)
+        valueMinor += converter.convert(b.balanceMinor, b.currency, on, `balance:${b.accountId}`);
+    }
+    days.push({ on, valueMinor });
+  }
+  return days;
+}
+
+function nextDay(date: LocalDate): LocalDate {
+  const t = new Date(`${date}T00:00:00Z`);
+  t.setUTCDate(t.getUTCDate() + 1);
+  return parseLocalDate(t.toISOString().slice(0, 10));
 }
 
 export interface Bridge {

@@ -20,7 +20,11 @@ import {
 } from '../features/budgets/BudgetFormPage';
 import { BudgetPage, budgetAction, budgetLoader } from '../features/budgets/BudgetPage';
 import { BudgetsPage, budgetsLoader } from '../features/budgets/BudgetsPage';
-import { DashboardPage, dashboardLoader } from '../features/dashboard/DashboardPage';
+import {
+  availableLoader,
+  DashboardPage,
+  dashboardLoader,
+} from '../features/dashboard/DashboardPage';
 import { spendingLoader } from '../features/dashboard/SpendingPanel';
 import { DebtPage, debtAction, debtLoader, proposalLoader } from '../features/debts/DebtPage';
 import {
@@ -174,6 +178,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, loader: dashboardLoader, element: <DashboardPage /> },
           { path: 'dashboard/spending', loader: spendingLoader },
+          { path: 'dashboard/available', loader: availableLoader },
           { path: 'accounts', loader: accountsLoader, element: <AccountsPage /> },
           { path: 'accounts/new', action: newAccountAction, element: <NewAccountPage /> },
           { path: 'transactions', loader: transactionsLoader, element: <TransactionsPage /> },

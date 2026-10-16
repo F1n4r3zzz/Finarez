@@ -131,6 +131,17 @@ describe('spending on Inicio', () => {
     expect(summaries(api).length).toBe(calls);
   });
 
+  it('asks for the last 30 days of the bank, cash and wallet accounts after the page shows', async () => {
+    const api = inicioApi([month, month]);
+    renderApp('/');
+    await screen.findByRole('region', { name: 'Gastos por categoría' });
+    await waitFor(() =>
+      expect(api.calls.map((c) => c.path)).toContain(
+        `/reports/balances?from=2026-09-16&to=2026-10-15&accounts=${BANK}`,
+      ),
+    );
+  });
+
   it('keeps the ring when nothing was spent', async () => {
     const empty = summary('2026-10-01', '2026-10-31', []);
     inicioApi([empty, empty]);

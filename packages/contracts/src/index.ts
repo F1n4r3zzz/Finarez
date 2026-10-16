@@ -78,6 +78,7 @@ export {
   ruleUpdateSchema,
 } from './recurring';
 export type {
+  BalanceSeriesReport,
   BridgeReport,
   ExcludedView,
   MonthlyReport,

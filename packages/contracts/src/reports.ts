@@ -65,3 +65,10 @@ export interface BridgeReport extends Completeness {
   unrealizedFxMinor: string;
   roundingMinor: string;
 }
+
+/** Some accounts' total at the end of each day of a range (at most 92 days). */
+export interface BalanceSeriesReport extends Completeness {
+  from: LocalDate;
+  to: LocalDate;
+  days: { on: LocalDate; valueMinor: string }[];
+}

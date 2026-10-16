@@ -7,11 +7,14 @@ import {
   parseLocalDate,
   todayIn,
 } from '@finanz/kernel';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useLoaderData } from 'react-router';
+import { Link, type LoaderFunctionArgs, useFetcher, useLoaderData } from 'react-router';
 import { Notice } from '../../components/Notice';
 import { api } from '../../lib/api';
 import {
+  getBalances,
+  getMonthly,
   getNetWorth,
   getSummary,
   listAccounts,
@@ -37,17 +40,20 @@ export async function dashboardLoader() {
   const today = todayIn(preferences.timeZone);
   const current = monthRange(today);
   const previous = monthRange(today, 1);
-  const [accounts, categories, worth, thisMonth, lastMonth, recent, pending] = await Promise.all([
-    listAccounts(),
-    listCategories(),
-    getNetWorth(today),
-    getSummary(current.from, current.to),
-    getSummary(previous.from, previous.to),
-    listTransactions({ limit: 6 }),
-    listPending(),
-  ]);
+  const [accounts, categories, worth, thisMonth, lastMonth, recent, pending, sixMonths] =
+    await Promise.all([
+      listAccounts(),
+      listCategories(),
+      getNetWorth(today),
+      getSummary(current.from, current.to),
+      getSummary(previous.from, previous.to),
+      listTransactions({ limit: 6 }),
+      listPending(),
+      getMonthly(monthRange(today, 5).from, current.to),
+    ]);
   return {
     accounts,
+    sixMonths,
     pending: pending.length,
     categories,
     worth,
@@ -60,6 +66,39 @@ export async function dashboardLoader() {
 }
 
 type Data = Awaited<ReturnType<typeof dashboardLoader>>;
+
+const DAY = 86_400_000;
+const daysBefore = (date: LocalDate, days: number) =>
+  parseLocalDate(new Date(Date.parse(`${date}T00:00:00Z`) - days * DAY).toISOString().slice(0, 10));
+
+/** What was available at the end of each of the last 30 days, for Inicio's first card. */
+export async function availableLoader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  const to = url.searchParams.get('to') ?? '';
+  const ids = (url.searchParams.get('accounts') ?? '').split(',').filter(Boolean);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || ids.length === 0) return { days: [] as bigint[] };
+  try {
+    const series = await getBalances(daysBefore(to as LocalDate, 29), to, ids);
+    return { days: series.days.map((d) => BigInt(d.valueMinor)) };
+  } catch {
+    // The trend is extra: without it the card still shows today's figure.
+    return { days: [] as bigint[] };
+  }
+}
+
+/** Loads the 30-day trend after the page shows, so Inicio never waits for it. */
+function useAvailableTrend(accountIds: readonly string[], today: LocalDate) {
+  const fetcher = useFetcher<typeof availableLoader>();
+  const query = accountIds.length
+    ? `/dashboard/available?to=${today}&accounts=${accountIds.join(',')}`
+    : undefined;
+  const { load } = fetcher;
+  useEffect(() => {
+    if (query) load(query);
+  }, [query, load]);
+  const days = fetcher.data?.days;
+  return days && days.length > 1 ? days : undefined;
+}
 
 function recentRow(t: TransactionView, data: Data): RecentRow | undefined {
   const legs = t.entries.filter((e) => e.accountKind === 'asset' || e.accountKind === 'liability');
@@ -97,10 +136,14 @@ export function DashboardPage() {
   const { accounts, worth, thisMonth, lastMonth } = data;
   const currency = worth.currency as CurrencyCode;
   const active = accounts.filter((a) => !a.archived);
+  const liquid = active.filter((a) => LIQUID.has(a.subtype));
+  const availableTrend = useAvailableTrend(
+    liquid.map((a) => a.id),
+    data.today,
+  );
 
   if (active.length === 0) return <DashboardView />;
 
-  const liquid = active.filter((a) => LIQUID.has(a.subtype));
   const value = new Map(worth.byAccount.map((a) => [a.accountId, BigInt(a.valueMinor)]));
   const available = liquid.reduce((sum, a) => sum + (value.get(a.id) ?? 0n), 0n);
   const missing = [
@@ -158,6 +201,12 @@ export function DashboardPage() {
           income: money(BigInt(lastMonth.incomeMinor), currency),
           expenses: money(-BigInt(lastMonth.expensesMinor), currency),
         },
+        trends: {
+          income: data.sixMonths.months.map((m) => BigInt(m.incomeMinor)),
+          expenses: data.sixMonths.months.map((m) => BigInt(m.expensesMinor)),
+          net: data.sixMonths.months.map((m) => BigInt(m.netMinor)),
+        },
+        availableTrend,
       }}
       accounts={rows}
       spending={

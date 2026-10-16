@@ -19,8 +19,9 @@ export function Panel({ title, subtitle, link, action, children, className = '' 
       aria-labelledby={headingId}
       className={`rounded-xl border border-line bg-surface ${className}`}
     >
-      <header className="flex min-h-14 items-center justify-between gap-4 px-5 pt-4">
-        <div className="min-w-0">
+      <header className="flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-3 px-5 pt-4">
+        {/* The corner control drops below the title when the panel is too narrow for both. */}
+        <div className="min-w-0 flex-1 basis-44">
           <h2 id={headingId} className="font-semibold">
             {title}
           </h2>

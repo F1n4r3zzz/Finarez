@@ -1,29 +1,14 @@
-import { add, type LocalDate, type Money, negate } from '@finanz/kernel';
+import type { LocalDate, Money } from '@finanz/kernel';
 import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Amount } from '../../components/Amount';
 import { Panel } from '../../components/Panel';
-import { Stat } from '../../components/Stat';
 import { formatMonthName, formatShortDate } from '../../lib/dates';
-import { formatMoney } from '../../lib/money';
-import { changeRatio } from '../../lib/percent';
+import { type DashboardSummary, SummaryCards } from './SummaryCards';
 
-export interface MonthTotals {
-  /** Any date in the month. */
-  month: LocalDate;
-  income: Money;
-  /** Negative: money that left the accounts. */
-  expenses: Money;
-}
-
-export interface DashboardSummary {
-  available: Money;
-  accountCount: number;
-  current: MonthTotals;
-  previous?: MonthTotals;
-}
+export type { DashboardSummary, MonthTotals } from './SummaryCards';
 
 export interface AccountRow {
   id: string;
@@ -51,54 +36,6 @@ interface DashboardViewProps {
   spending?: ReactNode;
   /** Shown under the page title, e.g. that the app is still being built. */
   notice?: ReactNode;
-}
-
-function Balance({ summary }: { summary: DashboardSummary }) {
-  const { t } = useTranslation();
-  const { current, previous } = summary;
-  const month = formatMonthName(current.month);
-  const versus = previous ? t('dashboard.versus', { month: formatMonthName(previous.month) }) : '';
-  const net = add(current.income, current.expenses);
-  const incomeRatio = previous && changeRatio(current.income, previous.income);
-  const spendRatio = previous && changeRatio(current.expenses, previous.expenses);
-
-  return (
-    <section
-      aria-labelledby="available-label"
-      className="@container flex flex-col rounded-xl border border-line bg-surface p-6 md:p-8 xl:col-span-2"
-    >
-      <p id="available-label" className="text-muted">
-        {t('dashboard.available')}
-      </p>
-      <p className="amount mt-2 text-5xl leading-none tracking-tight md:text-6xl">
-        {formatMoney(summary.available)}
-      </p>
-      <p className="mt-3 text-sm text-muted">
-        {t('dashboard.inAccounts', { count: summary.accountCount })}
-      </p>
-      <dl className="mt-8 grid gap-5 border-line border-t pt-6 @xl:grid-cols-3">
-        <Stat
-          label={t('dashboard.income', { month })}
-          value={formatMoney(current.income)}
-          delta={
-            incomeRatio === undefined
-              ? undefined
-              : { ratio: incomeRatio, label: versus, upIsGood: true }
-          }
-        />
-        <Stat
-          label={t('dashboard.expenses', { month })}
-          value={formatMoney(negate(current.expenses))}
-          delta={
-            spendRatio === undefined
-              ? undefined
-              : { ratio: spendRatio, label: versus, upIsGood: false }
-          }
-        />
-        <Stat label={t('dashboard.net', { month })} value={<Amount value={net} signed />} />
-      </dl>
-    </section>
-  );
 }
 
 const STEPS = [
@@ -187,8 +124,9 @@ export function DashboardView({
         <Onboarding />
       ) : (
         <>
-          <div className="grid gap-4 xl:grid-cols-3">
-            <Balance summary={summary} />
+          <SummaryCards summary={summary} />
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div>{spending}</div>
             <Panel
               title={t('modules.accounts.title')}
               link={{ to: '/accounts', label: t('dashboard.seeAll') }}
@@ -205,14 +143,10 @@ export function DashboardView({
                 ))}
               </ul>
             </Panel>
-          </div>
-
-          <div className="mt-4 grid gap-4 xl:grid-cols-5">
-            <div className="xl:col-span-2">{spending}</div>
             <Panel
               title={t('dashboard.recent')}
               link={{ to: '/transactions', label: t('dashboard.seeAll') }}
-              className="xl:col-span-3"
+              className="lg:col-span-2"
             >
               {recent.length === 0 ? (
                 <p className="text-muted">{t('dashboard.recentEmpty')}</p>

@@ -9,7 +9,7 @@ import { SAMPLE_ACCOUNTS, SAMPLE_RECENT, SAMPLE_SPENDING, SAMPLE_SUMMARY } from 
 
 function renderView(element: ReactElement) {
   const router = createMemoryRouter([{ path: '/', element }]);
-  render(<RouterProvider router={router} />);
+  return render(<RouterProvider router={router} />);
 }
 
 describe('DashboardView', () => {
@@ -60,6 +60,47 @@ describe('DashboardView', () => {
     // Vivienda: 1.800.000 of 2.850.000 spent.
     expect(spending.getByText('63 %')).toBeTruthy();
     expect(screen.getByText('Nómina')).toBeTruthy();
+  });
+
+  it('opens with four cards, each with its trend; this month, still running, ends dashed', () => {
+    const { container } = renderView(
+      <DashboardView
+        summary={{
+          ...SAMPLE_SUMMARY,
+          trends: {
+            income: [1n, 2n, 3n, 2n, 4n, 1n],
+            expenses: [3n, 3n, 2n, 4n, 3n, 2n],
+            net: [-2n, -1n, 1n, -2n, 1n, -1n],
+          },
+          availableTrend: [5n, 6n, 6n, 7n],
+        }}
+      />,
+    );
+    const cards = within(screen.getByRole('region', { name: 'Resumen' }));
+    for (const label of [
+      'Disponible hoy',
+      'Ingresos de octubre',
+      'Gastos de octubre',
+      'Balance de octubre',
+    ])
+      expect(cards.getByText(label)).toBeTruthy();
+    expect(cards.getByText('En 3 cuentas')).toBeTruthy();
+    expect(cards.getByText('Ingresos menos gastos')).toBeTruthy();
+    const lines = container.querySelectorAll('section[aria-label="Resumen"] svg polyline');
+    // Available: one solid line; the three monthly cards: solid plus a dashed last step.
+    expect(lines).toHaveLength(7);
+    expect(
+      [...lines]
+        .filter((l) => l.getAttribute('stroke-dasharray'))
+        .map((l) => l.getAttribute('points')?.split(' ').length),
+    ).toEqual([2, 2, 2]);
+  });
+
+  it('leaves out a trend it does not have yet', () => {
+    const { container } = renderView(<DashboardView summary={SAMPLE_SUMMARY} />);
+    expect(container.querySelectorAll('section[aria-label="Resumen"] svg polyline')).toHaveLength(
+      0,
+    );
   });
 
   it('colors each change by whether it is good news, not by its direction', () => {

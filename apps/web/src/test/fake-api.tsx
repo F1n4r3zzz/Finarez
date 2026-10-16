@@ -60,6 +60,10 @@ export const signedIn = {
       byAccount: [],
       ...nothingYet,
     }),
+  'GET /reports/monthly': () =>
+    json({ from: '2026-05-01', to: '2026-10-31', months: [], ...nothingYet }),
+  'GET /reports/balances': () =>
+    json({ from: '2026-09-16', to: '2026-10-15', days: [], ...nothingYet }),
   'GET /reports/summary': () =>
     json({
       from: '2026-10-01',

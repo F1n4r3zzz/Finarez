@@ -28,12 +28,13 @@ export function Stat({ label, value, delta }: StatProps) {
   );
 }
 
-function DeltaBadge({ delta }: { delta: Delta }) {
+/** The change as a badge colored by whether it is good news, then the period it compares with. */
+export function DeltaBadge({ delta, as: Tag = 'dd' }: { delta: Delta; as?: 'dd' | 'p' }) {
   const up = delta.ratio >= 0;
   const good = up === delta.upIsGood;
   const Arrow = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <dd className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted">
+    <Tag className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted">
       <span
         className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium ${
           good ? 'bg-income-soft text-income' : 'bg-expense-soft text-expense'
@@ -43,6 +44,6 @@ function DeltaBadge({ delta }: { delta: Delta }) {
         <span className="amount">{formatPercent(delta.ratio)}</span>
       </span>
       {delta.label}
-    </dd>
+    </Tag>
   );
 }
