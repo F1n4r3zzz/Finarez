@@ -19,12 +19,8 @@ import {
   listTransactions,
 } from '../ledger/api';
 import { listPending } from '../recurring/api';
-import {
-  type AccountRow,
-  type CategorySpend,
-  DashboardView,
-  type RecentRow,
-} from './DashboardView';
+import { type AccountRow, DashboardView, type RecentRow } from './DashboardView';
+import { SpendingPanel } from './SpendingPanel';
 
 const LIQUID = new Set(['bank', 'cash', 'wallet']);
 
@@ -110,13 +106,6 @@ export function DashboardPage() {
   const missing = [
     ...new Set([worth, thisMonth, lastMonth].flatMap((r) => r.excluded.map((e) => e.currency))),
   ];
-  const spending: CategorySpend[] = thisMonth.expensesByCategory
-    .filter((c) => BigInt(c.amountMinor) > 0n)
-    .slice(0, 5)
-    .map((c) => ({
-      category: data.categories.find((x) => x.id === c.categoryId)?.name ?? '',
-      amount: money(BigInt(c.amountMinor), currency),
-    }));
   const rows: AccountRow[] = active.slice(0, 6).map((a) => ({
     id: a.id,
     name: a.name,
@@ -171,7 +160,15 @@ export function DashboardPage() {
         },
       }}
       accounts={rows}
-      spending={spending}
+      spending={
+        <SpendingPanel
+          month={thisMonth}
+          categories={data.categories}
+          today={data.today}
+          currency={currency}
+          className="h-full"
+        />
+      }
       recent={data.recent
         .map((r) => recentRow(r, data))
         .filter((r): r is RecentRow => Boolean(r))

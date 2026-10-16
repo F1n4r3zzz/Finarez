@@ -3,12 +3,16 @@ import { Link } from 'react-router';
 
 interface PanelProps {
   title: string;
+  /** A line under the title, e.g. what the figures cover. */
+  subtitle?: string;
   link?: { to: string; label: string };
+  /** A control in the header's corner instead of a link, e.g. a period filter. */
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
 }
 
-export function Panel({ title, link, children, className = '' }: PanelProps) {
+export function Panel({ title, subtitle, link, action, children, className = '' }: PanelProps) {
   const headingId = useId();
   return (
     <section
@@ -16,9 +20,13 @@ export function Panel({ title, link, children, className = '' }: PanelProps) {
       className={`rounded-xl border border-line bg-surface ${className}`}
     >
       <header className="flex min-h-14 items-center justify-between gap-4 px-5 pt-4">
-        <h2 id={headingId} className="font-semibold">
-          {title}
-        </h2>
+        <div className="min-w-0">
+          <h2 id={headingId} className="font-semibold">
+            {title}
+          </h2>
+          {subtitle && <p className="text-sm text-subtle">{subtitle}</p>}
+        </div>
+        {action}
         {link && (
           <Link
             to={link.to}

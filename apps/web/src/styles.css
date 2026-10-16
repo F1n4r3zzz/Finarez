@@ -45,6 +45,17 @@
   --color-bar-track: #eff4ff;
   --color-chart-income: #0d9488;
   --color-chart-expense: #e34948;
+
+  /* Spending donut, largest slice first, grey for "Otros". Every pair that can touch passes the
+     dataviz CVD and normal-vision checks on each theme's surface: neighbours, the ring's wrap
+     for 2 to 5 slices, and Otros between slots 5 and 1. Slots 3-5 and Otros are under 3:1 on
+     the light surface, so the legend always shows each name and amount. */
+  --color-slice-1: #2a78d6;
+  --color-slice-2: #eb6834;
+  --color-slice-3: #1baf7a;
+  --color-slice-4: #eda100;
+  --color-slice-5: #e87ba4;
+  --color-slice-other: #cbd5e1;
 }
 
 :root {
@@ -83,6 +94,13 @@
   --color-bar-track: #1c2840;
   --color-chart-income: #0f9f90;
   --color-chart-expense: #ef5350;
+
+  --color-slice-1: #3987e5;
+  --color-slice-2: #d95926;
+  --color-slice-3: #199e70;
+  --color-slice-4: #c98500;
+  --color-slice-5: #d55181;
+  --color-slice-other: #475569;
 }
 
 /*

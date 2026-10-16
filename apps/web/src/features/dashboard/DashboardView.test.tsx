@@ -2,7 +2,9 @@ import { render, screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
+import { Panel } from '../../components/Panel';
 import { DashboardView } from './DashboardView';
+import { SpendingDonut } from './SpendingPanel';
 import { SAMPLE_ACCOUNTS, SAMPLE_RECENT, SAMPLE_SPENDING, SAMPLE_SUMMARY } from './sample';
 
 function renderView(element: ReactElement) {
@@ -35,7 +37,15 @@ describe('DashboardView', () => {
         summary={SAMPLE_SUMMARY}
         accounts={SAMPLE_ACCOUNTS}
         recent={SAMPLE_RECENT}
-        spending={SAMPLE_SPENDING}
+        spending={
+          <Panel title="Gastos por categoría">
+            <SpendingDonut
+              slices={SAMPLE_SPENDING}
+              total={SAMPLE_SPENDING.reduce((sum, s) => sum + s.amount, 0n)}
+              currency="COP"
+            />
+          </Panel>
+        }
       />,
     );
     expect(screen.queryByText('Primeros pasos')).toBeNull();
@@ -45,8 +55,10 @@ describe('DashboardView', () => {
     expect(screen.getByText('Cuenta de ahorros')).toBeTruthy();
     const spending = within(screen.getByRole('region', { name: 'Gastos por categoría' }));
     expect(
-      spending.getAllByRole('listitem').map((li) => li.querySelector('span')?.textContent),
+      spending.getAllByRole('listitem').map((li) => li.querySelectorAll('span')[1]?.textContent),
     ).toEqual(['Vivienda', 'Comida', 'Transporte', 'Salud', 'Ocio']);
+    // Vivienda: 1.800.000 of 2.850.000 spent.
+    expect(spending.getByText('63 %')).toBeTruthy();
     expect(screen.getByText('Nómina')).toBeTruthy();
   });
 

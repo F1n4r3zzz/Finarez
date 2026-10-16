@@ -8,7 +8,7 @@ import { Panel } from '../../components/Panel';
 import { Stat } from '../../components/Stat';
 import { formatMonthName, formatShortDate } from '../../lib/dates';
 import { formatMoney } from '../../lib/money';
-import { changeRatio, formatPercent } from '../../lib/percent';
+import { changeRatio } from '../../lib/percent';
 
 export interface MonthTotals {
   /** Any date in the month. */
@@ -43,17 +43,12 @@ export interface RecentRow {
   transfer?: boolean;
 }
 
-export interface CategorySpend {
-  category: string;
-  /** Positive: how much was spent. */
-  amount: Money;
-}
-
 interface DashboardViewProps {
   summary?: DashboardSummary;
   accounts?: readonly AccountRow[];
   recent?: readonly RecentRow[];
-  spending?: readonly CategorySpend[];
+  /** The spending-by-category panel (it loads its own periods). */
+  spending?: ReactNode;
   /** Shown under the page title, e.g. that the app is still being built. */
   notice?: ReactNode;
 }
@@ -103,38 +98,6 @@ function Balance({ summary }: { summary: DashboardSummary }) {
         <Stat label={t('dashboard.net', { month })} value={<Amount value={net} signed />} />
       </dl>
     </section>
-  );
-}
-
-function SpendingBars({ rows }: { rows: readonly CategorySpend[] }) {
-  const { t } = useTranslation();
-  const max = rows.reduce((m, r) => (r.amount.amountMinor > m ? r.amount.amountMinor : m), 0n);
-  const total = rows.reduce((s, r) => s + r.amount.amountMinor, 0n);
-  if (rows.length === 0 || max === 0n)
-    return <p className="text-muted">{t('dashboard.spendingEmpty')}</p>;
-  return (
-    <ul className="flex flex-col gap-4">
-      {rows.map((r) => {
-        const width = Number((r.amount.amountMinor * 1000n) / max) / 10;
-        const share = Number((r.amount.amountMinor * 10_000n) / total) / 10_000;
-        return (
-          <li key={r.category}>
-            <div className="flex items-baseline justify-between gap-3 text-sm">
-              <span className="truncate font-medium">{r.category}</span>
-              <span className="shrink-0">
-                <span className="amount">{formatMoney(r.amount)}</span>
-                <span className="ml-2 inline-block w-10 text-right text-subtle">
-                  {formatPercent(share, { signed: false })}
-                </span>
-              </span>
-            </div>
-            <div aria-hidden="true" className="mt-1.5 h-2 rounded-full bg-bar-track">
-              <div className="h-2 rounded-full bg-bar" style={{ width: `${width}%` }} />
-            </div>
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 
@@ -202,7 +165,7 @@ export function DashboardView({
   summary,
   accounts = [],
   recent = [],
-  spending = [],
+  spending,
   notice,
 }: DashboardViewProps) {
   const { t } = useTranslation();
@@ -245,13 +208,7 @@ export function DashboardView({
           </div>
 
           <div className="mt-4 grid gap-4 xl:grid-cols-5">
-            <Panel
-              title={t('dashboard.spending')}
-              link={{ to: '/reports', label: t('dashboard.seeReports') }}
-              className="xl:col-span-2"
-            >
-              <SpendingBars rows={spending} />
-            </Panel>
+            <div className="xl:col-span-2">{spending}</div>
             <Panel
               title={t('dashboard.recent')}
               link={{ to: '/transactions', label: t('dashboard.seeAll') }}
