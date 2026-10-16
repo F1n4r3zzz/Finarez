@@ -406,8 +406,11 @@ describe('Inicio', () => {
 
   it('runs what came due once when the app opens', async () => {
     const api = recurringApi();
+    const runs = () => api.calls.filter((c) => c.path === '/recurring/run');
     renderApp('/');
+    // The run starts after the first screen paints.
+    await waitFor(() => expect(runs()).toHaveLength(1));
     await screen.findByText(/por confirmar/);
-    expect(api.calls.filter((c) => c.path === '/recurring/run')).toHaveLength(1);
+    expect(runs()).toHaveLength(1);
   });
 });
