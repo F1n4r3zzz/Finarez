@@ -35,7 +35,7 @@ export const legalEs = {
     { label: 'Nombre o razón social', value: 'Finarez' },
     { label: 'Identificación', value: '[NIT]' },
     { label: 'Domicilio y dirección', value: '[CIUDAD Y DIRECCIÓN EN COLOMBIA]' },
-    { label: 'Privacidad y atención al usuario', value: 'finarez.contact@gmail.com' },
+    { label: 'Privacidad y atención al usuario', value: 'finarezapp@gmail.com' },
     { label: 'Teléfono', value: '[TELÉFONO DE CONTACTO]' },
     { label: 'Área responsable de datos', value: '[PERSONA O ÁREA RESPONSABLE]' },
   ],
@@ -106,7 +106,7 @@ export const legalEs = {
           id: 'cuenta',
           title: '4. Tu cuenta y su seguridad',
           paragraphs: [
-            'Debes utilizar un correo al que tengas acceso, confirmar su titularidad y mantener una contraseña confidencial. No compartas enlaces de recuperación, códigos o sesiones. Si ves un acceso que no reconoces, escríbenos a finarez.contact@gmail.com.',
+            'Debes utilizar un correo al que tengas acceso, confirmar su titularidad y mantener una contraseña confidencial. No compartas enlaces de recuperación, códigos o sesiones. Si ves un acceso que no reconoces, escríbenos a finarezapp@gmail.com.',
             'Eres responsable de la información que ingresas y debes revisar importes, monedas, fechas y saldos. No introduzcas claves bancarias, números completos de tarjetas, códigos de seguridad ni datos de otras personas que no tengas derecho a tratar.',
           ],
         },
@@ -174,7 +174,7 @@ export const legalEs = {
           id: 'atencion',
           title: '12. Atención, ley aplicable y autoridades',
           paragraphs: [
-            'El marco previsto es el colombiano, sin excluir normas imperativas ni derechos que resulten aplicables. Para soporte y privacidad, escribe a finarez.contact@gmail.com.',
+            'El marco previsto es el colombiano, sin excluir normas imperativas ni derechos que resulten aplicables. Para soporte y privacidad, escribe a finarezapp@gmail.com.',
             'Podrás presentar solicitudes y reclamaciones por los canales informados, sin costos por el simple ejercicio de tus derechos. Se respetan las competencias de la Superintendencia de Industria y Comercio y de las demás autoridades competentes, sin imponer renuncias a la protección legal o un arbitraje obligatorio en este borrador.',
           ],
           links: [
@@ -200,7 +200,7 @@ export const legalEs = {
           id: 'responsable',
           title: '1. Responsable, alcance y estado',
           paragraphs: [
-            'Finarez es responsable del tratamiento de los datos necesarios para prestar el servicio. Su NIT, domicilio y teléfono se completarán en la ficha de responsable de esta página. Para consultas y reclamos sobre tus datos, escribe a finarez.contact@gmail.com.',
+            'Finarez es responsable del tratamiento de los datos necesarios para prestar el servicio. Su NIT, domicilio y teléfono se completarán en la ficha de responsable de esta página. Para consultas y reclamos sobre tus datos, escribe a finarezapp@gmail.com.',
             'Esta política cubre la información de cuentas, registros financieros, seguridad y preferencias de Finarez. Se dirige inicialmente a Colombia y se prepara con base en la Ley 1581 de 2012 y sus normas reglamentarias. Los proveedores externos también pueden tener responsabilidades y condiciones propias que se identificarán según cada servicio.',
           ],
         },
@@ -290,7 +290,7 @@ export const legalEs = {
           id: 'solicitudes',
           title: '10. Cómo ejercer tus derechos',
           paragraphs: [
-            'El canal de privacidad es finarez.contact@gmail.com. La persona o área encargada está pendiente en la ficha de responsable. Ese correo debe estar disponible y monitoreado desde el lanzamiento. El centro de exportación y eliminación dentro de Ajustes también está pendiente; este documento no lo presenta como una función disponible.',
+            'El canal de privacidad es finarezapp@gmail.com. La persona o área encargada está pendiente en la ficha de responsable. Ese correo debe estar disponible y monitoreado desde el lanzamiento. El centro de exportación y eliminación dentro de Ajustes también está pendiente; este documento no lo presenta como una función disponible.',
             'El procedimiento deberá permitir identificar la cuenta, describir la solicitud y recibir una respuesta, verificando identidad o representación de forma proporcionada. No envíes contraseñas ni datos financieros innecesarios. Las solicitudes se registrarán y se informará cualquier dato adicional indispensable para atenderlas.',
             'Las consultas se atienden, por regla general, en diez días hábiles; cuando proceda una extensión, se informarán los motivos y la fecha, sin superar los cinco días hábiles adicionales. Los reclamos se atienden en quince días hábiles contados desde el día siguiente a su recibo, con extensión motivada de hasta ocho días hábiles adicionales cuando corresponda.',
             'Los reclamos incompletos, su traslado al competente y la anotación de reclamo en trámite se gestionarán según la Ley 1581. No será necesario contratar un plan de pago para presentar una solicitud sobre tus datos.',
@@ -413,7 +413,7 @@ export const legalEs = {
           title: '6. Actualizaciones y contacto',
           paragraphs: [
             'Este inventario corresponde a la configuración de la aplicación revisada en la fecha del documento. Antes de abrir el servicio al público se verificará también el entorno alojado, se incorporarán las tecnologías de los proveedores realmente habilitados y se fijará la fecha de vigencia.',
-            'Para consultas, escribe a finarez.contact@gmail.com. La política de privacidad explica las finalidades generales, tus derechos y el procedimiento previsto para ejercerlos.',
+            'Para consultas, escribe a finarezapp@gmail.com. La política de privacidad explica las finalidades generales, tus derechos y el procedimiento previsto para ejercerlos.',
           ],
         },
       ],

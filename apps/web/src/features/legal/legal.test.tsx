@@ -16,7 +16,7 @@ describe('public legal documents', () => {
     expect(await screen.findByRole('heading', { level: 1, name: title })).toBeTruthy();
     expect(router.state.location.pathname).toBe(path);
     expect(screen.getByText('Borrador para revisión')).toBeTruthy();
-    expect(screen.getByText('finarez.contact@gmail.com')).toBeTruthy();
+    expect(screen.getByText('finarezapp@gmail.com')).toBeTruthy();
     expect(screen.getByText('[NIT]')).toBeTruthy();
     expect(screen.queryByRole('checkbox')).toBeNull();
     expect(api.calls).toEqual([]);
