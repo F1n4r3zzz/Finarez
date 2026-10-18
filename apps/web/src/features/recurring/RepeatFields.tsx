@@ -52,20 +52,26 @@ export function RepeatFields({
     : [];
 
   return (
-    <fieldset className="grid gap-5 border-line border-t pt-5 sm:rounded-xl sm:border sm:p-4">
+    <fieldset className="grid gap-5">
       <legend className="sr-only">{t('recurring.repeat.legend')}</legend>
-      <label className="flex gap-3">
+      <label className="flex cursor-pointer items-center justify-between gap-4 rounded-[14px] border border-line bg-hover px-4 py-3">
+        <span>
+          <span className="block font-semibold">{t('recurring.repeat.toggle')}</span>
+          <span className="block text-muted text-sm">{t('recurring.repeat.toggleHint')}</span>
+        </span>
         <input
           type="checkbox"
+          role="switch"
+          aria-checked={on}
           name="repeat"
           checked={on}
           onChange={(e) => setOn(e.target.checked)}
-          className="mt-1 size-5 shrink-0 accent-brand"
+          className="peer sr-only"
         />
-        <span>
-          <span className="block font-medium">{t('recurring.repeat.toggle')}</span>
-          <span className="block text-sm text-muted">{t('recurring.repeat.toggleHint')}</span>
-        </span>
+        <span
+          aria-hidden="true"
+          className="relative h-7 w-[2.875rem] shrink-0 rounded-full bg-line-strong transition-colors duration-150 after:absolute after:top-[3px] after:left-[3px] after:size-[1.375rem] after:rounded-full after:bg-surface after:transition-transform after:duration-150 peer-checked:bg-action peer-checked:after:translate-x-[1.125rem] peer-focus-visible:outline-2 peer-focus-visible:outline-brand peer-focus-visible:outline-offset-2"
+        />
       </label>
       {on && (
         <>

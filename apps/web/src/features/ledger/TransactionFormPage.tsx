@@ -6,11 +6,13 @@ import {
   type LocalDate,
   todayIn,
 } from '@finanz/kernel';
-import { useState } from 'react';
+import { X } from 'lucide-react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   type ActionFunctionArgs,
   Form,
+  Link,
   type LoaderFunctionArgs,
   redirect,
   useActionData,
@@ -18,6 +20,7 @@ import {
   useNavigation,
 } from 'react-router';
 import { useAccount } from '../../app/account';
+import { useBandOverlap } from '../../app/band';
 import { Button } from '../../components/Button';
 import { FailureNotice } from '../../components/FailureNotice';
 import { SelectField, TextField } from '../../components/Field';
@@ -36,22 +39,26 @@ import {
   getTransaction,
   listAccounts,
   listCategories,
+  listTransactions,
   restoreTransaction,
   voidTransaction,
 } from './api';
+import { selectableCategories, topCategories } from './category-usage';
 
 type Kind = 'expense' | 'income' | 'transfer';
 const KINDS: readonly Kind[] = ['expense', 'income', 'transfer'];
 
 export async function transactionFormLoader({ params, request }: LoaderFunctionArgs) {
-  const [accounts, categories, transaction] = await Promise.all([
+  const [accounts, categories, transaction, recent] = await Promise.all([
     listAccounts(),
     listCategories(),
     params.id ? getTransaction(params.id) : Promise.resolve(undefined),
+    // Recent movements tell which categories to offer as quick picks.
+    params.id ? Promise.resolve([]) : listTransactions({ limit: 300 }),
   ]);
   // "Nuevo recurrente" opens the form with "Repetir" already on.
   const repeat = new URL(request.url).searchParams.get('repeat') === '1';
-  return { accounts, categories, transaction, repeat };
+  return { accounts, categories, transaction, repeat, recent };
 }
 
 type FieldKey =
@@ -214,20 +221,63 @@ export async function transactionFormAction({
 }
 
 function categoryOptions(categories: Category[], kind: 'income' | 'expense') {
-  const active = categories.filter((c) => c.kind === kind && !c.archived);
-  const roots = active.filter((c) => !c.parentId);
-  return roots.flatMap((root) => [
-    { value: root.id, label: root.name },
-    ...active
-      .filter((c) => c.parentId === root.id)
-      .map((c) => ({ value: c.id, label: `— ${c.name}` })),
-  ]);
+  return selectableCategories(categories, kind).map((c) => ({
+    value: c.id,
+    label: c.parentId ? `— ${c.name}` : c.name,
+  }));
+}
+
+/** The amount, large, with the currency of the account it moves. */
+function MoneyField({
+  label,
+  name,
+  currency,
+  defaultValue,
+  error,
+}: {
+  label: string;
+  name: string;
+  currency?: string;
+  defaultValue?: string;
+  error?: string;
+}) {
+  const id = useId();
+  return (
+    <div className="grid gap-1.5">
+      <label htmlFor={id} className="font-medium text-sm">
+        {label}
+      </label>
+      <div
+        className={`flex items-baseline gap-2.5 rounded-[18px] border bg-field px-4 py-2.5 has-focus-visible:outline-2 has-focus-visible:outline-brand ${
+          error ? 'border-expense' : 'border-line-strong'
+        }`}
+      >
+        {currency && <span className="font-semibold text-muted">{currency}</span>}
+        <input
+          id={id}
+          name={name}
+          inputMode="decimal"
+          autoComplete="off"
+          defaultValue={defaultValue}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className="amount min-w-0 flex-1 bg-transparent text-[2.5rem] leading-tight outline-none"
+        />
+      </div>
+      {error && (
+        <p id={`${id}-error`} className="text-expense text-sm">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function TransactionFormPage() {
   const { t } = useTranslation();
+  useBandOverlap();
   const { preferences } = useAccount();
-  const { accounts, categories, transaction, repeat } =
+  const { accounts, categories, transaction, repeat, recent } =
     useLoaderData<typeof transactionFormLoader>();
   const result = useActionData<FormResult>();
   const navigation = useNavigation();
@@ -241,6 +291,12 @@ export function TransactionFormPage() {
   );
   const [to, setTo] = useState<string>(
     (initial && 'to' in initial ? initial.to : active[1]?.id) ?? '',
+  );
+  const [accountId, setAccountId] = useState<string>(
+    (initial && 'accountId' in initial ? initial.accountId : active[0]?.id) ?? '',
+  );
+  const [categoryId, setCategoryId] = useState<string>(
+    (initial && 'categoryId' in initial ? initial.categoryId : '') ?? '',
   );
   const today = todayIn(preferences.timeZone);
   const [date, setDate] = useState<string>(transaction?.occurredOn ?? today);
@@ -259,6 +315,11 @@ export function TransactionFormPage() {
       {a.name} ({a.currency})
     </option>
   ));
+  const options = kind === 'transfer' ? [] : categoryOptions(categories, kind);
+  const picks = kind === 'transfer' || transaction ? [] : topCategories(recent, categories, kind);
+  // Until the user picks one, the most used category of this kind (not the list's first).
+  const fallback = picks[0]?.id ?? options[0]?.value ?? '';
+  const chosen = options.some((o) => o.value === categoryId) ? categoryId : fallback;
 
   return (
     <>
@@ -266,9 +327,18 @@ export function TransactionFormPage() {
         title={t(
           transaction ? 'ledger.transactions.form.editTitle' : 'ledger.transactions.form.newTitle',
         )}
-        description={transaction?.description ?? t('modules.transactions.description')}
+        description={transaction?.description ?? t('ledger.transactions.form.newDescription')}
+        action={
+          <Link
+            to="/transactions"
+            aria-label={t('ledger.transactions.form.close')}
+            className="absolute top-4 right-4 inline-flex size-11 items-center justify-center rounded-full bg-band-chip text-on-band lg:hidden"
+          >
+            <X size={22} aria-hidden="true" />
+          </Link>
+        }
       />
-      <div className="grid max-w-lg gap-5">
+      <div className="grid max-w-[45rem] gap-5 rounded-[22px] border border-line bg-surface p-5 sm:p-6">
         {transaction?.managedBy && (
           <Notice tone="info">{t('ledger.transactions.form.managed')}</Notice>
         )}
@@ -285,52 +355,39 @@ export function TransactionFormPage() {
               onChange={setKind}
               disabled={Boolean(transaction)}
             />
-            <TextField
-              label={t('ledger.transactions.form.date')}
-              name="occurredOn"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-            <TextField
-              label={t('ledger.transactions.form.description')}
-              name="description"
-              defaultValue={transaction?.description}
-              hint={t('ledger.transactions.form.descriptionHint')}
-              error={error('description')}
-              autoComplete="off"
-            />
             {kind === 'transfer' ? (
               <>
-                <SelectField
-                  label={t('ledger.transactions.form.from')}
-                  name="from"
-                  value={from}
-                  onChange={(e) => setFrom(e.target.value)}
-                  error={error('from')}
-                >
-                  {accountOptions}
-                </SelectField>
-                <SelectField
-                  label={t('ledger.transactions.form.to')}
-                  name="to"
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  error={error('to')}
-                >
-                  {accountOptions}
-                </SelectField>
-                <TextField
+                <MoneyField
                   label={t(
                     differentCurrencies
                       ? 'ledger.transactions.form.sent'
                       : 'ledger.transactions.form.amount',
                   )}
                   name="sent"
-                  inputMode="decimal"
+                  currency={accountMap.get(from)?.currency}
                   defaultValue={initial && 'sent' in initial ? initial.sent : ''}
                   error={error('sent')}
                 />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <SelectField
+                    label={t('ledger.transactions.form.from')}
+                    name="from"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                    error={error('from')}
+                  >
+                    {accountOptions}
+                  </SelectField>
+                  <SelectField
+                    label={t('ledger.transactions.form.to')}
+                    name="to"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    error={error('to')}
+                  >
+                    {accountOptions}
+                  </SelectField>
+                </div>
                 {differentCurrencies && (
                   <TextField
                     label={t('ledger.transactions.form.received')}
@@ -344,38 +401,83 @@ export function TransactionFormPage() {
               </>
             ) : (
               <>
+                <MoneyField
+                  label={t('ledger.transactions.form.amount')}
+                  name="amount"
+                  currency={accountMap.get(accountId)?.currency}
+                  defaultValue={initial && 'amount' in initial ? initial.amount : ''}
+                  error={error('amount')}
+                />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <SelectField
+                    label={t('ledger.transactions.form.account')}
+                    name="accountId"
+                    value={accountId}
+                    onChange={(e) => setAccountId(e.target.value)}
+                    error={error('accountId')}
+                  >
+                    {accountOptions}
+                  </SelectField>
+                  <TextField
+                    label={t('ledger.transactions.form.date')}
+                    name="occurredOn"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+                {picks.length > 0 && (
+                  <fieldset className="flex flex-wrap gap-2">
+                    <legend className="sr-only">{t('ledger.transactions.form.quickPicks')}</legend>
+                    {picks.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        aria-pressed={chosen === c.id}
+                        onClick={() => setCategoryId(c.id)}
+                        className={`min-h-10 rounded-full border px-3.5 font-medium transition-colors duration-150 ${
+                          chosen === c.id
+                            ? 'border-action bg-action text-on-action'
+                            : 'border-line-strong hover:bg-hover'
+                        }`}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                  </fieldset>
+                )}
                 <SelectField
-                  label={t('ledger.transactions.form.account')}
-                  name="accountId"
-                  defaultValue={
-                    initial && 'accountId' in initial ? initial.accountId : active[0]?.id
-                  }
-                  error={error('accountId')}
-                >
-                  {accountOptions}
-                </SelectField>
-                <SelectField
-                  key={kind}
                   label={t('ledger.transactions.form.category')}
                   name="categoryId"
-                  defaultValue={initial && 'categoryId' in initial ? initial.categoryId : undefined}
+                  value={chosen}
+                  onChange={(e) => setCategoryId(e.target.value)}
                   error={error('categoryId')}
                 >
-                  {categoryOptions(categories, kind).map((o) => (
+                  {options.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
                 </SelectField>
-                <TextField
-                  label={t('ledger.transactions.form.amount')}
-                  name="amount"
-                  inputMode="decimal"
-                  defaultValue={initial && 'amount' in initial ? initial.amount : ''}
-                  error={error('amount')}
-                />
               </>
             )}
+            {kind === 'transfer' && (
+              <TextField
+                label={t('ledger.transactions.form.date')}
+                name="occurredOn"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            )}
+            <TextField
+              label={t('ledger.transactions.form.description')}
+              name="description"
+              defaultValue={transaction?.description}
+              hint={t('ledger.transactions.form.descriptionHint')}
+              error={error('description')}
+              autoComplete="off"
+            />
             {!transaction && (
               <RepeatFields
                 date={date as LocalDate}
@@ -388,14 +490,21 @@ export function TransactionFormPage() {
               />
             )}
             <FailureNotice failure={result?.failure} />
-            <div>
-              <Button type="submit" pending={submitting}>
-                {t(
-                  submitting
-                    ? 'ledger.transactions.form.submitting'
-                    : 'ledger.transactions.form.submit',
-                )}
+            {/* On phones the save button stays at the bottom of the screen. */}
+            <div className="sticky bottom-0 -mx-5 flex gap-3 border-line border-t bg-surface px-5 py-3 sm:static sm:mx-0 sm:border-0 sm:p-0">
+              <Button type="submit" pending={submitting} wide>
+                {submitting
+                  ? t('ledger.transactions.form.submitting')
+                  : transaction
+                    ? t('ledger.transactions.form.saveChanges')
+                    : t(`ledger.transactions.form.save.${kind}`)}
               </Button>
+              <Link
+                to="/transactions"
+                className="hidden min-h-11 items-center justify-center rounded-full border border-line-strong px-5 font-medium hover:bg-hover sm:inline-flex"
+              >
+                {t('ledger.transactions.form.cancel')}
+              </Link>
             </div>
           </Form>
         )}

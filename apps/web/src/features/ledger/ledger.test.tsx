@@ -147,10 +147,10 @@ describe('Movimientos', () => {
   it('records an expense with one idempotency key, even if the button is pressed twice', async () => {
     const api = ledgerApi({ 'POST /ledger/transactions': () => json(lunch, 201) });
     renderApp('/transactions/new');
-    await screen.findByRole('heading', { name: 'Nuevo movimiento' });
+    await screen.findByRole('heading', { name: 'Registrar movimiento' });
     type('Descripción', 'Mercado del mes');
     type('Valor', '310.000');
-    const save = screen.getByRole('button', { name: 'Guardar' });
+    const save = screen.getByRole('button', { name: 'Guardar gasto' });
     fireEvent.click(save);
     fireEvent.click(save);
     await screen.findByText('Mercado, Bancolombia');
@@ -169,14 +169,14 @@ describe('Movimientos', () => {
   it('asks for what the other side received when currencies differ', async () => {
     const api = ledgerApi({ 'POST /ledger/transactions': () => json(lunch, 201) });
     renderApp('/transactions/new');
-    await screen.findByRole('heading', { name: 'Nuevo movimiento' });
+    await screen.findByRole('heading', { name: 'Registrar movimiento' });
     fireEvent.click(screen.getByRole('radio', { name: 'Transferencia' }));
     type('Descripción', 'Wise a Bancolombia');
     type('Desde', WISE);
     type('Hacia', BANK);
     type('Valor enviado', '1.000');
     type('Valor recibido', '4.010.000');
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar transferencia' }));
     await screen.findByText('Mercado del mes');
     expect(api.actions()[0]?.body).toMatchObject({
       kind: 'transfer',
@@ -194,7 +194,7 @@ describe('Movimientos', () => {
     await screen.findByRole('heading', { name: 'Editar movimiento' });
     expect((screen.getByLabelText('Valor') as HTMLInputElement).value).toBe('310.000');
     type('Valor', '320.000');
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
     expect((await screen.findByRole('alert')).textContent).toContain('cambió mientras lo editabas');
     expect(api.actions()[0]).toMatchObject({ method: 'PUT', body: { version: 1 } });
   });
@@ -358,5 +358,76 @@ describe('Movimientos list', () => {
     const row = (await screen.findByText('Pago tarjeta')).closest('a') as HTMLElement;
     expect(row.textContent).toMatch(/\$\s200\.000$/);
     expect(row.textContent).not.toMatch(/[+-]\$/);
+  });
+});
+
+describe('Registrar movimiento', () => {
+  const TRANSPORTE = '01900000-0000-7000-8000-0000000000c3';
+  const formApi = () =>
+    ledgerApi({
+      'GET /categories': () =>
+        json([
+          ...CATEGORIES,
+          { id: TRANSPORTE, kind: 'expense', parentId: null, name: 'Transporte', archived: false },
+        ]),
+    });
+
+  it('offers the most used categories as quick picks that fill the category', async () => {
+    formApi();
+    renderApp('/transactions/new');
+    await screen.findByRole('heading', { name: 'Registrar movimiento' });
+    const picks = within(screen.getByRole('group', { name: 'Más usadas' }));
+    // Mercado was used before, so it comes first.
+    expect(picks.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Mercado',
+      'Transporte',
+    ]);
+    fireEvent.click(picks.getByRole('button', { name: 'Transporte' }));
+    expect((screen.getByLabelText('Categoría') as HTMLSelectElement).value).toBe(TRANSPORTE);
+    expect(picks.getByRole('button', { name: 'Transporte' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    expect(picks.getByRole('button', { name: 'Mercado' }).getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+  });
+
+  it('starts on the most used category, not the first one in the list', async () => {
+    ledgerApi({
+      'GET /categories': () =>
+        json([
+          { id: 'ajustes', kind: 'expense', parentId: null, name: 'Ajustes', archived: false },
+          ...CATEGORIES,
+        ]),
+    });
+    renderApp('/transactions/new');
+    await screen.findByRole('heading', { name: 'Registrar movimiento' });
+    expect((screen.getByLabelText('Categoría') as HTMLSelectElement).value).toBe(MERCADO);
+  });
+
+  it('names the save button after what is being recorded', async () => {
+    formApi();
+    renderApp('/transactions/new');
+    expect(await screen.findByRole('button', { name: 'Guardar gasto' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Ingreso' }));
+    expect(screen.getByRole('button', { name: 'Guardar ingreso' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Transferencia' }));
+    expect(screen.getByRole('button', { name: 'Guardar transferencia' })).toBeTruthy();
+  });
+
+  it('makes Repetir a switch that shows how often', async () => {
+    formApi();
+    renderApp('/transactions/new');
+    const repeat = await screen.findByRole('switch', { name: /Repetir este movimiento/ });
+    expect(screen.queryByText('Cada cuánto')).toBeNull();
+    fireEvent.click(repeat);
+    expect(screen.getByText('Cada cuánto')).toBeTruthy();
+  });
+
+  it('can be closed back to Movimientos', async () => {
+    formApi();
+    renderApp('/transactions/new');
+    const close = await screen.findByRole('link', { name: 'Cerrar' });
+    expect(close.getAttribute('href')).toBe('/transactions');
   });
 });

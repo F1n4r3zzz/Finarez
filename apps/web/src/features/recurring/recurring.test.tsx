@@ -129,7 +129,7 @@ describe('Repetir, in a new movement', () => {
       [`GET /recurring/rules/${PHONE}/occurrences`]: () => json([]),
     });
     const router = renderApp('/transactions/new');
-    await screen.findByRole('heading', { name: 'Nuevo movimiento' });
+    await screen.findByRole('heading', { name: 'Registrar movimiento' });
     expect(screen.queryByText('Cada cuánto')).toBeNull();
     fireEvent.click(screen.getByLabelText(/Repetir este movimiento/));
     type('Descripción', 'Plan celular');
@@ -141,7 +141,7 @@ describe('Repetir, in a new movement', () => {
         'Próximas veces: 15 de noviembre de 2026, 15 de diciembre de 2026 y 15 de enero de 2027.',
       ),
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar gasto' }));
     await screen.findByRole('heading', { level: 1, name: 'Plan celular' });
     expect(router.state.location.pathname).toBe(`/transactions/recurring/${PHONE}`);
     const [created] = api.actions();
@@ -168,7 +168,7 @@ describe('Repetir, in a new movement', () => {
   it('twice a month proposes the other payday, and a final date cuts the list short', async () => {
     const api = recurringApi();
     renderApp('/transactions/new?repeat=1');
-    await screen.findByRole('heading', { name: 'Nuevo movimiento' });
+    await screen.findByRole('heading', { name: 'Registrar movimiento' });
     fireEvent.click(screen.getByLabelText('Quincenal'));
     expect((screen.getByLabelText('Segundo día del mes') as HTMLSelectElement).value).toBe('30');
     expect(screen.getByText(/30 de octubre de 2026, 15 de noviembre de 2026 y 30 de/)).toBeTruthy();
@@ -179,7 +179,7 @@ describe('Repetir, in a new movement', () => {
     type('Hasta (opcional)', '2026-10-01');
     type('Descripción', 'Salario');
     type('Valor', '3.100.000');
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar gasto' }));
     expect(
       await screen.findByText('Debe ser igual o posterior a la fecha del movimiento.'),
     ).toBeTruthy();
