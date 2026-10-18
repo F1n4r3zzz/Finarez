@@ -103,7 +103,9 @@ export function AccountsPage() {
         title={t('modules.accounts.title')}
         description={t('modules.accounts.description')}
         action={
-          accounts.length > 0 && <ActionLink to="/accounts/new" label={t('ledger.accounts.add')} />
+          accounts.length > 0 && (
+            <ActionLink to="/accounts/new" label={t('ledger.accounts.add')} variant="band" />
+          )
         }
       />
       {accounts.length === 0 ? (

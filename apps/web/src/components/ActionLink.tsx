@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 
 const VARIANTS = {
@@ -24,6 +25,18 @@ export function ActionLink({
     >
       <Plus size={18} aria-hidden="true" />
       {label}
+    </Link>
+  );
+}
+
+/** A secondary link on the band, such as "Recurrentes" or "Editar". */
+export function BandLink({ to, children }: { to: string; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-band-chip px-5 font-semibold text-on-band transition-colors duration-150 hover:bg-band-chip/80 sm:w-auto"
+    >
+      {children}
     </Link>
   );
 }

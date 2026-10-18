@@ -8,6 +8,7 @@ import type {
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, type LoaderFunctionArgs, useFetcher, useLoaderData } from 'react-router';
+import { BandLink } from '../../components/ActionLink';
 import { Amount } from '../../components/Amount';
 import { Button } from '../../components/Button';
 import { FailureNotice } from '../../components/FailureNotice';
@@ -166,12 +167,9 @@ export function RulePage() {
         description={rule.ended ? t('recurring.detail.endedNote') : describe(rule)}
         action={
           !rule.ended && (
-            <Link
-              to={`/transactions/recurring/${rule.id}/edit`}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-line bg-surface px-4 font-medium transition-colors duration-150 hover:bg-hover sm:w-auto"
-            >
+            <BandLink to={`/transactions/recurring/${rule.id}/edit`}>
               {t('recurring.detail.edit')}
-            </Link>
+            </BandLink>
           )
         }
       />

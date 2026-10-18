@@ -4,7 +4,7 @@ import { Plus, Repeat } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Form, Link, type LoaderFunctionArgs, useLoaderData, useSubmit } from 'react-router';
 import { moduleById } from '../../app/modules';
-import { ActionLink } from '../../components/ActionLink';
+import { ActionLink, BandLink } from '../../components/ActionLink';
 import { Amount } from '../../components/Amount';
 import { EmptyState } from '../../components/EmptyState';
 import { SelectField } from '../../components/Field';
@@ -76,14 +76,15 @@ export function TransactionsPage() {
         action={
           accounts.length > 0 && (
             <div className="flex flex-col gap-3 sm:flex-row-reverse">
-              <ActionLink to="/transactions/new" label={t('ledger.transactions.add')} />
-              <Link
-                to="/transactions/recurring"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 font-medium transition-colors duration-150 hover:bg-hover"
-              >
+              <ActionLink
+                to="/transactions/new"
+                label={t('ledger.transactions.add')}
+                variant="band"
+              />
+              <BandLink to="/transactions/recurring">
                 <Repeat size={18} aria-hidden="true" />
                 {t('recurring.link')}
-              </Link>
+              </BandLink>
             </div>
           )
         }

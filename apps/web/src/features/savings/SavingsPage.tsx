@@ -173,7 +173,11 @@ export function SavingsPage() {
       <PageHeader
         title={t('modules.savings.title')}
         description={t('modules.savings.description')}
-        action={active.length > 0 && <ActionLink to="/savings/new" label={t('savings.add')} />}
+        action={
+          active.length > 0 && (
+            <ActionLink to="/savings/new" label={t('savings.add')} variant="band" />
+          )
+        }
       />
       {active.length === 0 ? (
         <EmptyState

@@ -304,7 +304,11 @@ export function RecurringPage() {
       <PageHeader
         title={t('recurring.title')}
         description={t('recurring.description')}
-        action={rules.length > 0 && add}
+        action={
+          rules.length > 0 && (
+            <ActionLink to="/transactions/new?repeat=1" label={t('recurring.add')} variant="band" />
+          )
+        }
       />
       {rules.length === 0 ? (
         <EmptyState icon={Repeat} title={t('recurring.emptyTitle')} body={t('recurring.emptyBody')}>

@@ -261,7 +261,11 @@ export function BudgetsPage() {
       <PageHeader
         title={t('modules.budgets.title')}
         description={t('modules.budgets.description')}
-        action={budgets.length > 0 && <ActionLink to="/budgets/new" label={t('budgets.add')} />}
+        action={
+          budgets.length > 0 && (
+            <ActionLink to="/budgets/new" label={t('budgets.add')} variant="band" />
+          )
+        }
       />
       {budgets.length === 0 ? (
         <EmptyState

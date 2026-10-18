@@ -146,7 +146,9 @@ export function DebtsPage() {
       <PageHeader
         title={t('modules.debts.title')}
         description={t('modules.debts.description')}
-        action={open.length > 0 && <ActionLink to="/debts/new" label={t('debts.add')} />}
+        action={
+          open.length > 0 && <ActionLink to="/debts/new" label={t('debts.add')} variant="band" />
+        }
       />
       {open.length === 0 ? (
         <EmptyState
