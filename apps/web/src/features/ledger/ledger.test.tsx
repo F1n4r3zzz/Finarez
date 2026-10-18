@@ -1,6 +1,6 @@
 import type { AccountView, Category, TransactionView } from '@finanz/contracts';
-import { fireEvent, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeApi, type Handlers, json, renderApp, signedIn } from '../../test/fake-api';
 
 const BANK = '01900000-0000-7000-8000-00000000000a';
@@ -140,7 +140,8 @@ describe('Movimientos', () => {
     expect(await screen.findByText('Mercado del mes')).toBeTruthy();
     expect(screen.getByText('Mercado, Bancolombia')).toBeTruthy();
     // Expenses show as negative amounts (the symbol depends on the browser's region).
-    expect(screen.getByText(/^-.*310\.000/)).toBeTruthy();
+    const row = screen.getByText('Mercado del mes').closest('a') as HTMLElement;
+    expect(within(row).getByText(/^-.*310\.000/)).toBeTruthy();
   });
 
   it('records an expense with one idempotency key, even if the button is pressed twice', async () => {
@@ -212,5 +213,150 @@ describe('Movimientos', () => {
       path: `/ledger/transactions/${lunch.id}/void`,
       body: { version: 1 },
     });
+  });
+});
+
+const salary: TransactionView = {
+  ...lunch,
+  id: '01900000-0000-7000-8000-0000000000f2',
+  occurredOn: '2026-03-14' as TransactionView['occurredOn'],
+  kind: 'income',
+  description: 'Salario quincenal',
+  entries: [
+    {
+      ...(lunch.entries[0] as TransactionView['entries'][number]),
+      id: 's1',
+      amountMinor: '155000000',
+    },
+    {
+      ...(lunch.entries[1] as TransactionView['entries'][number]),
+      id: 's2',
+      accountKind: 'income',
+      amountMinor: '-155000000',
+      categoryId: SALARIO,
+    },
+  ],
+};
+
+const toVisa: TransactionView = {
+  ...lunch,
+  id: '01900000-0000-7000-8000-0000000000f3',
+  occurredOn: '2026-03-13' as TransactionView['occurredOn'],
+  kind: 'transfer',
+  description: 'Pago tarjeta',
+  entries: [
+    {
+      ...(lunch.entries[0] as TransactionView['entries'][number]),
+      id: 't1',
+      amountMinor: '-20000000',
+    },
+    {
+      ...(lunch.entries[0] as TransactionView['entries'][number]),
+      id: 't2',
+      accountId: VISA,
+      accountKind: 'liability',
+      amountMinor: '20000000',
+    },
+  ],
+};
+
+describe('Movimientos list', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-15T15:00:00Z'));
+    vi.spyOn(navigator, 'languages', 'get').mockReturnValue(['es-CO']);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  const listApi = (extra: Handlers = {}) =>
+    ledgerApi({ 'GET /ledger/transactions': () => json([salary, toVisa, lunch]), ...extra });
+  const listCalls = (api: ReturnType<typeof fakeApi>) =>
+    api.calls.filter((c) => c.method === 'GET' && c.path.startsWith('/ledger/transactions'));
+
+  it('shows this month by default and asks only for its dates', async () => {
+    const api = listApi();
+    renderApp('/transactions');
+    await screen.findByText('Mercado del mes');
+    expect(listCalls(api).at(-1)?.path).toMatch(/from=2026-03-01&to=2026-03-31/);
+    expect(screen.getByRole('button', { name: 'Este mes' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+    expect(screen.getByText('Ayer, sábado 14')).toBeTruthy();
+  });
+
+  it('switches to last month', async () => {
+    const api = listApi();
+    renderApp('/transactions');
+    await screen.findByText('Mercado del mes');
+    fireEvent.click(screen.getByRole('button', { name: 'Mes pasado' }));
+    await waitFor(() =>
+      expect(listCalls(api).at(-1)?.path).toMatch(/from=2026-02-01&to=2026-02-28/),
+    );
+  });
+
+  it('narrows by category and by search without asking the API again', async () => {
+    const api = listApi();
+    renderApp('/transactions');
+    await screen.findByText('Mercado del mes');
+    const before = listCalls(api).length;
+    fireEvent.change(screen.getByLabelText('Categoría'), { target: { value: SALARIO } });
+    await waitFor(() => expect(screen.queryByText('Mercado del mes')).toBeNull());
+    expect(screen.getByText('Salario quincenal')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Categoría'), { target: { value: '' } });
+    // Each change is its own step, as when a person makes them.
+    expect(await screen.findByText('Mercado del mes')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Buscar movimientos'), { target: { value: 'mercado' } });
+    await waitFor(() => expect(screen.queryByText('Salario quincenal')).toBeNull());
+    expect(screen.getByText('Mercado del mes')).toBeTruthy();
+    expect(listCalls(api).length).toBe(before);
+  });
+
+  it('totals what is shown: count, money in, money out and the net', async () => {
+    listApi();
+    renderApp('/transactions');
+    const totals = await screen.findByLabelText('Totales');
+    // The transfer between own accounts is neither income nor spending.
+    expect(totals.textContent?.replace(/\s+/g, ' ')).toBe(
+      '3 movimientos Entró $ 1.550.000 Salió $ 310.000 Neto +$ 1.240.000',
+    );
+  });
+
+  it('puts what waits for confirmation first', async () => {
+    listApi({
+      'GET /recurring/pending': () =>
+        json([
+          {
+            ruleId: 'r1',
+            dueOn: '2026-03-15',
+            status: 'pending',
+            transactionId: null,
+            error: null,
+            description: 'Plan celular',
+            amountMinor: '6590000',
+            currency: 'COP',
+          },
+        ]),
+    });
+    renderApp('/transactions');
+    const group = await screen.findByRole('region', { name: 'Por confirmar' });
+    expect(within(group).getByText('Plan celular')).toBeTruthy();
+    expect(
+      within(group)
+        .getByRole('link', { name: /Confirmar/ })
+        .getAttribute('href'),
+    ).toBe('/transactions/recurring');
+    const regions = screen.getAllByRole('region').map((r) => r.getAttribute('aria-label'));
+    expect(regions[0]).toBe('Por confirmar');
+  });
+
+  it('shows a transfer without a sign, since it is neither income nor spending', async () => {
+    listApi();
+    renderApp('/transactions');
+    const row = (await screen.findByText('Pago tarjeta')).closest('a') as HTMLElement;
+    expect(row.textContent).toMatch(/\$\s200\.000$/);
+    expect(row.textContent).not.toMatch(/[+-]\$/);
   });
 });

@@ -45,7 +45,11 @@ import {
   transactionFormAction,
   transactionFormLoader,
 } from '../features/ledger/TransactionFormPage';
-import { TransactionsPage, transactionsLoader } from '../features/ledger/TransactionsPage';
+import {
+  TransactionsPage,
+  transactionsLoader,
+  transactionsShouldRevalidate,
+} from '../features/ledger/TransactionsPage';
 import {
   AcceptTermsPage,
   acceptTermsAction,
@@ -176,7 +180,12 @@ export const routes: RouteObject[] = [
           { path: 'dashboard/spending', loader: spendingLoader },
           { path: 'accounts', loader: accountsLoader, element: <AccountsPage /> },
           { path: 'accounts/new', action: newAccountAction, element: <NewAccountPage /> },
-          { path: 'transactions', loader: transactionsLoader, element: <TransactionsPage /> },
+          {
+            path: 'transactions',
+            loader: transactionsLoader,
+            shouldRevalidate: transactionsShouldRevalidate,
+            element: <TransactionsPage />,
+          },
           {
             path: 'transactions/new',
             loader: transactionFormLoader,
