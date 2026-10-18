@@ -804,9 +804,8 @@ export const es = {
     themeSystem: 'Como el sistema',
     themeLight: 'Claro',
     themeDark: 'Oscuro',
-    themeOled: 'Negro (OLED)',
     themeHint:
-      'Con «Como el sistema», Finarez cambia solo según tu dispositivo. Negro (OLED) usa un fondo negro puro, que ahorra batería en pantallas OLED.',
+      'Con «Como el sistema», Finarez cambia solo según tu dispositivo. El tema oscuro usa un fondo negro puro, que ahorra batería en pantallas OLED.',
     language: 'Idioma',
     languageValue: 'Español',
     languageNote: 'El inglés estará disponible más adelante.',

@@ -23,7 +23,7 @@
   "dependencies": {
     "@finanz/contracts": "workspace:*",
     "@finanz/kernel": "workspace:*",
-    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "i18next": "^26.4.2",
     "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^1.52.0",

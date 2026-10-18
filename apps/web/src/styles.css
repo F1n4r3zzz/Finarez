@@ -1,48 +1,64 @@
 @import "tailwindcss";
-@import "@fontsource-variable/ibm-plex-sans/wght.css";
+@import "@fontsource-variable/bricolage-grotesque/opsz.css";
 
 /*
- * Swiss-minimal financial dashboard: neutral slate surfaces, trust blue for brand and
- * navigation, green/red reserved for money in/out. Text pairs meet WCAG AA (4.5:1) in both
- * themes; chart mark colors are validated with the dataviz palette checks per theme.
+ * Design C ("Azul profundo"): the logo's deep blue as a band at the top of every page, calm
+ * surfaces below it, green for money in and red only for alarms (overspending, debts, money
+ * out). Two themes: light, and dark on a true black page. Text pairs meet WCAG AA (4.5:1) in
+ * both; chart mark colors are validated with the dataviz palette checks per theme.
  *
  * The theme is chosen by `data-theme` on <html> (set before first paint by
  * /theme-init.js, then kept in sync by src/app/theme.ts).
  */
-@custom-variant dark (
-  &:where([data-theme="dark"], [data-theme="dark"] *, [data-theme="oled"], [data-theme="oled"] *)
-);
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
-  --font-sans: "IBM Plex Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --color-paper: #f5f7fa;
+  --color-paper: #f2f5fa;
   --color-surface: #ffffff;
-  /* App frame: sidebar, mobile header and bottom bar. */
+  /* The phone's bottom bar. */
   --color-chrome: #ffffff;
-  --color-hover: #f1f5f9;
-  --color-ink: #0f172a;
-  --color-muted: #475569;
+  --color-hover: #eef2f8;
+  --color-ink: #101a33;
+  --color-muted: #56627a;
   --color-subtle: #64748b;
-  --color-line: #e2e8f0;
+  --color-line: #dce3ef;
+  /* Field borders and outline buttons. */
+  --color-line-strong: #c3cedf;
   --color-brand: #2457c5;
-  --color-brand-soft: #eff4ff;
+  --color-brand-soft: #eaf1ff;
   --color-on-brand: #ffffff;
+  /* Primary buttons. */
+  --color-action: #12285a;
+  --color-on-action: #ffffff;
+  --color-field: #ffffff;
 
-  /* The logo's two arrows: money in and out. */
-  --color-logo: #2457c5;
-  --color-logo-accent: #83afff;
+  /* The band at the top of every page, and what sits on it. */
+  --color-band: #12285a;
+  --color-band-edge: #12285a;
+  --color-on-band: #ffffff;
+  --color-band-muted: #c9d8ff;
+  --color-band-chip: rgb(255 255 255 / 0.12);
+  --color-cta: #9abeff;
+  --color-on-cta: #12285a;
 
-  /* Text on money amounts. */
+  /* The logo's two arrows, money in and out; the logo always sits on the band. */
+  --color-logo: #9abeff;
+  --color-logo-accent: #eaf1ff;
+
+  /* Money. Red is the only alarm color. */
   --color-income: #047857;
   --color-expense: #b91c1c;
-  --color-income-soft: #ecfdf5;
+  --color-income-soft: #e3f5ee;
   --color-expense-soft: #fef2f2;
+  /* Overspent bars, and text on expense-soft. */
+  --color-expense-mark: #dc2626;
+  --color-expense-strong: #991b1b;
 
-  /* Chart marks. Income/expense columns pass the dataviz checks on each theme's surface
-     (colorblind separation 11.9 light, 11.8 dark and OLED). */
+  /* Chart marks. Income/expense columns pass the dataviz checks on each theme's surface. */
   --color-bar: #2563eb;
-  --color-bar-track: #eff4ff;
+  --color-bar-track: #e8edf6;
   --color-chart-income: #0d9488;
   --color-chart-expense: #e34948;
 
@@ -63,35 +79,42 @@
 }
 
 /*
- * Dark: deep navy, not black. Depth comes from lightness steps (page < panel < hover)
- * because shadows don't read on dark. Colors are desaturated tonal variants, not inversions.
+ * Dark: a true black page (kind to OLED screens) with panels a step above it and hairline
+ * borders, because shadows don't read on black. The band turns a brighter navy so it stays
+ * the focus. Colors are lighter tonal variants, not inversions.
  */
-:root[data-theme="dark"],
-:root[data-theme="oled"] {
+:root[data-theme="dark"] {
   color-scheme: dark;
 
-  --color-paper: #0b1120;
-  --color-surface: #121b2d;
-  --color-chrome: #121b2d;
-  --color-hover: #1a2438;
-  --color-ink: #e7ecf3;
-  --color-muted: #a5b2c5;
-  --color-subtle: #8f9db3;
-  --color-line: #2a3752;
+  --color-paper: #000000;
+  --color-surface: #0c111d;
+  --color-chrome: #0c111d;
+  --color-hover: #151b29;
+  --color-ink: #e8ecf4;
+  --color-muted: #94a3b8;
+  --color-subtle: #8391a7;
+  --color-line: #1e2638;
+  --color-line-strong: #2e3850;
   --color-brand: #8db0ff;
-  --color-brand-soft: #1b2a4a;
-  --color-on-brand: #0b1120;
+  --color-brand-soft: #18223f;
+  --color-on-brand: #12285a;
+  --color-action: #9abeff;
+  --color-on-action: #12285a;
+  --color-field: #05070d;
 
-  --color-logo: #9abeff;
-  --color-logo-accent: #eaf1ff;
+  --color-band: #1e3a8a;
+  --color-band-edge: #2c4a9c;
+  --color-band-muted: #c7d6ff;
 
   --color-income: #5bd39a;
-  --color-expense: #f58a8f;
-  --color-income-soft: #10291f;
-  --color-expense-soft: #2e1820;
+  --color-expense: #f87171;
+  --color-income-soft: #0f241d;
+  --color-expense-soft: #2a141a;
+  --color-expense-mark: #f87171;
+  --color-expense-strong: #fca5a5;
 
   --color-bar: #3b82f6;
-  --color-bar-track: #1c2840;
+  --color-bar-track: #1e2638;
   --color-chart-income: #0f9f90;
   --color-chart-expense: #ef5350;
 
@@ -101,21 +124,6 @@
   --color-slice-4: #c98500;
   --color-slice-5: #d55181;
   --color-slice-other: #475569;
-}
-
-/*
- * OLED: the dark theme on a pure black page. Text, brand, money and chart colors are
- * inherited unchanged; only the surfaces step down (contrast only goes up). Panels stay a
- * hair above black, with slightly stronger borders, so the layout still reads.
- */
-:root[data-theme="oled"] {
-  --color-paper: #000000;
-  --color-surface: #0a0e16;
-  --color-chrome: #000000;
-  --color-hover: #151b27;
-  --color-line: #222b3d;
-  --color-brand-soft: #14203a;
-  --color-bar-track: #141c2e;
 }
 
 /* Amounts: tabular figures so columns of numbers line up. */

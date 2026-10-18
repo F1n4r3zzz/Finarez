@@ -369,13 +369,8 @@ export const legalEs = {
             rows: [
               [
                 'finanz.theme',
-                'Tema claro, oscuro u OLED elegido.',
+                'Tema claro u oscuro elegido.',
                 'Hasta cambiarlo o borrar el almacenamiento.',
-              ],
-              [
-                'finanz.theme.dark',
-                'Variante oscura preferida al alternar el tema.',
-                'Hasta cambiarla o borrar el almacenamiento.',
               ],
               [
                 'finanz.language',

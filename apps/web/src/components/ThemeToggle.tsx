@@ -2,7 +2,7 @@ import { Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toggleTheme, useTheme } from '../app/theme';
 
-/** Quick light ↔ dark switch (returns to OLED for OLED users). The full choice lives in Ajustes. */
+/** Quick light ↔ dark switch. The full choice lives in Ajustes. */
 export function ThemeToggle() {
   const { t } = useTranslation();
   const { theme } = useTheme();

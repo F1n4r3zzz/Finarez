@@ -1,15 +1,16 @@
 import { useSyncExternalStore } from 'react';
 
-export type Theme = 'light' | 'dark' | 'oled';
+/** Light, or dark (a true black page, made for OLED phones). */
+export type Theme = 'light' | 'dark';
 export type ThemePreference = 'system' | Theme;
-type DarkTheme = Exclude<Theme, 'light'>;
 
 // Device-local until user preferences are stored on the server (after login exists).
 const STORAGE_KEY = 'finanz.theme';
-/** Which dark the quick toggle returns to, so OLED users don't land on regular dark. */
-const DARK_VARIANT_KEY = 'finanz.theme.dark';
-const META_COLOR: Record<Theme, string> = { light: '#f5f7fa', dark: '#0b1120', oled: '#000000' };
-const THEMES: readonly string[] = ['light', 'dark', 'oled'] satisfies Theme[];
+/** Left by the version that had two darks; removed on the next choice. */
+const OLD_DARK_VARIANT_KEY = 'finanz.theme.dark';
+/** The browser bar takes the band's color, so the top of the phone screen is one piece. */
+const META_COLOR: Record<Theme, string> = { light: '#12285A', dark: '#1E3A8A' };
+const THEMES: readonly string[] = ['light', 'dark'] satisfies Theme[];
 const listeners = new Set<() => void>();
 
 const systemDarkQuery = () => window.matchMedia('(prefers-color-scheme: dark)');
@@ -30,6 +31,8 @@ function readStorage(key: string): string | null {
 
 export function readThemePreference(): ThemePreference {
   const stored = readStorage(STORAGE_KEY);
+  // "oled" was the black dark of the previous version, which is now the only dark.
+  if (stored === 'oled') return 'dark';
   return stored && THEMES.includes(stored) ? (stored as Theme) : 'system';
 }
 
@@ -52,9 +55,7 @@ export function setThemePreference(preference: ThemePreference): void {
   try {
     if (preference === 'system') localStorage.removeItem(STORAGE_KEY);
     else localStorage.setItem(STORAGE_KEY, preference);
-    if (preference === 'dark' || preference === 'oled') {
-      localStorage.setItem(DARK_VARIANT_KEY, preference);
-    }
+    localStorage.removeItem(OLD_DARK_VARIANT_KEY);
   } catch {
     // Storage blocked (private mode): the choice lasts for this page only.
     applyTheme(resolveTheme(preference, systemDarkQuery().matches));
@@ -64,14 +65,9 @@ export function setThemePreference(preference: ThemePreference): void {
   refresh();
 }
 
-/** Quick switch: light ↔ the user's dark (regular or OLED). */
+/** Quick switch between light and dark. */
 export function toggleTheme(): void {
-  if (currentTheme() !== 'light') {
-    setThemePreference('light');
-    return;
-  }
-  const variant: DarkTheme = readStorage(DARK_VARIANT_KEY) === 'oled' ? 'oled' : 'dark';
-  setThemePreference(variant);
+  setThemePreference(currentTheme() === 'light' ? 'dark' : 'light');
 }
 
 /** Call once at startup: follows system changes and choices made in other tabs. */
