@@ -1,40 +1,44 @@
 import type { LocalDate, Money } from '@finanz/kernel';
-import { ChevronRight } from 'lucide-react';
+import { ArrowLeftRight, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { useBandOverlap } from '../../app/band';
 import { Amount } from '../../components/Amount';
+import { Monogram } from '../../components/Monogram';
+import { PageHeader } from '../../components/PageHeader';
 import { Panel } from '../../components/Panel';
-import { formatMonthName, formatShortDate } from '../../lib/dates';
-import { type DashboardSummary, SummaryCards } from './SummaryCards';
+import { formatShortDate } from '../../lib/dates';
+import { AccountTiles } from './AccountTiles';
+import { BandHero } from './BandHero';
+import { BudgetsCard } from './BudgetsCard';
+import { MonthCard } from './MonthCard';
+import type { UpcomingItem } from './month';
+import type { AccountTile, BudgetRow, DashboardHero, MonthTotals, Pace, RecentRow } from './types';
+import { UpcomingCard } from './UpcomingCard';
 
-export type { DashboardSummary, MonthTotals } from './SummaryCards';
-
-export interface AccountRow {
-  id: string;
-  name: string;
-  detail: string;
-  balance: Money;
-}
-
-export interface RecentRow {
-  id: string;
-  date: LocalDate;
-  description: string;
-  /** Category name, or "From → To" for a transfer. */
-  category: string;
-  amount: Money;
-  /** Money moved between the user's own accounts: shown without a sign or color. */
-  transfer?: boolean;
-}
+export type {
+  AccountTile,
+  BudgetRow,
+  DashboardHero,
+  MonthTotals,
+  Pace,
+  RecentRow,
+} from './types';
 
 interface DashboardViewProps {
-  summary?: DashboardSummary;
-  accounts?: readonly AccountRow[];
-  recent?: readonly RecentRow[];
+  /** Without it the user has no accounts yet and sees the first steps. */
+  hero?: DashboardHero;
+  accounts?: readonly AccountTile[];
+  month?: MonthTotals;
+  pace?: Pace;
+  budgets?: readonly BudgetRow[];
+  upcoming?: readonly UpcomingItem[];
+  today?: LocalDate;
   /** The spending-by-category panel (it loads its own periods). */
   spending?: ReactNode;
-  /** Shown under the page title, e.g. that the app is still being built. */
+  recent?: readonly RecentRow[];
+  /** Above the cards, e.g. missing exchange rates. */
   notice?: ReactNode;
 }
 
@@ -48,6 +52,10 @@ function Onboarding() {
   const { t } = useTranslation();
   return (
     <>
+      <PageHeader
+        title={t('modules.dashboard.title')}
+        description={t('modules.dashboard.description')}
+      />
       <section
         aria-labelledby="available-label"
         className="rounded-[22px] border border-line bg-surface p-6 md:p-8"
@@ -55,12 +63,12 @@ function Onboarding() {
         <p id="available-label" className="text-muted">
           {t('dashboard.available')}
         </p>
-        <p className="mt-2 max-w-xl text-xl font-medium md:text-2xl">
+        <p className="mt-2 max-w-xl font-medium text-xl md:text-2xl">
           {t('dashboard.availableEmpty')}
         </p>
       </section>
       <section aria-labelledby="first-steps" className="mt-8">
-        <h2 id="first-steps" className="text-lg font-semibold">
+        <h2 id="first-steps" className="font-semibold text-lg">
           {t('dashboard.firstSteps')}
         </h2>
         <ol className="mt-3 grid gap-3 md:grid-cols-3">
@@ -80,7 +88,7 @@ function Onboarding() {
                   <span className="block font-medium">
                     {t(`dashboard.steps.${step.key}.title`)}
                   </span>
-                  <span className="mt-1 block text-sm text-muted">
+                  <span className="mt-1 block text-muted text-sm">
                     {t(`dashboard.steps.${step.key}.body`)}
                   </span>
                 </span>
@@ -98,81 +106,65 @@ function Onboarding() {
   );
 }
 
-export function DashboardView({
-  summary,
-  accounts = [],
-  recent = [],
-  spending,
-  notice,
-}: DashboardViewProps) {
+function RecentPanel({ recent }: { recent: readonly RecentRow[] }) {
   const { t } = useTranslation();
-  const subtitle = summary
-    ? t('dashboard.subtitle', { month: formatMonthName(summary.current.month) })
-    : t('modules.dashboard.description');
+  return (
+    <Panel
+      title={t('dashboard.recent')}
+      link={{ to: '/transactions', label: t('dashboard.seeAllMany') }}
+    >
+      {recent.length === 0 ? (
+        <p className="text-muted">{t('dashboard.recentEmpty')}</p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {recent.map((r) => (
+            <li key={r.id} className="flex items-center gap-3.5 py-3">
+              <Monogram
+                name={r.category || r.description}
+                tone={r.transfer ? 'plain' : r.amount.amountMinor > 0n ? 'income' : 'neutral'}
+                icon={r.transfer ? <ArrowLeftRight size={18} /> : undefined}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="line-clamp-2 block font-semibold">{r.description}</span>
+                <span className="block truncate text-muted text-sm">
+                  {r.category
+                    ? `${r.category}, ${formatShortDate(r.date)}`
+                    : formatShortDate(r.date)}
+                </span>
+              </span>
+              <Amount value={r.amount} signed={!r.transfer} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+}
 
+function WithData(props: DashboardViewProps & { hero: DashboardHero }) {
+  useBandOverlap();
+  const { hero, accounts = [], month, pace, budgets = [], upcoming = [], today, spending } = props;
   return (
     <>
-      <header className="mb-6 md:mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-          {t('modules.dashboard.title')}
-        </h1>
-        <p className="mt-1 text-muted">{subtitle}</p>
-      </header>
-      {notice}
-
-      {!summary ? (
-        <Onboarding />
-      ) : (
-        <>
-          <SummaryCards summary={summary} />
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            <div>{spending}</div>
-            <Panel
-              title={t('modules.accounts.title')}
-              link={{ to: '/accounts', label: t('dashboard.seeAll') }}
-            >
-              <ul className="divide-y divide-line">
-                {accounts.map((a) => (
-                  <li key={a.id} className="flex items-baseline justify-between gap-4 py-2.5">
-                    <span className="min-w-0">
-                      <span className="line-clamp-2 text-sm font-medium">{a.name}</span>
-                      <span className="block truncate text-sm text-subtle">{a.detail}</span>
-                    </span>
-                    <Amount value={a.balance} />
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-            <Panel
-              title={t('dashboard.recent')}
-              link={{ to: '/transactions', label: t('dashboard.seeAll') }}
-              className="lg:col-span-2"
-            >
-              {recent.length === 0 ? (
-                <p className="text-muted">{t('dashboard.recentEmpty')}</p>
-              ) : (
-                <ul className="divide-y divide-line">
-                  {recent.map((r) => (
-                    <li
-                      key={r.id}
-                      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 py-2.5"
-                    >
-                      <span className="min-w-14 whitespace-nowrap text-sm text-subtle">
-                        {formatShortDate(r.date)}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="line-clamp-2 text-sm font-medium">{r.description}</span>
-                        <span className="block truncate text-sm text-subtle">{r.category}</span>
-                      </span>
-                      <Amount value={r.amount} signed={!r.transfer} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Panel>
-          </div>
-        </>
-      )}
+      <BandHero hero={hero} month={month} />
+      <div className="grid gap-4 lg:gap-[1.375rem]">
+        <AccountTiles accounts={accounts} />
+        {props.notice}
+        <div className="grid gap-4 lg:grid-cols-3 lg:gap-[1.375rem]">
+          {month && <MonthCard month={month} pace={pace} />}
+          {budgets.length > 0 && <BudgetsCard budgets={budgets} />}
+          <UpcomingCard items={upcoming} today={today ?? ('' as LocalDate)} />
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2 lg:gap-[1.375rem]">
+          <div>{spending}</div>
+          <RecentPanel recent={props.recent ?? []} />
+        </div>
+      </div>
     </>
   );
+}
+
+/** Inicio: the balance on the band, account tiles, the month, budgets, what's next and lists. */
+export function DashboardView(props: DashboardViewProps) {
+  return props.hero ? <WithData {...props} hero={props.hero} /> : <Onboarding />;
 }

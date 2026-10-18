@@ -395,11 +395,12 @@ describe('A recurring rule', () => {
 });
 
 describe('Inicio', () => {
-  it('says how many recurring movements wait for confirmation', async () => {
+  it('lists what waits for confirmation under Próximos, with a way to confirm it', async () => {
     recurringApi();
     renderApp('/');
-    expect(await screen.findByText(/Tienes 1 movimiento recurrente por confirmar\./)).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Revisar' }).getAttribute('href')).toBe(
+    const upcoming = within(await screen.findByRole('region', { name: 'Próximos' }));
+    expect(upcoming.getByText('Plan celular')).toBeTruthy();
+    expect(upcoming.getByRole('link', { name: 'Confirmar' }).getAttribute('href')).toBe(
       '/transactions/recurring',
     );
   });
@@ -410,7 +411,7 @@ describe('Inicio', () => {
     renderApp('/');
     // The run starts after the first screen paints.
     await waitFor(() => expect(runs()).toHaveLength(1));
-    await screen.findByText(/por confirmar/);
+    await screen.findByRole('link', { name: 'Confirmar' });
     expect(runs()).toHaveLength(1);
   });
 });

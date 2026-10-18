@@ -1,29 +1,84 @@
 import { money, parseLocalDate } from '@finanz/kernel';
-import type { AccountRow, DashboardSummary, RecentRow } from './DashboardView';
+import type {
+  AccountTile,
+  BudgetRow,
+  DashboardHero,
+  MonthTotals,
+  RecentRow,
+} from './DashboardView';
+import type { UpcomingItem } from './month';
 import type { Slice } from './spending';
 
-// Development-only sample data for /dev/preview. Never shown in production builds.
+// Development-only sample data for /dev/preview and the view's tests. Never shown in production.
 const cop = (pesos: number) => money(BigInt(pesos) * 100n, 'COP');
 
-export const SAMPLE_SUMMARY: DashboardSummary = {
+export const SAMPLE_HERO: DashboardHero = {
   available: cop(12_450_000),
-  accountCount: 3,
-  current: {
-    month: parseLocalDate('2026-10-14'),
-    income: cop(4_200_000),
-    expenses: cop(-2_850_000),
-  },
-  previous: {
-    month: parseLocalDate('2026-09-30'),
-    income: cop(3_900_000),
-    expenses: cop(-2_500_000),
-  },
+  netWorth: cop(21_300_000),
 };
 
-export const SAMPLE_ACCOUNTS: readonly AccountRow[] = [
-  { id: 'a1', name: 'Cuenta de ahorros', detail: 'Bancolombia', balance: cop(8_100_000) },
-  { id: 'a2', name: 'Billetera', detail: 'Nequi', balance: cop(650_000) },
-  { id: 'a3', name: 'Efectivo', detail: 'En la casa', balance: cop(180_000) },
+export const SAMPLE_MONTH: MonthTotals = {
+  income: cop(4_200_000),
+  expenses: cop(2_850_000),
+  monthName: 'octubre',
+};
+
+export const SAMPLE_TILES: readonly AccountTile[] = [
+  {
+    id: 'a1',
+    name: 'Cuenta de ahorros',
+    kind: 'Bancolombia',
+    balance: cop(8_100_000),
+    debt: false,
+  },
+  { id: 'a2', name: 'Nequi', kind: 'Billetera digital', balance: cop(650_000), debt: false },
+  {
+    id: 'a3',
+    name: 'Interactive Brokers',
+    kind: 'Inversión',
+    balance: money(238_050n, 'USD'),
+    debt: false,
+  },
+  { id: 'a4', name: 'Efectivo', kind: 'En la casa', balance: cop(180_000), debt: false },
+  {
+    id: 'a5',
+    name: 'Crédito vehículo',
+    kind: 'Banco de Bogotá',
+    balance: cop(-27_412_169),
+    debt: true,
+  },
+];
+
+export const SAMPLE_BUDGETS: readonly BudgetRow[] = [
+  { id: 'b1', name: 'Mercado', spent: cop(480_000), available: cop(700_000), overspent: false },
+  { id: 'b2', name: 'Transporte', spent: cop(210_000), available: cop(350_000), overspent: false },
+  { id: 'b3', name: 'Restaurantes', spent: cop(200_000), available: cop(180_000), overspent: true },
+];
+
+export const SAMPLE_UPCOMING: readonly UpcomingItem[] = [
+  {
+    key: 'u1',
+    date: parseLocalDate('2026-10-14'),
+    title: 'Plan celular Claro',
+    amount: cop(65_900),
+    kind: 'confirm',
+    ruleId: 'r1',
+  },
+  {
+    key: 'u2',
+    date: parseLocalDate('2026-10-25'),
+    title: 'Cuota Crédito vehículo',
+    amount: cop(1_321_322),
+    kind: 'debt',
+  },
+  {
+    key: 'u3',
+    date: parseLocalDate('2026-10-30'),
+    title: 'Salario quincenal',
+    amount: cop(1_550_000),
+    kind: 'recurring',
+    ruleId: 'r2',
+  },
 ];
 
 export const SAMPLE_SPENDING: readonly Slice[] = [
@@ -62,12 +117,5 @@ export const SAMPLE_RECENT: readonly RecentRow[] = [
     description: 'Arriendo',
     category: 'Vivienda',
     amount: cop(-1_800_000),
-  },
-  {
-    id: 't5',
-    date: parseLocalDate('2026-10-08'),
-    description: 'Farmacia',
-    category: 'Salud',
-    amount: cop(-85_000),
   },
 ];

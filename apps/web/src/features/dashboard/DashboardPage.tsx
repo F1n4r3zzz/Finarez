@@ -7,22 +7,29 @@ import {
   parseLocalDate,
   todayIn,
 } from '@finanz/kernel';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, type LoaderFunctionArgs, useFetcher, useLoaderData } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import { Notice } from '../../components/Notice';
 import { api } from '../../lib/api';
+import { formatMonthName } from '../../lib/dates';
+import { listBudgets } from '../budgets/api';
+import { listDebts } from '../debts/api';
 import {
-  getBalances,
-  getMonthly,
   getNetWorth,
   getSummary,
   listAccounts,
   listCategories,
   listTransactions,
 } from '../ledger/api';
-import { listPending } from '../recurring/api';
-import { type AccountRow, DashboardView, type RecentRow } from './DashboardView';
+import { listPending, listRules } from '../recurring/api';
+import {
+  type AccountTile,
+  type BudgetRow,
+  DashboardView,
+  type Pace,
+  type RecentRow,
+} from './DashboardView';
+import { samePointLastMonth, upcomingItems } from './month';
 import { SpendingPanel } from './SpendingPanel';
 
 const LIQUID = new Set(['bank', 'cash', 'wallet']);
@@ -40,65 +47,50 @@ export async function dashboardLoader() {
   const today = todayIn(preferences.timeZone);
   const current = monthRange(today);
   const previous = monthRange(today, 1);
-  const [accounts, categories, worth, thisMonth, lastMonth, recent, pending, sixMonths] =
-    await Promise.all([
-      listAccounts(),
-      listCategories(),
-      getNetWorth(today),
-      getSummary(current.from, current.to),
-      getSummary(previous.from, previous.to),
-      listTransactions({ limit: 6 }),
-      listPending(),
-      getMonthly(monthRange(today, 5).from, current.to),
-    ]);
-  return {
+  const lastMonthSoFar = samePointLastMonth(today);
+  const [
     accounts,
-    sixMonths,
-    pending: pending.length,
     categories,
     worth,
     thisMonth,
     lastMonth,
+    lastMonthPace,
     recent,
+    pending,
+    rules,
+    debts,
+    budgets,
+  ] = await Promise.all([
+    listAccounts(),
+    listCategories(),
+    getNetWorth(today),
+    getSummary(current.from, current.to),
+    getSummary(previous.from, previous.to),
+    getSummary(lastMonthSoFar.from, lastMonthSoFar.to),
+    listTransactions({ limit: 6 }),
+    listPending(),
+    listRules(),
+    listDebts(),
+    listBudgets(today),
+  ]);
+  return {
+    accounts,
+    categories,
+    worth,
+    thisMonth,
+    lastMonth,
+    lastMonthPace,
+    recent,
+    pending,
+    rules,
+    debts,
+    budgets,
     today,
     previousMonth: previous.to,
   };
 }
 
 type Data = Awaited<ReturnType<typeof dashboardLoader>>;
-
-const DAY = 86_400_000;
-const daysBefore = (date: LocalDate, days: number) =>
-  parseLocalDate(new Date(Date.parse(`${date}T00:00:00Z`) - days * DAY).toISOString().slice(0, 10));
-
-/** What was available at the end of each of the last 30 days, for Inicio's first card. */
-export async function availableLoader({ request }: LoaderFunctionArgs) {
-  const url = new URL(request.url);
-  const to = url.searchParams.get('to') ?? '';
-  const ids = (url.searchParams.get('accounts') ?? '').split(',').filter(Boolean);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(to) || ids.length === 0) return { days: [] as bigint[] };
-  try {
-    const series = await getBalances(daysBefore(to as LocalDate, 29), to, ids);
-    return { days: series.days.map((d) => BigInt(d.valueMinor)) };
-  } catch {
-    // The trend is extra: without it the card still shows today's figure.
-    return { days: [] as bigint[] };
-  }
-}
-
-/** Loads the 30-day trend after the page shows, so Inicio never waits for it. */
-function useAvailableTrend(accountIds: readonly string[], today: LocalDate) {
-  const fetcher = useFetcher<typeof availableLoader>();
-  const query = accountIds.length
-    ? `/dashboard/available?to=${today}&accounts=${accountIds.join(',')}`
-    : undefined;
-  const { load } = fetcher;
-  useEffect(() => {
-    if (query) load(query);
-  }, [query, load]);
-  const days = fetcher.data?.days;
-  return days && days.length > 1 ? days : undefined;
-}
 
 function recentRow(t: TransactionView, data: Data): RecentRow | undefined {
   const legs = t.entries.filter((e) => e.accountKind === 'asset' || e.accountKind === 'liability');
@@ -133,87 +125,96 @@ function recentRow(t: TransactionView, data: Data): RecentRow | undefined {
 export function DashboardPage() {
   const { t } = useTranslation();
   const data = useLoaderData<typeof dashboardLoader>();
-  const { accounts, worth, thisMonth, lastMonth } = data;
+  const { accounts, worth, thisMonth, lastMonth, lastMonthPace, today } = data;
   const currency = worth.currency as CurrencyCode;
   const active = accounts.filter((a) => !a.archived);
-  const liquid = active.filter((a) => LIQUID.has(a.subtype));
-  const availableTrend = useAvailableTrend(
-    liquid.map((a) => a.id),
-    data.today,
-  );
 
   if (active.length === 0) return <DashboardView />;
 
   const value = new Map(worth.byAccount.map((a) => [a.accountId, BigInt(a.valueMinor)]));
-  const available = liquid.reduce((sum, a) => sum + (value.get(a.id) ?? 0n), 0n);
+  const available = active
+    .filter((a) => LIQUID.has(a.subtype))
+    .reduce((sum, a) => sum + (value.get(a.id) ?? 0n), 0n);
   const missing = [
     ...new Set([worth, thisMonth, lastMonth].flatMap((r) => r.excluded.map((e) => e.currency))),
   ];
-  const rows: AccountRow[] = active.slice(0, 6).map((a) => ({
-    id: a.id,
-    name: a.name,
-    detail: a.institution ?? t(`ledger.subtypes.${a.subtype}`),
-    balance: fromWire({ amountMinor: a.balanceMinor, currency: a.currency }),
-  }));
-
-  const notices = [
-    data.pending > 0 && (
-      <Notice key="recurring" tone="info">
-        <p>
-          {t('recurring.notice', { count: data.pending })}{' '}
-          <Link
-            to="/transactions/recurring"
-            className="font-medium text-brand underline-offset-4 hover:underline"
-          >
-            {t('recurring.review')}
-          </Link>
-        </p>
-      </Notice>
-    ),
-    missing.length > 0 && (
-      <Notice key="rates" tone="info">
-        <p>
-          {t('dashboard.missingRates', { currencies: missing.join(', ') })}{' '}
-          <Link
-            to="/settings"
-            className="font-medium text-brand underline-offset-4 hover:underline"
-          >
-            {t('dashboard.addRates')}
-          </Link>
-        </p>
-      </Notice>
-    ),
-  ].filter(Boolean);
+  const tiles: AccountTile[] = [...active]
+    .sort((a, b) => Number(a.kind === 'liability') - Number(b.kind === 'liability'))
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      kind: a.institution ?? t(`ledger.subtypes.${a.subtype}`),
+      balance: fromWire({ amountMinor: a.balanceMinor, currency: a.currency }),
+      debt: a.kind === 'liability',
+    }));
+  const categoryName = (id: string) => data.categories.find((c) => c.id === id)?.name ?? '';
+  const budgets: BudgetRow[] = data.budgets.flatMap((b) =>
+    b.archived || !b.current
+      ? []
+      : [
+          {
+            id: b.id,
+            name: categoryName(b.categoryId),
+            spent: money(BigInt(b.current.spentMinor), b.currency),
+            available: money(BigInt(b.current.availableMinor), b.currency),
+            overspent: b.current.overspent,
+          },
+        ],
+  );
+  const spentNow = BigInt(thisMonth.expensesMinor);
+  const spentThen = BigInt(lastMonthPace.expensesMinor);
+  // Only against a month that had any movement, and only when there is a difference.
+  const lastMonthActive =
+    BigInt(lastMonth.incomeMinor) !== 0n || BigInt(lastMonth.expensesMinor) !== 0n;
+  const pace: Pace | undefined =
+    lastMonthActive && spentNow !== spentThen
+      ? {
+          delta: money(spentNow - spentThen, currency),
+          monthName: formatMonthName(data.previousMonth),
+        }
+      : undefined;
 
   return (
     <DashboardView
-      notice={notices.length > 0 ? <div className="mb-6 grid gap-3">{notices}</div> : undefined}
-      summary={{
+      notice={
+        missing.length > 0 && (
+          <Notice tone="info">
+            <p>
+              {t('dashboard.missingRates', { currencies: missing.join(', ') })}{' '}
+              <Link
+                to="/settings"
+                className="font-medium text-brand underline-offset-4 hover:underline"
+              >
+                {t('dashboard.addRates')}
+              </Link>
+            </p>
+          </Notice>
+        )
+      }
+      hero={{
         available: money(available, currency),
-        accountCount: liquid.length,
-        current: {
-          month: data.today,
-          income: money(BigInt(thisMonth.incomeMinor), currency),
-          expenses: money(-BigInt(thisMonth.expensesMinor), currency),
-        },
-        previous: {
-          month: data.previousMonth,
-          income: money(BigInt(lastMonth.incomeMinor), currency),
-          expenses: money(-BigInt(lastMonth.expensesMinor), currency),
-        },
-        trends: {
-          income: data.sixMonths.months.map((m) => BigInt(m.incomeMinor)),
-          expenses: data.sixMonths.months.map((m) => BigInt(m.expensesMinor)),
-          net: data.sixMonths.months.map((m) => BigInt(m.netMinor)),
-        },
-        availableTrend,
+        netWorth: money(BigInt(worth.totalMinor), currency),
       }}
-      accounts={rows}
+      accounts={tiles}
+      month={{
+        income: money(BigInt(thisMonth.incomeMinor), currency),
+        expenses: money(spentNow, currency),
+        monthName: formatMonthName(today),
+      }}
+      pace={pace}
+      budgets={budgets}
+      upcoming={upcomingItems({
+        pending: data.pending,
+        rules: data.rules,
+        debts: data.debts,
+        today,
+      })}
+      today={today}
       spending={
         <SpendingPanel
           month={thisMonth}
           categories={data.categories}
-          today={data.today}
+          today={today}
           currency={currency}
           className="h-full"
         />

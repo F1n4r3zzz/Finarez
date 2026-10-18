@@ -1,6 +1,5 @@
 import type {
   AccountView,
-  BalanceSeriesReport,
   Category,
   DraftInput,
   MonthlyReport,
@@ -14,13 +13,6 @@ export const listAccounts = () => api<AccountView[]>('GET', '/ledger/accounts');
 
 export const getMonthly = (from: string, to: string) =>
   api<MonthlyReport>('GET', `/reports/monthly?from=${from}&to=${to}`);
-
-/** The accounts' total at the end of each day from `from` to `to`, in the primary currency. */
-export const getBalances = (from: string, to: string, accountIds: readonly string[]) =>
-  api<BalanceSeriesReport>(
-    'GET',
-    `/reports/balances?from=${from}&to=${to}&accounts=${accountIds.join(',')}`,
-  );
 
 /** Creating an account can post its opening balance, so it is keyed like a transaction. */
 export const createAccount = (body: unknown, key: string = crypto.randomUUID()) =>
