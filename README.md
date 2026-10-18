@@ -2,7 +2,7 @@
 
 Personal finance web app: accounts, income and expenses, transfers, budgets, savings, debts and net worth. Spanish first, multi-currency (USD, EUR, COP, MXN). Work in progress.
 
-Working today: sign-up and sign-in, accounts, income and expenses, transfers (including between currencies), exchange rates, the home dashboard, debts (loans and credit cards, with each payment split into interest and principal), savings goals and reports. Budgets, recurring movements and file import are next.
+Working today: sign-up and sign-in, accounts, income and expenses, transfers (including between currencies), exchange rates, the home dashboard, debts (loans and credit cards, with each payment split into interest and principal), savings goals, budgets, recurring movements, reports and the legal pages with consent at sign-up. Country of residence at sign-up, file import and net worth are next.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ pnpm db:migrate        # create the tables in DATABASE_URL
 pnpm check             # lint, typecheck, module boundaries, tests (needs the test database)
 pnpm dev               # API on http://localhost:3000/api
 pnpm --filter @finanz/web dev   # web app on http://localhost:5173
-pnpm e2e               # browser tests of the main flows (auth, accounts and movements, debts) against a fresh test database
+pnpm e2e               # browser tests of the main flows (auth, accounts and movements, debts, savings, budgets, recurring) against a fresh test database
 ```
 
 Locally, sign-up and password-reset emails are printed in the API's terminal. `pnpm e2e` uses the installed Google Chrome; in CI it uses Playwright's Chromium.
