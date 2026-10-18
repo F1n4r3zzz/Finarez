@@ -30,7 +30,7 @@ export function LegalLayout() {
       </a>
       <header className="border-line border-b bg-surface">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-8">
-          <Wordmark />
+          <Wordmark tone="plain" />
           <div className="flex items-center gap-3 sm:gap-5">
             <TextLink to="/">{t('legal.openApp')}</TextLink>
             <ThemeToggle />

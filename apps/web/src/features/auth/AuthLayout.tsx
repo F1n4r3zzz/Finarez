@@ -17,8 +17,8 @@ export function AuthLayout() {
         {t('app.skipToContent')}
       </a>
       <header className="flex h-16 items-center justify-between pr-1.5 pl-4 md:px-8">
-        <Wordmark />
-        <ThemeToggle />
+        <Wordmark tone="plain" />
+        <ThemeToggle tone="plain" />
       </header>
       <main
         id="main"

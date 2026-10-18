@@ -1,4 +1,4 @@
-import { act, cleanup, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fakeApi, renderApp, signedIn } from '../test/fake-api';
 import { setShowInvestments } from './preferences';
@@ -8,62 +8,90 @@ const renderAt = async (path: string) => {
   await screen.findByRole('navigation', { name: 'Navegación principal' });
 };
 
-const mainNav = () => screen.getByRole('navigation', { name: 'Navegación principal' });
+const mainNav = () => within(screen.getByRole('navigation', { name: 'Navegación principal' }));
+const phoneBar = () => within(screen.getByRole('navigation', { name: 'Secciones' }));
+const moreButton = () => mainNav().getByRole('button', { name: /^Más/ });
+const names = (links: HTMLElement[]) =>
+  links.map((l) => l.getAttribute('aria-label') ?? l.textContent);
 
 beforeEach(() => {
   fakeApi(signedIn);
 });
 
 describe('AppShell', () => {
-  it('lists every section in Spanish and marks the current one', async () => {
-    await renderAt('/net-worth');
-    const nav = within(mainNav());
-    for (const label of [
-      'Inicio',
-      'Cuentas',
-      'Movimientos',
-      'Importar',
-      'Presupuestos',
-      'Ahorros',
-      'Deudas',
-      'Patrimonio',
-      'Reportes',
-      'Inversiones',
-      'Ajustes',
-    ]) {
-      expect(nav.getByRole('link', { name: label })).toBeTruthy();
+  it('shows five sections and Más in the top menu and marks the current one', async () => {
+    await renderAt('/budgets');
+    for (const label of ['Inicio', 'Cuentas', 'Movimientos', 'Presupuestos', 'Reportes']) {
+      expect(mainNav().getByRole('link', { name: label })).toBeTruthy();
     }
-    expect(nav.getByRole('link', { name: 'Patrimonio' }).getAttribute('aria-current')).toBe('page');
-    expect(nav.getByRole('link', { name: 'Inicio' }).getAttribute('aria-current')).toBeNull();
-    expect(screen.getByRole('heading', { level: 1, name: 'Patrimonio' })).toBeTruthy();
-  });
-
-  it('hides the optional investments section when the user turns it off', async () => {
-    await renderAt('/');
-    expect(within(mainNav()).queryByRole('link', { name: 'Inversiones' })).toBeTruthy();
-    act(() => setShowInvestments(false));
-    expect(within(mainNav()).queryByRole('link', { name: 'Inversiones' })).toBeNull();
-  });
-
-  it('keeps the mobile bar to five entries ending in "Más"', async () => {
-    await renderAt('/');
-    const links = within(screen.getByRole('navigation', { name: 'Secciones' })).getAllByRole(
-      'link',
+    expect(mainNav().getByRole('link', { name: 'Ajustes' })).toBeTruthy();
+    expect(moreButton().getAttribute('aria-expanded')).toBe('false');
+    expect(mainNav().queryByRole('link', { name: 'Ahorros' })).toBeNull();
+    expect(mainNav().getByRole('link', { name: 'Presupuestos' }).getAttribute('aria-current')).toBe(
+      'page',
     );
-    expect(links.map((l) => l.textContent)).toEqual([
+    expect(mainNav().getByRole('link', { name: 'Inicio' }).getAttribute('aria-current')).toBeNull();
+  });
+
+  it('Más opens the other sections and closes with Escape', async () => {
+    await renderAt('/');
+    act(() => moreButton().click());
+    expect(moreButton().getAttribute('aria-expanded')).toBe('true');
+    for (const label of ['Ahorros', 'Deudas', 'Patrimonio', 'Inversiones', 'Importar']) {
+      expect(mainNav().getByRole('link', { name: label })).toBeTruthy();
+    }
+    fireEvent.keyDown(mainNav().getByRole('link', { name: 'Deudas' }), { key: 'Escape' });
+    expect(moreButton().getAttribute('aria-expanded')).toBe('false');
+    expect(mainNav().queryByRole('link', { name: 'Deudas' })).toBeNull();
+    expect(document.activeElement).toBe(moreButton());
+
+    act(() => moreButton().click());
+    act(() => mainNav().getByRole('link', { name: 'Deudas' }).click());
+    expect(await screen.findByRole('heading', { level: 1, name: 'Deudas' })).toBeTruthy();
+    expect(moreButton().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('lights Más when the current section lives in it', async () => {
+    await renderAt('/debts');
+    expect(moreButton().dataset.current).toBe('true');
+    cleanup();
+    await renderAt('/');
+    expect(moreButton().dataset.current).toBeUndefined();
+  });
+
+  it('hides Inversiones from Más when the user turns it off', async () => {
+    await renderAt('/');
+    act(() => moreButton().click());
+    expect(mainNav().queryByRole('link', { name: 'Inversiones' })).toBeTruthy();
+    act(() => setShowInvestments(false));
+    expect(mainNav().queryByRole('link', { name: 'Inversiones' })).toBeNull();
+  });
+
+  it('keeps the phone bar to Inicio, Movimientos, Registrar, Reportes and Más', async () => {
+    await renderAt('/');
+    const links = phoneBar().getAllByRole('link');
+    expect(names(links)).toEqual([
       'Inicio',
-      'Cuentas',
       'Movimientos',
+      'Registrar movimiento',
       'Reportes',
       'Más',
     ]);
+    expect(links[2]?.getAttribute('href')).toBe('/transactions/new');
   });
 
   it('keeps "Más" lit in sections that live inside it', async () => {
-    await renderAt('/debts');
-    const bar = within(screen.getByRole('navigation', { name: 'Secciones' }));
-    expect(bar.getByRole('link', { name: 'Más' }).className).toContain('lit');
-    expect(bar.getByRole('link', { name: 'Inicio' }).className).not.toContain('lit');
+    for (const path of ['/debts', '/accounts']) {
+      await renderAt(path);
+      expect(phoneBar().getByRole('link', { name: 'Más' }).className).toContain('lit');
+      expect(phoneBar().getByRole('link', { name: 'Inicio' }).className).not.toContain('lit');
+      cleanup();
+    }
+  });
+
+  it('hides the phone bar while a movement is being written', async () => {
+    await renderAt('/transactions/new');
+    expect(screen.queryByRole('navigation', { name: 'Secciones' })).toBeNull();
   });
 
   it('shows a not-found page inside the shell for unknown addresses', async () => {

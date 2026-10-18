@@ -32,24 +32,33 @@ export interface ModuleDef {
   id: ModuleId;
   path: string;
   icon: LucideIcon;
-  /** Sidebar group: day to day, planning, analysis, settings. */
+  /** Kind of section: day to day, planning, analysis, settings. */
   group: 'daily' | 'plan' | 'analyze' | 'settings';
-  /** Shown in the mobile bottom bar (at most five, including "Más"). */
-  mobile?: boolean;
+  /** A pill in the desktop top menu; the other sections live in its "Más" menu. */
+  top?: boolean;
+  /** In the phone's bottom bar, beside the + and "Más". */
+  bar?: boolean;
   /** Can be hidden by the user (investments are a secondary module). */
   optional?: boolean;
 }
 
 export const MODULES: readonly ModuleDef[] = [
-  { id: 'dashboard', path: '/', icon: House, group: 'daily', mobile: true },
-  { id: 'accounts', path: '/accounts', icon: Wallet, group: 'daily', mobile: true },
-  { id: 'transactions', path: '/transactions', icon: ReceiptText, group: 'daily', mobile: true },
+  { id: 'dashboard', path: '/', icon: House, group: 'daily', top: true, bar: true },
+  { id: 'accounts', path: '/accounts', icon: Wallet, group: 'daily', top: true },
+  {
+    id: 'transactions',
+    path: '/transactions',
+    icon: ReceiptText,
+    group: 'daily',
+    top: true,
+    bar: true,
+  },
   { id: 'import', path: '/import', icon: FileUp, group: 'daily' },
-  { id: 'budgets', path: '/budgets', icon: Target, group: 'plan' },
+  { id: 'budgets', path: '/budgets', icon: Target, group: 'plan', top: true },
   { id: 'savings', path: '/savings', icon: PiggyBank, group: 'plan' },
   { id: 'debts', path: '/debts', icon: CreditCard, group: 'plan' },
   { id: 'networth', path: '/net-worth', icon: Scale, group: 'analyze' },
-  { id: 'reports', path: '/reports', icon: ChartColumn, group: 'analyze', mobile: true },
+  { id: 'reports', path: '/reports', icon: ChartColumn, group: 'analyze', top: true, bar: true },
   { id: 'investments', path: '/investments', icon: TrendingUp, group: 'analyze', optional: true },
   { id: 'settings', path: '/settings', icon: Settings, group: 'settings' },
 ];

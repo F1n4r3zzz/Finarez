@@ -12,6 +12,8 @@ export const es = {
     goHome: 'Ir al inicio',
     toDark: 'Cambiar a tema oscuro',
     toLight: 'Cambiar a tema claro',
+    register: 'Registrar movimiento',
+    registerShort: 'Registrar',
   },
   modules: {
     dashboard: { title: 'Inicio', description: 'Tu dinero de un vistazo.' },

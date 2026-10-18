@@ -1,7 +1,13 @@
-import { createContext, type ReactNode, useContext, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-type Slot = { element: HTMLElement | null; setElement: (element: HTMLElement | null) => void };
+interface Slot {
+  element: HTMLElement | null;
+  setElement: (element: HTMLElement | null) => void;
+  /** How many mounted pages asked their first cards to overlap the band. */
+  overlaps: number;
+  setOverlaps: (update: (count: number) => number) => void;
+}
 
 const BandSlotContext = createContext<Slot | null>(null);
 
@@ -12,8 +18,11 @@ const BandSlotContext = createContext<Slot | null>(null);
  */
 export function BandSlotProvider({ children }: { children: ReactNode }) {
   const [element, setElement] = useState<HTMLElement | null>(null);
+  const [overlaps, setOverlaps] = useState(0);
   return (
-    <BandSlotContext.Provider value={{ element, setElement }}>{children}</BandSlotContext.Provider>
+    <BandSlotContext.Provider value={{ element, setElement, overlaps, setOverlaps }}>
+      {children}
+    </BandSlotContext.Provider>
   );
 }
 
@@ -27,6 +36,24 @@ export function BandSlotTarget({ className }: { className?: string }) {
 export function InBand({ children }: { children: ReactNode }) {
   const { element } = useSlot();
   return element ? createPortal(children, element) : null;
+}
+
+/**
+ * For pages whose first block is a card: the band grows and the card rises over its lower edge.
+ * Pages that start with plain text (forms not yet on a card) don't call it, so nothing dark
+ * ever sits on the band.
+ */
+export function useBandOverlap(): void {
+  const { setOverlaps } = useSlot();
+  useEffect(() => {
+    setOverlaps((count) => count + 1);
+    return () => setOverlaps((count) => count - 1);
+  }, [setOverlaps]);
+}
+
+/** For the shell: whether the current page asked for the overlap. */
+export function useBandOverlapValue(): boolean {
+  return useSlot().overlaps > 0;
 }
 
 function useSlot(): Slot {
