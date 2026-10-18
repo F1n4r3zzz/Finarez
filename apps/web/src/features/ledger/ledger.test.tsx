@@ -6,6 +6,7 @@ import { fakeApi, type Handlers, json, renderApp, signedIn } from '../../test/fa
 const BANK = '01900000-0000-7000-8000-00000000000a';
 const VISA = '01900000-0000-7000-8000-00000000000b';
 const WISE = '01900000-0000-7000-8000-00000000000c';
+const FUND = '01900000-0000-7000-8000-00000000000d';
 const MERCADO = '01900000-0000-7000-8000-0000000000c1';
 const SALARIO = '01900000-0000-7000-8000-0000000000c2';
 
@@ -86,15 +87,45 @@ const type = (label: string, value: string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 
 describe('Cuentas', () => {
-  it('lists what you have and what you owe, debts as positive amounts, with totals per currency', async () => {
+  it('groups accounts into available, saved or invested and owed, each with its totals', async () => {
+    ledgerApi({
+      'GET /ledger/accounts': () =>
+        json([...ACCOUNTS, account(FUND, 'Fondo de inversión', 'investment', 'COP', '500000000')]),
+      'GET /reports/net-worth': () =>
+        json({
+          on: '2026-10-14',
+          totalMinor: '2116000000',
+          assetsMinor: '2350000000',
+          liabilitiesMinor: '-234000000',
+          byAccount: [],
+          currency: 'COP',
+          complete: true,
+          excluded: [],
+          rateIds: [],
+          staleRateIds: [],
+        }),
+    });
+    renderApp('/accounts');
+    const available = await screen.findByRole('region', { name: 'Disponible' });
+    expect(within(available).getByText('Bancolombia')).toBeTruthy();
+    expect(within(available).getByText('Total en USD')).toBeTruthy();
+    const saved = screen.getByRole('region', { name: 'Ahorros e inversiones' });
+    expect(within(saved).getByText('Fondo de inversión')).toBeTruthy();
+    const owe = screen.getByRole('region', { name: 'Lo que debes' });
+    // Debts carry their minus sign, in the alarm color, like on Inicio.
+    const owed = within(owe).getAllByText(/^-.*2\.340\.000/);
+    expect(owed).toHaveLength(2);
+    expect(owed[0]?.className).toContain('text-expense');
+    expect(screen.getByText(/^Tu patrimonio:/).textContent).toMatch(/21\.160\.000/);
+    const row = within(available).getByText('Bancolombia').closest('a') as HTMLElement;
+    expect(row.getAttribute('href')).toBe(`/transactions?account=${BANK}`);
+  });
+
+  it('leaves out groups without accounts', async () => {
     ledgerApi();
     renderApp('/accounts');
-    const have = await screen.findByRole('region', { name: 'Lo que tienes' });
-    expect(within(have).getByText('Bancolombia')).toBeTruthy();
-    expect(within(have).getByText('Total en USD')).toBeTruthy();
-    const owe = screen.getByRole('region', { name: 'Lo que debes' });
-    expect(within(owe).getAllByText(/2\.340\.000/)).toHaveLength(2);
-    expect(owe.textContent).not.toContain('-');
+    await screen.findByRole('region', { name: 'Disponible' });
+    expect(screen.queryByRole('region', { name: 'Ahorros e inversiones' })).toBeNull();
   });
 
   it('creates an account; a debt typed without a sign is stored as owed', async () => {

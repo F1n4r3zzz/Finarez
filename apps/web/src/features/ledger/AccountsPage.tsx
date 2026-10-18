@@ -1,6 +1,6 @@
 import { type AccountView, ASSET_SUBTYPES, LIABILITY_SUBTYPES } from '@finanz/contracts';
 import { type CurrencyCode, fromWire, type Money, money, todayIn } from '@finanz/kernel';
-import { Plus } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,6 +13,7 @@ import {
   useNavigation,
 } from 'react-router';
 import { useAccount } from '../../app/account';
+import { useBandOverlap } from '../../app/band';
 import { moduleById } from '../../app/modules';
 import { ActionLink } from '../../components/ActionLink';
 import { Amount } from '../../components/Amount';
@@ -20,20 +21,31 @@ import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
 import { FailureNotice } from '../../components/FailureNotice';
 import { SelectField, TextField } from '../../components/Field';
+import { Monogram } from '../../components/Monogram';
 import { PageHeader } from '../../components/PageHeader';
 import { Panel } from '../../components/Panel';
 import { parseAmountInput } from '../../lib/amount-input';
 import { describeFailure, type Failure } from '../../lib/failure';
 import { formattingLocale } from '../../lib/locale';
+import { formatMoney } from '../../lib/money';
 import { currencyOptions } from '../preferences/options';
-import { createAccount, listAccounts } from './api';
+import { createAccount, getNetWorth, listAccounts } from './api';
 
 export async function accountsLoader() {
-  return { accounts: await listAccounts() };
+  const [accounts, worth] = await Promise.all([listAccounts(), getNetWorth()]);
+  return { accounts, worth };
 }
 
 const isLiability = (subtype: string) =>
   (LIABILITY_SUBTYPES as readonly string[]).includes(subtype);
+
+/** How Cuentas groups accounts: what you can spend, what you set aside, other things, debts. */
+const GROUPS = [
+  { key: 'available', subtypes: ['bank', 'cash', 'wallet'] },
+  { key: 'saved', subtypes: ['savings', 'investment'] },
+  { key: 'otherAssets', subtypes: ['receivable', 'other_asset'] },
+  { key: 'owe', subtypes: LIABILITY_SUBTYPES },
+] as const;
 
 function totalsByCurrency(accounts: readonly AccountView[]): Money[] {
   const totals = new Map<CurrencyCode, bigint>();
@@ -53,8 +65,8 @@ function AccountList({
 }) {
   const { t } = useTranslation();
   if (accounts.length === 0) return null;
-  // Debts read better as positive amounts under "Lo que debes".
-  const shown = (value: Money) => (owed ? money(-value.amountMinor, value.currency) : value);
+  // Debts keep their minus sign, in the alarm color, as on Inicio.
+  const tone = owed ? 'text-expense' : '';
   return (
     <Panel title={title}>
       <ul className="divide-y divide-line">
@@ -62,19 +74,22 @@ function AccountList({
           <li key={a.id}>
             <Link
               to={`/transactions?account=${a.id}`}
-              className="-mx-2 flex min-h-14 items-center justify-between gap-4 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-hover"
+              className="-mx-2 flex min-h-16 items-center gap-3.5 rounded-xl px-2 py-2.5 transition-colors duration-150 hover:bg-hover"
             >
-              <span className="min-w-0">
-                <span className="line-clamp-2 font-medium">{a.name}</span>
-                <span className="block truncate text-sm text-subtle">
+              <Monogram name={a.name} tone={owed ? 'debt' : 'neutral'} />
+              <span className="min-w-0 flex-1">
+                <span className="line-clamp-2 font-semibold">{a.name}</span>
+                <span className="block truncate text-muted text-sm">
                   {a.archived
                     ? t('ledger.accounts.archived')
                     : (a.institution ?? t(`ledger.subtypes.${a.subtype}`))}
                 </span>
               </span>
               <Amount
-                value={shown(fromWire({ amountMinor: a.balanceMinor, currency: a.currency }))}
+                value={fromWire({ amountMinor: a.balanceMinor, currency: a.currency })}
+                className={tone}
               />
+              <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-muted" />
             </Link>
           </li>
         ))}
@@ -83,7 +98,7 @@ function AccountList({
         {totalsByCurrency(accounts).map((total) => (
           <li key={total.currency} className="flex justify-between gap-4 text-muted">
             <span>{t('ledger.accounts.total', { currency: total.currency })}</span>
-            <Amount value={shown(total)} className="text-ink" />
+            <Amount value={total} className={owed ? tone : 'text-ink'} />
           </li>
         ))}
       </ul>
@@ -91,17 +106,42 @@ function AccountList({
   );
 }
 
+function Groups({ accounts }: { accounts: AccountView[] }) {
+  const { t } = useTranslation();
+  useBandOverlap();
+  return (
+    <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-[1.375rem] xl:grid-cols-3">
+      {GROUPS.map((group) => (
+        <AccountList
+          key={group.key}
+          title={t(`ledger.accounts.${group.key}`)}
+          accounts={accounts.filter((a) =>
+            (group.subtypes as readonly string[]).includes(a.subtype),
+          )}
+          owed={group.key === 'owe'}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function AccountsPage() {
   const { t } = useTranslation();
-  const { accounts } = useLoaderData<typeof accountsLoader>();
-  const have = accounts.filter((a) => !isLiability(a.subtype));
-  const owe = accounts.filter((a) => isLiability(a.subtype));
+  const { accounts, worth } = useLoaderData<typeof accountsLoader>();
 
   return (
     <>
       <PageHeader
         title={t('modules.accounts.title')}
-        description={t('modules.accounts.description')}
+        description={
+          accounts.length > 0
+            ? t('ledger.accounts.netWorth', {
+                amount: formatMoney(
+                  money(BigInt(worth.totalMinor), worth.currency as CurrencyCode),
+                ),
+              })
+            : t('modules.accounts.description')
+        }
         action={
           accounts.length > 0 && (
             <ActionLink to="/accounts/new" label={t('ledger.accounts.add')} variant="band" />
@@ -123,10 +163,7 @@ export function AccountsPage() {
           </Link>
         </EmptyState>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <AccountList title={t('ledger.accounts.have')} accounts={have} owed={false} />
-          <AccountList title={t('ledger.accounts.owe')} accounts={owe} owed />
-        </div>
+        <Groups accounts={accounts} />
       )}
     </>
   );

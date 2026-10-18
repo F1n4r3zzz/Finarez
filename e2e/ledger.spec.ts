@@ -61,7 +61,7 @@ test('a new user adds accounts, records movements and sees them in Cuentas and I
   await expect(owe.getByText(/\$\s?0$/).first()).toBeVisible();
   await expect(
     page
-      .getByRole('region', { name: 'Lo que tienes' })
+      .getByRole('region', { name: 'Disponible' })
       .getByText(/15\.850\.000/)
       .first(),
   ).toBeVisible();

@@ -56,7 +56,7 @@ test('a loan payment is split into interest and principal, and voiding it restor
   await page.goto('/accounts');
   const owe = page.getByRole('region', { name: 'Lo que debes' });
   await expect(owe.getByText(/37\.581\.555/).first()).toBeVisible();
-  const have = page.getByRole('region', { name: 'Lo que tienes' });
+  const have = page.getByRole('region', { name: 'Disponible' });
   await expect(have.getByText(/17\.178\.678/).first()).toBeVisible();
 
   await page.goto('/debts');

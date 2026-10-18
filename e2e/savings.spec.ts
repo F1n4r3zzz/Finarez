@@ -53,8 +53,9 @@ test('a goal takes money moved from the bank to the fund, without changing what 
 
   // The money moved between your own accounts: the total you have is the same.
   await page.goto('/accounts');
-  const have = page.getByRole('region', { name: 'Lo que tienes' });
-  await expect(have.getByText(/16\.700\.000/).first()).toBeVisible();
-  await expect(have.getByText(/1\.800\.000/).first()).toBeVisible();
-  await expect(have.getByText(/18\.500\.000/).last()).toBeVisible();
+  const available = page.getByRole('region', { name: 'Disponible' });
+  await expect(available.getByText(/16\.700\.000/).first()).toBeVisible();
+  const saved = page.getByRole('region', { name: 'Ahorros e inversiones' });
+  await expect(saved.getByText(/1\.800\.000/).first()).toBeVisible();
+  await expect(page.getByText(/^Tu patrimonio: .*18\.500\.000$/)).toBeVisible();
 });

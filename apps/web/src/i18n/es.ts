@@ -607,7 +607,11 @@ export const es = {
     accounts: {
       add: 'Agregar cuenta',
       have: 'Lo que tienes',
+      available: 'Disponible',
+      saved: 'Ahorros e inversiones',
+      otherAssets: 'Otros bienes',
       owe: 'Lo que debes',
+      netWorth: 'Tu patrimonio: {{amount}}',
       emptyTitle: 'Agrega tu primera cuenta',
       emptyBody:
         'Empieza por la cuenta que más usas: tu banco, Nequi o el efectivo. Puedes agregar tarjetas y préstamos después.',
