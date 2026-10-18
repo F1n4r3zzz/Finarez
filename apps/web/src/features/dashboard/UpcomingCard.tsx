@@ -53,7 +53,7 @@ export function UpcomingCard({
                 {item.kind === 'confirm' && (
                   <Link
                     to="/transactions/recurring"
-                    className="inline-flex min-h-9 items-center rounded-full bg-action px-3.5 font-semibold text-on-action text-sm"
+                    className="inline-flex min-h-11 items-center rounded-full bg-action px-3.5 font-semibold text-on-action text-sm"
                   >
                     {t('dashboard.upcomingConfirm')}
                   </Link>

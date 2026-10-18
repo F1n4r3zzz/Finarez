@@ -28,7 +28,7 @@ export function LegalLayout() {
       >
         {t('app.skipToContent')}
       </a>
-      <header className="relative overflow-hidden border-band-edge border-b bg-band">
+      <header data-band className="relative overflow-hidden border-band-edge border-b bg-band">
         <BandArt />
         <div className="relative mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-8 lg:min-h-[76px]">
           <Wordmark />

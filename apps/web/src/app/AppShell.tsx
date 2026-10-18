@@ -46,7 +46,7 @@ function TopPill({ module }: { module: ModuleDef }) {
       to={module.path}
       end={module.path === '/'}
       className={({ isActive }) =>
-        `flex min-h-10 items-center rounded-full px-3.5 transition-colors duration-150 hover:text-on-band ${
+        `flex min-h-11 items-center rounded-full px-3.5 transition-colors duration-150 hover:text-on-band ${
           isActive ? 'bg-band-chip font-semibold text-on-band' : 'font-medium text-band-muted'
         }`
       }
@@ -81,7 +81,7 @@ function Shell() {
       </a>
 
       {/* Transparent: the band behind it is drawn by <main>'s first block, so the two read as one. */}
-      <header className="relative z-20">
+      <header data-band className="relative z-20">
         <div className={`${CONTAINER} flex h-16 items-center gap-3 lg:h-[76px] lg:gap-7`}>
           <Wordmark />
           <nav aria-label={t('app.mainNav')} className="flex flex-1 items-center gap-2">
@@ -129,7 +129,7 @@ function Shell() {
         tabIndex={-1}
         className={`flex-1 outline-none ${showBar ? 'pb-28 lg:pb-16' : 'pb-16'}`}
       >
-        <div className={`relative ${overlap ? 'pb-24' : 'pb-9'}`}>
+        <div data-band className={`relative ${overlap ? 'pb-24' : 'pb-9'}`}>
           <div
             aria-hidden="true"
             className="absolute inset-x-0 -top-16 bottom-0 -z-10 overflow-hidden border-band-edge border-b bg-band lg:-top-[76px]"

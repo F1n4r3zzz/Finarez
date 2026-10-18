@@ -45,7 +45,7 @@ export function MoreMenu({ modules }: { modules: readonly ModuleDef[] }) {
         aria-controls={listId}
         data-current={current ? 'true' : undefined}
         onClick={() => setOpen((value) => !value)}
-        className={`flex min-h-10 items-center gap-1.5 rounded-full px-3.5 transition-colors duration-150 hover:text-on-band ${
+        className={`flex min-h-11 items-center gap-1.5 rounded-full px-3.5 transition-colors duration-150 hover:text-on-band ${
           current || open
             ? 'bg-band-chip font-semibold text-on-band'
             : 'font-medium text-band-muted'

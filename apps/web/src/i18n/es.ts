@@ -55,6 +55,13 @@ export const es = {
     },
     more: { title: 'Más', description: 'Todas las secciones de Finarez.' },
   },
+  dates: {
+    today: 'Hoy, {{weekday}} {{day}} de {{month}}',
+    yesterday: 'Ayer, {{weekday}} {{day}}',
+    thisMonth: '{{weekday}} {{day}}',
+    otherMonth: '{{weekday}} {{day}} de {{month}}',
+    otherYear: '{{weekday}} {{day}} de {{month}} de {{year}}',
+  },
   more: {
     sections: 'Todas las secciones',
     account: 'Tu cuenta',
@@ -622,6 +629,8 @@ export const es = {
       otherAssets: 'Otros bienes',
       owe: 'Lo que debes',
       netWorth: 'Tu patrimonio: {{amount}}',
+      netWorthPartial:
+        'Tu patrimonio sin contar {{currencies}}: {{amount}}. Falta su tasa de cambio.',
       emptyTitle: 'Agrega tu primera cuenta',
       emptyBody:
         'Empieza por la cuenta que más usas: tu banco, Nequi o el efectivo. Puedes agregar tarjetas y préstamos después.',

@@ -140,3 +140,52 @@ describe('spending on Inicio', () => {
     expect(panel().getByText('Gastado')).toBeTruthy();
   });
 });
+
+describe('the rest of Inicio', () => {
+  const month = summary('2026-10-01', '2026-10-31', [['food', 600_000]]);
+
+  it('compares spending so far this month with the same point last month', async () => {
+    const api = inicioApi([month]);
+    renderApp('/');
+    await screen.findByRole('region', { name: 'Gastos por categoría' });
+    expect(summaries(api)).toContain('/reports/summary?from=2026-10-01&to=2026-10-15');
+    expect(summaries(api)).toContain('/reports/summary?from=2026-09-01&to=2026-09-15');
+  });
+
+  it('warns when a budget leaves out spending for lack of an exchange rate', async () => {
+    fakeApi({
+      ...signedIn,
+      'GET /ledger/accounts': () => json(ACCOUNTS),
+      'GET /categories': () => json(CATEGORIES),
+      'GET /reports/summary': () => json(month),
+      'GET /budgets': () =>
+        json([
+          {
+            id: 'b1',
+            categoryId: 'food',
+            period: 'monthly',
+            currency: 'USD',
+            carryover: false,
+            startsOn: '2026-01-01',
+            archived: false,
+            limitMinor: '10000',
+            current: {
+              from: '2026-10-01',
+              to: '2026-10-31',
+              limitMinor: '10000',
+              carriedMinor: '0',
+              availableMinor: '10000',
+              spentMinor: '0',
+              remainingMinor: '10000',
+              overspent: false,
+              excluded: [
+                { date: '2026-10-05', currency: 'EUR', component: 'expense', amountMinor: '500' },
+              ],
+            },
+          },
+        ]),
+    });
+    renderApp('/');
+    expect(await screen.findByText(/Faltan tasas de cambio para EUR/)).toBeTruthy();
+  });
+});

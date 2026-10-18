@@ -435,7 +435,7 @@ export function TransactionFormPage() {
                         type="button"
                         aria-pressed={chosen === c.id}
                         onClick={() => setCategoryId(c.id)}
-                        className={`min-h-10 rounded-full border px-3.5 font-medium transition-colors duration-150 ${
+                        className={`min-h-11 rounded-full border px-3.5 font-medium transition-colors duration-150 ${
                           chosen === c.id
                             ? 'border-action bg-action text-on-action'
                             : 'border-line-strong hover:bg-hover'

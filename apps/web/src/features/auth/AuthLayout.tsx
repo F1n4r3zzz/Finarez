@@ -17,7 +17,10 @@ export function AuthLayout() {
       >
         {t('app.skipToContent')}
       </a>
-      <div className="relative overflow-hidden border-band-edge border-b bg-band pb-44 sm:pb-52">
+      <div
+        data-band
+        className="relative overflow-hidden border-band-edge border-b bg-band pb-44 sm:pb-52"
+      >
         <BandArt />
         <header className="relative mx-auto flex h-16 max-w-[1280px] items-center justify-between px-4 lg:h-[76px] lg:px-12">
           <Wordmark />

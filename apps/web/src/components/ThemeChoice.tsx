@@ -19,7 +19,7 @@ export function ThemeChoice() {
         {THEME_OPTIONS.map(({ value, icon: Icon, key }) => (
           <label
             key={value}
-            className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full px-3.5 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink has-checked:bg-surface has-checked:font-semibold has-checked:text-ink has-checked:ring-1 has-checked:ring-line-strong has-focus-visible:outline-2 has-focus-visible:outline-brand"
+            className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-3.5 text-sm font-medium text-muted transition-colors duration-150 hover:text-ink has-checked:bg-surface has-checked:font-semibold has-checked:text-ink has-checked:ring-1 has-checked:ring-line-strong has-focus-visible:outline-2 has-focus-visible:outline-brand"
           >
             <input
               type="radio"

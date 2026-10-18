@@ -1,4 +1,5 @@
 import type { LocalDate } from '@finanz/kernel';
+import i18n from 'i18next';
 import { formattingLocale } from './locale';
 
 function toUtcDate(date: LocalDate): Date {
@@ -57,7 +58,7 @@ const capitalize = (text: string, locale: string) =>
   text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
 
 /**
- * A day's heading in a list: "Hoy, sábado 18 de octubre", "Ayer, viernes 17", "Miércoles 15"
+ * A day's heading in a list: "Hoy, domingo 18 de octubre", "Ayer, sábado 17", "Jueves 15"
  * within this month, "Miércoles 30 de septiembre" before it, with the year for earlier years.
  */
 export function dayHeading(date: LocalDate, today: LocalDate, locale = formattingLocale()): string {
@@ -65,16 +66,23 @@ export function dayHeading(date: LocalDate, today: LocalDate, locale = formattin
   const now = toUtcDate(today);
   const part = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(locale, { ...options, timeZone: 'UTC' }).format(value);
-  const weekday = part({ weekday: 'long' });
-  const day = value.getUTCDate();
-  const month = part({ month: 'long' });
+  const parts = {
+    weekday: part({ weekday: 'long' }),
+    day: value.getUTCDate(),
+    month: part({ month: 'long' }),
+    year: value.getUTCFullYear(),
+  };
   const days = Math.round((now.getTime() - value.getTime()) / 86_400_000);
-  if (days === 0) return `Hoy, ${weekday} ${day} de ${month}`;
-  if (days === 1) return `Ayer, ${weekday} ${day}`;
-  const sameYear = value.getUTCFullYear() === now.getUTCFullYear();
-  if (sameYear && value.getUTCMonth() === now.getUTCMonth()) {
-    return capitalize(`${weekday} ${day}`, locale);
-  }
-  const year = sameYear ? '' : ` de ${value.getUTCFullYear()}`;
-  return capitalize(`${weekday} ${day} de ${month}${year}`, locale);
+  const sameYear = parts.year === now.getUTCFullYear();
+  const key =
+    days === 0
+      ? 'dates.today'
+      : days === 1
+        ? 'dates.yesterday'
+        : sameYear && value.getUTCMonth() === now.getUTCMonth()
+          ? 'dates.thisMonth'
+          : sameYear
+            ? 'dates.otherMonth'
+            : 'dates.otherYear';
+  return capitalize(i18n.t(key, parts), locale);
 }

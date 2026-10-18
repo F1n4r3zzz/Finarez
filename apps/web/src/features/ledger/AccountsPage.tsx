@@ -128,6 +128,8 @@ function Groups({ accounts }: { accounts: AccountView[] }) {
 export function AccountsPage() {
   const { t } = useTranslation();
   const { accounts, worth } = useLoaderData<typeof accountsLoader>();
+  // Currencies without an exchange rate are left out of the total: say so, never hide it.
+  const missing = [...new Set(worth.excluded.map((e) => e.currency))];
 
   return (
     <>
@@ -135,11 +137,15 @@ export function AccountsPage() {
         title={t('modules.accounts.title')}
         description={
           accounts.length > 0
-            ? t('ledger.accounts.netWorth', {
-                amount: formatMoney(
-                  money(BigInt(worth.totalMinor), worth.currency as CurrencyCode),
-                ),
-              })
+            ? t(
+                missing.length > 0 ? 'ledger.accounts.netWorthPartial' : 'ledger.accounts.netWorth',
+                {
+                  amount: formatMoney(
+                    money(BigInt(worth.totalMinor), worth.currency as CurrencyCode),
+                  ),
+                  currencies: missing.join(', '),
+                },
+              )
             : t('modules.accounts.description')
         }
         action={

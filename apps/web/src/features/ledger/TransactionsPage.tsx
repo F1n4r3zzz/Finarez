@@ -15,6 +15,7 @@ import {
   todayIn,
 } from '@finanz/kernel';
 import { ArrowLeftRight, FileUp, Plus, Repeat, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Link,
@@ -32,6 +33,7 @@ import { Monogram } from '../../components/Monogram';
 import { PageHeader } from '../../components/PageHeader';
 import { api } from '../../lib/api';
 import { dayHeading, formatMonthName, formatShortDate } from '../../lib/dates';
+import { onlyLocalFiltersChanged } from '../../lib/local-filters';
 import { formatMoney } from '../../lib/money';
 import { listPending } from '../recurring/api';
 import { listAccounts, listCategories, listTransactions } from './api';
@@ -41,8 +43,15 @@ const LIMIT = 500;
 
 type Period = 'month' | 'last' | 'custom';
 
-const isDate = (value: string | null): value is string =>
-  value !== null && /^\d{4}-\d{2}-\d{2}$/.test(value);
+/** A real calendar date from the address, or nothing ("2026-02-30" is nothing). */
+function dateParam(value: string | null): LocalDate | undefined {
+  if (!value) return undefined;
+  try {
+    return parseLocalDate(value);
+  } catch {
+    return undefined;
+  }
+}
 
 function monthOf(day: LocalDate, monthsBack = 0) {
   const [y, m] = day.split('-').map(Number) as [number, number];
@@ -56,10 +65,10 @@ function monthOf(day: LocalDate, monthsBack = 0) {
 /** The period in the address: this month unless it says last month or valid custom dates. */
 function readPeriod(params: URLSearchParams, today: LocalDate) {
   const asked = params.get('period');
-  const from = params.get('from');
-  const to = params.get('to');
-  if (asked === 'custom' && isDate(from) && isDate(to) && from <= to) {
-    return { period: 'custom' as Period, from: parseLocalDate(from), to: parseLocalDate(to) };
+  const from = dateParam(params.get('from'));
+  const to = dateParam(params.get('to'));
+  if (asked === 'custom' && from && to && from <= to) {
+    return { period: 'custom' as Period, from, to };
   }
   if (asked === 'last') return { period: 'last' as Period, ...monthOf(today, 1) };
   return { period: (asked === 'custom' ? 'custom' : 'month') as Period, ...monthOf(today) };
@@ -92,17 +101,8 @@ export async function transactionsLoader({ request }: LoaderFunctionArgs) {
 }
 
 /** Category and search narrow what is already loaded, so they never ask the API again. */
-const LOCAL_FILTERS = new Set(['cat', 'q']);
-
-export function transactionsShouldRevalidate({
-  currentUrl,
-  nextUrl,
-  defaultShouldRevalidate,
-}: ShouldRevalidateFunctionArgs) {
-  if (currentUrl.pathname !== nextUrl.pathname) return defaultShouldRevalidate;
-  const rest = (url: URL) =>
-    [...url.searchParams].filter(([key]) => !LOCAL_FILTERS.has(key)).join('&');
-  return rest(currentUrl) === rest(nextUrl) ? false : defaultShouldRevalidate;
+export function transactionsShouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  return onlyLocalFiltersChanged(args) ? false : args.defaultShouldRevalidate;
 }
 
 const userLegs = (t: TransactionView) =>
@@ -150,29 +150,33 @@ function groupByDate(list: TransactionView[]): [LocalDate, TransactionView[]][] 
   return [...groups];
 }
 
-/** Money in and out of what is shown, per currency; transfers between own accounts are neither. */
+/**
+ * Income and spending of what is shown, per currency, counted as the reports count them: from the
+ * income and expense lines. Transfers between own accounts and opening balances are neither, a
+ * refund lowers spending, and a fee inside a transfer is spending.
+ */
 function totals(list: TransactionView[]) {
   const sums = new Map<CurrencyCode, { in: bigint; out: bigint }>();
   for (const t of list) {
-    const legs = userLegs(t);
-    if (t.status === 'void' || legs.length !== 1) continue;
-    const [leg] = legs;
-    if (!leg) continue;
-    const amount = BigInt(leg.amountMinor);
-    const sum = sums.get(leg.currency) ?? { in: 0n, out: 0n };
-    if (amount > 0n) sum.in += amount;
-    else sum.out -= amount;
-    sums.set(leg.currency, sum);
+    if (t.status === 'void') continue;
+    for (const e of t.entries) {
+      if (e.accountKind !== 'income' && e.accountKind !== 'expense') continue;
+      const sum = sums.get(e.currency) ?? { in: 0n, out: 0n };
+      const amount = BigInt(e.amountMinor);
+      if (e.accountKind === 'income') sum.in -= amount;
+      else sum.out += amount;
+      sums.set(e.currency, sum);
+    }
   }
   return sums;
 }
 
 const FILTER_PILL =
-  'inline-flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 font-medium text-sm transition-colors duration-150';
+  'inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 font-medium text-sm transition-colors duration-150';
 const pill = (pressed: boolean) =>
   `${FILTER_PILL} ${pressed ? 'border-action bg-action text-on-action' : 'border-line-strong bg-surface hover:bg-hover'}`;
 const FILTER_SELECT =
-  'min-h-10 rounded-full border border-line-strong bg-surface px-3.5 font-medium text-sm';
+  'min-h-11 rounded-full border border-line-strong bg-surface px-3.5 font-medium text-sm';
 
 function PendingGroup({ pending }: { pending: readonly OccurrenceView[] }) {
   const { t } = useTranslation();
@@ -218,6 +222,10 @@ function List() {
   const accountMap = new Map(accounts.map((a) => [a.id, a]));
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
   const categoryFilter = params.get('cat') ?? '';
+  // What the box shows follows the address (back, forward, links), and typing updates both.
+  const urlQuery = params.get('q') ?? '';
+  const [typed, setTyped] = useState(urlQuery);
+  useEffect(() => setTyped(urlQuery), [urlQuery]);
   const query = fold(params.get('q') ?? '').trim();
 
   const update = (changes: Record<string, string | null>, replace = false) =>
@@ -247,7 +255,6 @@ function List() {
   };
   const shown = transactions.filter((item) => matchesCategory(item) && matchesQuery(item));
   const sums = totals(shown);
-  const [single] = sums.size === 1 ? [...sums] : [];
   const pending = period === 'month' && !accountId && !categoryFilter && !query ? data.pending : [];
   const roots = categories.filter((c) => !c.parentId && !c.archived);
 
@@ -263,9 +270,12 @@ function List() {
           />
           <input
             type="search"
-            defaultValue={params.get('q') ?? ''}
+            value={typed}
             placeholder={t('ledger.transactions.searchPlaceholder')}
-            onChange={(e) => update({ q: e.currentTarget.value }, true)}
+            onChange={(e) => {
+              setTyped(e.currentTarget.value);
+              update({ q: e.currentTarget.value }, true);
+            }}
             className="h-12 w-full rounded-[14px] border border-line-strong bg-field pr-3.5 pl-10 text-base"
           />
         </label>
@@ -364,33 +374,25 @@ function List() {
         className="flex flex-wrap gap-x-7 gap-y-1 text-muted text-sm"
       >
         <span>{t('ledger.transactions.count', { count: shown.length })}</span>
-        {single && (
-          <>
+        {[...sums].map(([currency, sum]) => (
+          <span key={currency} className="flex flex-wrap gap-x-7 gap-y-1">
             {' '}
             <span>
               {t('ledger.transactions.cameIn')}{' '}
-              <strong className="amount text-ink">
-                {formatMoney(money(single[1].in, single[0]))}
-              </strong>
+              <strong className="amount text-ink">{formatMoney(money(sum.in, currency))}</strong>
             </span>{' '}
             <span>
               {t('ledger.transactions.wentOut')}{' '}
-              <strong className="amount text-ink">
-                {formatMoney(money(single[1].out, single[0]))}
-              </strong>
+              <strong className="amount text-ink">{formatMoney(money(sum.out, currency))}</strong>
             </span>{' '}
             <span>
               {t('ledger.transactions.net')}{' '}
-              <strong
-                className={`amount ${single[1].in > single[1].out ? 'text-income' : 'text-ink'}`}
-              >
-                {formatMoney(money(single[1].in - single[1].out, single[0]), {
-                  signDisplay: 'exceptZero',
-                })}
+              <strong className={`amount ${sum.in > sum.out ? 'text-income' : 'text-ink'}`}>
+                {formatMoney(money(sum.in - sum.out, currency), { signDisplay: 'exceptZero' })}
               </strong>
             </span>
-          </>
-        )}
+          </span>
+        ))}
       </output>
 
       {pending.length > 0 && <PendingGroup pending={pending} />}

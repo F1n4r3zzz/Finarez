@@ -53,6 +53,7 @@ export async function dashboardLoader() {
     categories,
     worth,
     thisMonth,
+    thisMonthSoFar,
     lastMonth,
     lastMonthPace,
     recent,
@@ -65,6 +66,8 @@ export async function dashboardLoader() {
     listCategories(),
     getNetWorth(today),
     getSummary(current.from, current.to),
+    // The comparison stops at today on both sides: future-dated movements don't count yet.
+    getSummary(current.from, today),
     getSummary(previous.from, previous.to),
     getSummary(lastMonthSoFar.from, lastMonthSoFar.to),
     listTransactions({ limit: 6 }),
@@ -78,6 +81,7 @@ export async function dashboardLoader() {
     categories,
     worth,
     thisMonth,
+    thisMonthSoFar,
     lastMonth,
     lastMonthPace,
     recent,
@@ -135,8 +139,16 @@ export function DashboardPage() {
   const available = active
     .filter((a) => LIQUID.has(a.subtype))
     .reduce((sum, a) => sum + (value.get(a.id) ?? 0n), 0n);
+  // Budgets in another currency can leave out spending too.
   const missing = [
-    ...new Set([worth, thisMonth, lastMonth].flatMap((r) => r.excluded.map((e) => e.currency))),
+    ...new Set(
+      [
+        worth,
+        thisMonth,
+        lastMonth,
+        ...data.budgets.flatMap((b) => (b.current ? [b.current] : [])),
+      ].flatMap((r) => r.excluded.map((e) => e.currency)),
+    ),
   ];
   const tiles: AccountTile[] = [...active]
     .sort((a, b) => Number(a.kind === 'liability') - Number(b.kind === 'liability'))
@@ -162,14 +174,15 @@ export function DashboardPage() {
         ],
   );
   const spentNow = BigInt(thisMonth.expensesMinor);
+  const spentSoFar = BigInt(data.thisMonthSoFar.expensesMinor);
   const spentThen = BigInt(lastMonthPace.expensesMinor);
   // Only against a month that had any movement, and only when there is a difference.
   const lastMonthActive =
     BigInt(lastMonth.incomeMinor) !== 0n || BigInt(lastMonth.expensesMinor) !== 0n;
   const pace: Pace | undefined =
-    lastMonthActive && spentNow !== spentThen
+    lastMonthActive && spentSoFar !== spentThen
       ? {
-          delta: money(spentNow - spentThen, currency),
+          delta: money(spentSoFar - spentThen, currency),
           monthName: formatMonthName(data.previousMonth),
         }
       : undefined;

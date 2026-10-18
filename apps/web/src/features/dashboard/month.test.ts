@@ -24,6 +24,19 @@ describe('monthFigures', () => {
     });
   });
 
+  it('a month where refunds outweigh spending has spent nothing: a finite share of zero', () => {
+    expect(monthFigures(0n, -10_000n)).toEqual({
+      state: 'left',
+      spentShare: 0,
+      remaining: 10_000n,
+    });
+    expect(monthFigures(100_000n, -5_000n)).toEqual({
+      state: 'left',
+      spentShare: 0,
+      remaining: 105_000n,
+    });
+  });
+
   it('a month with nothing yet is "empty"', () => {
     expect(monthFigures(0n, 0n)).toEqual({ state: 'empty', spentShare: 0, remaining: 0n });
   });

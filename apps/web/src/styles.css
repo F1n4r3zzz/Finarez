@@ -152,6 +152,11 @@
     outline-offset: 2px;
   }
 
+  /* On the band, the brand blue is too close to the navy: focus shows in light blue. */
+  [data-band] :focus-visible {
+    outline-color: var(--color-cta);
+  }
+
   /*
    * A grid without columns of its own gets one column that can shrink to the screen. Left
    * to the default, the column grows to its widest content (a long name next to an amount

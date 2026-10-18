@@ -1,7 +1,8 @@
 import type { AccountView, Category, TransactionView } from '@finanz/contracts';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeApi, type Handlers, json, renderApp, signedIn } from '../../test/fake-api';
+import { transactionsShouldRevalidate } from './TransactionsPage';
 
 const BANK = '01900000-0000-7000-8000-00000000000a';
 const VISA = '01900000-0000-7000-8000-00000000000b';
@@ -119,6 +120,30 @@ describe('Cuentas', () => {
     expect(screen.getByText(/^Tu patrimonio:/).textContent).toMatch(/21\.160\.000/);
     const row = within(available).getByText('Bancolombia').closest('a') as HTMLElement;
     expect(row.getAttribute('href')).toBe(`/transactions?account=${BANK}`);
+  });
+
+  it('says when net worth leaves out a currency without an exchange rate', async () => {
+    ledgerApi({
+      'GET /reports/net-worth': () =>
+        json({
+          on: '2026-10-14',
+          totalMinor: '1616000000',
+          assetsMinor: '1850000000',
+          liabilitiesMinor: '-234000000',
+          byAccount: [],
+          currency: 'COP',
+          complete: false,
+          excluded: [
+            { date: '2026-10-14', currency: 'USD', component: 'balance', amountMinor: '215000' },
+          ],
+          rateIds: [],
+          staleRateIds: [],
+        }),
+    });
+    renderApp('/accounts');
+    expect((await screen.findByText(/^Tu patrimonio/)).textContent).toMatch(
+      /^Tu patrimonio sin contar USD: .*16\.160\.000.*\. Falta su tasa de cambio\.$/,
+    );
   });
 
   it('leaves out groups without accounts', async () => {
@@ -333,6 +358,7 @@ describe('Movimientos list', () => {
     renderApp('/transactions');
     await screen.findByText('Mercado del mes');
     const before = listCalls(api).length;
+    const callsBefore = api.calls.length;
     fireEvent.change(screen.getByLabelText('Categoría'), { target: { value: SALARIO } });
     await waitFor(() => expect(screen.queryByText('Mercado del mes')).toBeNull());
     expect(screen.getByText('Salario quincenal')).toBeTruthy();
@@ -343,6 +369,8 @@ describe('Movimientos list', () => {
     await waitFor(() => expect(screen.queryByText('Salario quincenal')).toBeNull());
     expect(screen.getByText('Mercado del mes')).toBeTruthy();
     expect(listCalls(api).length).toBe(before);
+    // Not even the shell's session and preferences are asked again.
+    expect(api.calls.length).toBe(callsBefore);
   });
 
   it('totals what is shown: count, money in, money out and the net', async () => {
@@ -353,6 +381,103 @@ describe('Movimientos list', () => {
     expect(totals.textContent?.replace(/\s+/g, ' ')).toBe(
       '3 movimientos Entró $ 1.550.000 Salió $ 310.000 Neto +$ 1.240.000',
     );
+  });
+
+  it('counts income and spending like the reports: an opening balance is neither, a refund lowers spending, a fee counts', async () => {
+    const entry = lunch.entries[0] as TransactionView['entries'][number];
+    const opening: TransactionView = {
+      ...lunch,
+      id: 'op',
+      kind: 'adjustment',
+      description: 'Saldo inicial',
+      entries: [
+        { ...entry, id: 'o1', amountMinor: '100000000' },
+        { ...entry, id: 'o2', accountId: 'eq', accountKind: 'equity', amountMinor: '-100000000' },
+      ],
+    };
+    const refund: TransactionView = {
+      ...lunch,
+      id: 'rf',
+      description: 'Devolución',
+      entries: [
+        { ...entry, id: 'r1', amountMinor: '5000000' },
+        {
+          ...entry,
+          id: 'r2',
+          accountId: 'x',
+          accountKind: 'expense',
+          amountMinor: '-5000000',
+          categoryId: MERCADO,
+        },
+      ],
+    };
+    const withFee: TransactionView = {
+      ...toVisa,
+      id: 'fee',
+      description: 'Pago con comisión',
+      entries: [
+        { ...entry, id: 'f1', amountMinor: '-20500000' },
+        { ...entry, id: 'f2', accountId: VISA, accountKind: 'liability', amountMinor: '20000000' },
+        {
+          ...entry,
+          id: 'f3',
+          accountId: 'x',
+          accountKind: 'expense',
+          amountMinor: '500000',
+          categoryId: MERCADO,
+        },
+      ],
+    };
+    listApi({ 'GET /ledger/transactions': () => json([salary, lunch, opening, refund, withFee]) });
+    renderApp('/transactions');
+    const totals = await screen.findByLabelText('Totales');
+    // In 1.550.000; out 310.000 − 50.000 + 5.000.
+    expect(totals.textContent?.replace(/\s+/g, ' ')).toBe(
+      '5 movimientos Entró $ 1.550.000 Salió $ 265.000 Neto +$ 1.285.000',
+    );
+  });
+
+  it('totals each currency on its own line', async () => {
+    const entry = lunch.entries[0] as TransactionView['entries'][number];
+    const dollars: TransactionView = {
+      ...lunch,
+      id: 'usd',
+      description: 'Suscripción',
+      entries: [
+        { ...entry, id: 'u1', accountId: WISE, currency: 'USD', amountMinor: '-2000' },
+        {
+          ...entry,
+          id: 'u2',
+          accountId: 'x',
+          accountKind: 'expense',
+          currency: 'USD',
+          amountMinor: '2000',
+          categoryId: MERCADO,
+        },
+      ],
+    };
+    listApi({ 'GET /ledger/transactions': () => json([lunch, dollars]) });
+    renderApp('/transactions');
+    const totals = (await screen.findByLabelText('Totales')).textContent?.replace(/\s+/g, ' ');
+    expect(totals).toContain('Salió $ 310.000');
+    expect(totals).toContain('Salió US$ 20,00');
+  });
+
+  it('falls back to this month for an impossible date instead of breaking', async () => {
+    listApi();
+    renderApp('/transactions?period=custom&from=2026-02-30&to=2026-03-10');
+    expect(await screen.findByText('Mercado del mes')).toBeTruthy();
+    expect((screen.getByLabelText('Desde') as HTMLInputElement).value).toBe('2026-03-01');
+  });
+
+  it('keeps the search box in step with the address', async () => {
+    listApi();
+    const router = renderApp('/transactions?q=mercado');
+    const box = (await screen.findByLabelText('Buscar movimientos')) as HTMLInputElement;
+    expect(box.value).toBe('mercado');
+    await act(() => router.navigate('/transactions'));
+    await waitFor(() => expect(box.value).toBe(''));
+    expect(screen.getByText('Salario quincenal')).toBeTruthy();
   });
 
   it('puts what waits for confirmation first', async () => {
@@ -460,5 +585,29 @@ describe('Registrar movimiento', () => {
     renderApp('/transactions/new');
     const close = await screen.findByRole('link', { name: 'Cerrar' });
     expect(close.getAttribute('href')).toBe('/transactions');
+  });
+});
+
+describe('when Movimientos reloads', () => {
+  const url = (search: string) => new URL(`http://localhost/transactions${search}`);
+  const args = (from: string, to: string, extra = {}) =>
+    ({
+      currentUrl: url(from),
+      nextUrl: url(to),
+      defaultShouldRevalidate: true,
+      ...extra,
+    }) as Parameters<typeof transactionsShouldRevalidate>[0];
+
+  it('skips the loader only when the search or the category changed', () => {
+    expect(transactionsShouldRevalidate(args('', '?q=mercado'))).toBe(false);
+    expect(transactionsShouldRevalidate(args('?q=mer', '?q=mercado&cat=x'))).toBe(false);
+  });
+
+  it('reloads for a new period or account, a saved form, or an explicit refresh', () => {
+    expect(transactionsShouldRevalidate(args('', '?period=last'))).toBe(true);
+    expect(transactionsShouldRevalidate(args('?q=a', '?q=a&account=b'))).toBe(true);
+    // Same address: the shell's refresh after recording recurring movements.
+    expect(transactionsShouldRevalidate(args('?q=a', '?q=a'))).toBe(true);
+    expect(transactionsShouldRevalidate(args('', '?q=a', { formMethod: 'POST' }))).toBe(true);
   });
 });

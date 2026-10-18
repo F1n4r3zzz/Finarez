@@ -20,6 +20,8 @@ export interface MonthFigures {
 export function monthFigures(income: bigint, expenses: bigint): MonthFigures {
   const remaining = income - expenses;
   if (income === 0n && expenses === 0n) return { state: 'empty', spentShare: 0, remaining };
+  // Refunds can leave a month's spending at or below zero: nothing was spent.
+  if (expenses <= 0n) return { state: 'left', spentShare: 0, remaining };
   if (expenses > income) return { state: 'over', spentShare: 1, remaining };
   return { state: 'left', spentShare: Number(expenses) / Number(income), remaining };
 }

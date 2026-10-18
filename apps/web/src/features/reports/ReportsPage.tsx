@@ -142,7 +142,7 @@ function PeriodPicker({ period, invalid }: { period: Period; invalid: boolean })
     return `?${next}`;
   };
   const pill = (active: boolean) =>
-    `inline-flex min-h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm transition-colors duration-150 ${
+    `inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm transition-colors duration-150 ${
       active
         ? 'border-brand bg-brand-soft font-medium text-brand'
         : 'border-line bg-surface text-muted hover:bg-hover hover:text-ink'

@@ -23,7 +23,7 @@ export function Segmented<T extends string>({
         {options.map((o) => (
           <label
             key={o.value}
-            className="flex min-h-10 cursor-pointer items-center rounded-full px-4 font-medium text-muted text-sm transition-colors duration-150 hover:text-ink has-checked:bg-surface has-checked:font-semibold has-checked:text-ink has-checked:ring-1 has-checked:ring-line-strong has-focus-visible:outline-2 has-focus-visible:outline-brand"
+            className="flex min-h-11 cursor-pointer items-center rounded-full px-4 font-medium text-muted text-sm transition-colors duration-150 hover:text-ink has-checked:bg-surface has-checked:font-semibold has-checked:text-ink has-checked:ring-1 has-checked:ring-line-strong has-focus-visible:outline-2 has-focus-visible:outline-brand"
           >
             <input
               type="radio"

@@ -85,7 +85,13 @@ import { ratesAction, ratesLoader } from '../features/settings/RatesSection';
 import { SettingsPage, settingsAction } from '../features/settings/SettingsPage';
 import { WelcomePage, welcomeAction } from '../features/welcome/WelcomePage';
 import { AppShell } from './AppShell';
-import { APP_ROUTE_ID, accountLoader, guestOnlyLoader, welcomeLoader } from './account';
+import {
+  APP_ROUTE_ID,
+  accountLoader,
+  accountShouldRevalidate,
+  guestOnlyLoader,
+  welcomeLoader,
+} from './account';
 
 /** Shown while the first page loads (checking the session). */
 function Loading() {
@@ -174,6 +180,7 @@ export const routes: RouteObject[] = [
         id: APP_ROUTE_ID,
         path: '/',
         loader: accountLoader,
+        shouldRevalidate: accountShouldRevalidate,
         element: <AppShell />,
         children: [
           { index: true, loader: dashboardLoader, element: <DashboardPage /> },

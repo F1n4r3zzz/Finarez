@@ -1,7 +1,13 @@
 import type { ConsentStatus, Preferences } from '@finanz/contracts';
-import { type LoaderFunctionArgs, redirect, useRouteLoaderData } from 'react-router';
+import {
+  type LoaderFunctionArgs,
+  redirect,
+  type ShouldRevalidateFunctionArgs,
+  useRouteLoaderData,
+} from 'react-router';
 import { getSession, type SessionUser } from '../features/auth/auth-api';
 import { api, isApiFailure } from '../lib/api';
+import { onlyLocalFiltersChanged } from '../lib/local-filters';
 import { safeNextPath } from '../lib/next-path';
 
 /** The signed-in user and their saved preferences, loaded once for the whole app. */
@@ -100,4 +106,9 @@ export function useAccount(): Account {
   const account = useRouteLoaderData<Account>(APP_ROUTE_ID);
   if (!account) throw new Error('useAccount is only available inside the app routes');
   return account;
+}
+
+/** The session and preferences don't change when a page only narrows what it shows. */
+export function accountShouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  return onlyLocalFiltersChanged(args) ? false : args.defaultShouldRevalidate;
 }
