@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Amount } from '../../components/Amount';
 import { Monogram } from '../../components/Monogram';
+import { formatMoney } from '../../lib/money';
 import type { AccountTile } from './types';
 
 /** On desktop the row holds five tiles; past that, a tile leads to every account. */
@@ -40,7 +41,10 @@ export function AccountTiles({ accounts }: { accounts: readonly AccountTile[] })
           </span>
           <Amount
             value={a.balance}
-            className={`mt-auto text-lg lg:text-[1.375rem] ${a.debt ? 'text-expense' : ''}`}
+            className={`mt-auto lg:text-[1.375rem] ${
+              // Ten digits and up don't fit a phone tile at the usual size.
+              formatMoney(a.balance).length > 13 ? 'text-base' : 'text-lg'
+            } ${a.debt ? 'text-expense' : ''}`}
           />
         </Link>
       ))}

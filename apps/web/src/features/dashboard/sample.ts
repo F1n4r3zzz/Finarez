@@ -40,6 +40,14 @@ export const SAMPLE_TILES: readonly AccountTile[] = [
     debt: false,
   },
   { id: 'a4', name: 'Efectivo', kind: 'En la casa', balance: cop(180_000), debt: false },
+  // Worst case for narrow phones: a long name with a ten-digit balance.
+  {
+    id: 'a6',
+    name: 'Fondo de inversión colectiva Bancolombia Renta Fija Plus',
+    kind: 'Inversión',
+    balance: cop(1_234_567_890),
+    debt: false,
+  },
   {
     id: 'a5',
     name: 'Crédito vehículo',
