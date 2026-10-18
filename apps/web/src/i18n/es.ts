@@ -14,6 +14,8 @@ export const es = {
     toLight: 'Cambiar a tema claro',
     register: 'Registrar movimiento',
     registerShort: 'Registrar',
+    promise: 'Tu plata, clara y en orden.',
+    promiseDetail: 'Cuentas, gastos, presupuestos y deudas en un solo lugar.',
   },
   modules: {
     dashboard: { title: 'Inicio', description: 'Tu dinero de un vistazo.' },
@@ -52,6 +54,14 @@ export const es = {
       description: 'Tu cuenta, tu moneda, tu zona horaria y cómo se ve Finarez.',
     },
     more: { title: 'Más', description: 'Todas las secciones de Finarez.' },
+  },
+  more: {
+    sections: 'Todas las secciones',
+    account: 'Tu cuenta',
+    legal: 'Legal y privacidad',
+    legalDetail: 'Términos, privacidad y cookies.',
+    theme: 'Tema',
+    signOut: 'Salir',
   },
   empty: {
     accounts: {

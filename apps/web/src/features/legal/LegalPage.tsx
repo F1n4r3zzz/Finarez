@@ -2,8 +2,8 @@ import { LEGAL_VERSION } from '@finanz/contracts';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { BandArt } from '../../components/BandArt';
 import { Notice } from '../../components/Notice';
-import { TextLink } from '../../components/TextLink';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { Wordmark } from '../../components/Wordmark';
 import type { LegalDocument, LegalSection } from '../../i18n/legal.es';
@@ -28,11 +28,17 @@ export function LegalLayout() {
       >
         {t('app.skipToContent')}
       </a>
-      <header className="border-line border-b bg-surface">
-        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-8">
-          <Wordmark tone="plain" />
-          <div className="flex items-center gap-3 sm:gap-5">
-            <TextLink to="/">{t('legal.openApp')}</TextLink>
+      <header className="relative overflow-hidden border-band-edge border-b bg-band">
+        <BandArt />
+        <div className="relative mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-8 lg:min-h-[76px]">
+          <Wordmark />
+          <div className="flex items-center gap-2">
+            <Link
+              to="/"
+              className="inline-flex min-h-11 items-center rounded-full bg-cta px-4 font-bold text-on-cta"
+            >
+              {t('legal.openApp')}
+            </Link>
             <ThemeToggle />
           </div>
         </div>

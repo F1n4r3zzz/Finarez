@@ -345,3 +345,13 @@ describe('sign out', () => {
     await waitFor(() => expect(api.actions().map((c) => c.path)).toEqual(['/auth/sign-out']));
   });
 });
+
+describe('the frame around sign-in pages', () => {
+  it('shows the brand band with a short promise above the form, and the legal links under it', async () => {
+    fakeApi(signedOut);
+    renderApp('/sign-in');
+    expect(await screen.findByText('Tu plata, clara y en orden.')).toBeTruthy();
+    const legal = screen.getByRole('navigation', { name: 'Documentos legales' });
+    expect(legal.querySelectorAll('a')).toHaveLength(3);
+  });
+});

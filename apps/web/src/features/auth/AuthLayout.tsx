@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
+import { BandArt } from '../../components/BandArt';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { Wordmark } from '../../components/Wordmark';
 import { LegalLinks } from '../legal/LegalLinks';
@@ -16,21 +17,30 @@ export function AuthLayout() {
       >
         {t('app.skipToContent')}
       </a>
-      <header className="flex h-16 items-center justify-between pr-1.5 pl-4 md:px-8">
-        <Wordmark tone="plain" />
-        <ThemeToggle tone="plain" />
-      </header>
+      <div className="relative overflow-hidden border-band-edge border-b bg-band pb-44 sm:pb-52">
+        <BandArt />
+        <header className="relative mx-auto flex h-16 max-w-[1280px] items-center justify-between px-4 lg:h-[76px] lg:px-12">
+          <Wordmark />
+          <ThemeToggle />
+        </header>
+        <div className="relative px-4 pt-4 text-center sm:pt-6">
+          <p className="font-semibold text-2xl text-on-band tracking-tight sm:text-[2.125rem]">
+            {t('app.promise')}
+          </p>
+          <p className="mt-1.5 text-band-muted">{t('app.promiseDetail')}</p>
+        </div>
+      </div>
       <main
         id="main"
         tabIndex={-1}
-        className="flex flex-1 justify-center px-4 pt-4 pb-16 outline-none md:items-center md:pt-0"
+        className="relative -mt-36 flex flex-1 justify-center px-4 pb-10 outline-none sm:-mt-44"
       >
-        <div className="w-full max-w-[26rem]">
+        <div className="w-full max-w-[32rem]">
           <Outlet />
         </div>
       </main>
-      <footer className="border-line border-t px-4 py-5 md:px-8">
-        <div className="mx-auto max-w-3xl">
+      <footer className="px-4 pb-8">
+        <div className="flex justify-center [&_ul]:justify-center">
           <LegalLinks />
         </div>
       </footer>
@@ -49,13 +59,12 @@ interface AuthCardProps {
 export function AuthCard({ title, description, children, footer }: AuthCardProps) {
   return (
     <>
-      {/* A card on wider screens; on phones the form uses the full width. */}
-      <section className="md:rounded-xl md:border md:border-line md:bg-surface md:p-8">
-        <h1 className="font-semibold text-2xl tracking-tight">{title}</h1>
+      <section className="rounded-[26px] border border-line bg-surface p-6 sm:p-8">
+        <h1 className="font-semibold text-[1.75rem] tracking-tight">{title}</h1>
         {description && <p className="mt-1.5 text-muted">{description}</p>}
         <div className="mt-6">{children}</div>
       </section>
-      {footer && <p className="mt-6 text-muted md:mt-5 md:px-8">{footer}</p>}
+      {footer && <p className="mt-5 text-center text-muted">{footer}</p>}
     </>
   );
 }

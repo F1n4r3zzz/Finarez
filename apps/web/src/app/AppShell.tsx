@@ -2,6 +2,7 @@ import { Plus, Settings } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation, useRevalidator } from 'react-router';
+import { BandArt } from '../components/BandArt';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Wordmark } from '../components/Wordmark';
 import { runRecurring } from '../features/recurring/api';
@@ -35,20 +36,6 @@ const matches = (m: ModuleDef, pathname: string) =>
 /** The new-movement and edit pages are a full-screen sheet on phones, without the bottom bar. */
 const isMovementForm = (pathname: string) =>
   /^\/transactions\/(?!recurring(\/|$))[^/]+$/.test(pathname);
-
-/** The logo's two arrows, faint in the band, always whole inside it. */
-function BandArt() {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-      className="absolute top-2 right-[-2%] h-[calc(100%-1rem)] max-h-[25rem] w-auto opacity-[0.08] dark:opacity-[0.07]"
-    >
-      <path d="M7 10h26V4l17 15-17 15v-6H7z" className="fill-logo" />
-      <path d="M57 54H31v6L14 45l17-15v6h26z" className="fill-logo-accent" />
-    </svg>
-  );
-}
 
 const CONTAINER = 'mx-auto w-full max-w-[1280px] px-4 lg:px-12';
 
