@@ -92,7 +92,7 @@ function OperatorDetails() {
   return (
     <section
       aria-labelledby="operator-title"
-      className="mt-10 rounded-xl border border-line bg-surface p-5 sm:p-6"
+      className="mt-10 rounded-[22px] border border-line bg-surface p-5 sm:p-6"
     >
       <h2 id="operator-title" className="font-semibold text-lg">
         {t('legal.operatorTitle')}
@@ -125,7 +125,7 @@ export function LegalIndexPage() {
           <Link
             key={id}
             to={path}
-            className="rounded-xl border border-line bg-surface p-5 transition-colors hover:border-brand"
+            className="rounded-[22px] border border-line bg-surface p-5 transition-colors hover:border-brand"
           >
             <h2 className="font-semibold text-brand text-lg">{t(`legal.documents.${id}.title`)}</h2>
             <p className="mt-2 text-muted">{t(`legal.documents.${id}.description`)}</p>
@@ -245,7 +245,7 @@ export function LegalDocumentPage({ documentId }: { documentId: LegalDocumentId 
       <div className="grid items-start gap-8 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-12">
         <nav
           aria-label={t('legal.contents')}
-          className="rounded-xl border border-line bg-surface p-4 lg:sticky lg:top-6"
+          className="rounded-[22px] border border-line bg-surface p-4 lg:sticky lg:top-6"
         >
           <p className="mb-3 font-semibold text-sm">{t('legal.contents')}</p>
           <ul className="grid gap-3 text-muted text-sm">

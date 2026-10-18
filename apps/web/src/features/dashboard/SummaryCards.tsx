@@ -56,7 +56,7 @@ function Card({
   partialLast?: boolean;
 }) {
   return (
-    <div className="flex min-w-0 flex-col rounded-xl border border-line bg-surface p-4 md:p-5">
+    <div className="flex min-w-0 flex-col rounded-[22px] border border-line bg-surface p-4 md:p-5">
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
           <p className="text-muted text-sm">{label}</p>

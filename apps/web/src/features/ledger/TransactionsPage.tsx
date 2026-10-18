@@ -97,7 +97,7 @@ export function TransactionsPage() {
         >
           <Link
             to="/accounts/new"
-            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-brand px-4 font-medium text-on-brand"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-action px-5 font-semibold text-on-action"
           >
             <Plus size={18} aria-hidden="true" />
             {t('ledger.accounts.add')}
@@ -131,7 +131,7 @@ export function TransactionsPage() {
               {groupByDate(transactions).map(([date, items]) => (
                 <section key={date} aria-label={formatLongDate(date)}>
                   <h2 className="mb-2 font-medium text-muted text-sm">{formatLongDate(date)}</h2>
-                  <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+                  <ul className="divide-y divide-line rounded-[22px] border border-line bg-surface">
                     {items.map((item) => {
                       const d = describe(item, accountMap, categoryMap, accountId);
                       const isVoid = item.status === 'void';

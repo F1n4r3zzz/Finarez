@@ -284,7 +284,7 @@ function RuleList({
   return (
     <section aria-label={title}>
       <h2 className="mb-2 font-medium text-muted text-sm">{title}</h2>
-      <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+      <ul className="divide-y divide-line rounded-[22px] border border-line bg-surface">
         {rules.map((r) => (
           <RuleRow key={r.id} rule={r} accounts={accounts} />
         ))}

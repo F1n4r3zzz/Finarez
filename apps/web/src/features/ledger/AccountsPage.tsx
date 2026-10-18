@@ -114,7 +114,7 @@ export function AccountsPage() {
         >
           <Link
             to="/accounts/new"
-            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-brand px-4 font-medium text-on-brand"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-action px-5 font-semibold text-on-action"
           >
             <Plus size={18} aria-hidden="true" />
             {t('ledger.accounts.add')}

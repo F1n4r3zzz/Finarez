@@ -4,7 +4,7 @@ import { useRouteError } from 'react-router';
 import { isApiFailure } from '../../lib/api';
 
 const BUTTON =
-  'mt-6 inline-flex min-h-11 items-center rounded-lg bg-brand px-4 font-medium text-on-brand';
+  'mt-6 inline-flex min-h-11 items-center rounded-full bg-action px-5 font-semibold text-on-action';
 
 /** Shown when a route fails to render. Uses plain links: the router may be what broke. */
 export function ErrorPage() {

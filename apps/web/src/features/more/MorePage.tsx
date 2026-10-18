@@ -12,7 +12,7 @@ export function MorePage() {
   return (
     <>
       <PageHeader title={t('modules.more.title')} description={t('modules.more.description')} />
-      <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+      <ul className="divide-y divide-line rounded-[22px] border border-line bg-surface">
         {visible.map((m) => {
           const Icon = m.icon;
           return (

@@ -50,7 +50,7 @@ function Onboarding() {
     <>
       <section
         aria-labelledby="available-label"
-        className="rounded-xl border border-line bg-surface p-6 md:p-8"
+        className="rounded-[22px] border border-line bg-surface p-6 md:p-8"
       >
         <p id="available-label" className="text-muted">
           {t('dashboard.available')}
@@ -68,7 +68,7 @@ function Onboarding() {
             <li key={step.key}>
               <Link
                 to={step.to}
-                className="group flex h-full items-start gap-4 rounded-xl border border-line bg-surface p-5 transition-colors duration-150 hover:border-brand"
+                className="group flex h-full items-start gap-4 rounded-[22px] border border-line bg-surface p-5 transition-colors duration-150 hover:border-brand"
               >
                 <span
                   aria-hidden="true"

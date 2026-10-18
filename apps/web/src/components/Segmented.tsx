@@ -19,11 +19,11 @@ export function Segmented<T extends string>({
   return (
     <fieldset>
       <legend className="mb-1.5 font-medium text-sm">{legend}</legend>
-      <div className="inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-line bg-paper p-1">
+      <div className="inline-flex max-w-full flex-wrap gap-1 rounded-[22px] border border-line bg-hover p-1">
         {options.map((o) => (
           <label
             key={o.value}
-            className="flex min-h-10 cursor-pointer items-center rounded-md px-3 text-muted text-sm transition-colors duration-150 hover:text-ink has-checked:bg-surface has-checked:font-medium has-checked:text-ink has-checked:ring-1 has-checked:ring-line has-focus-visible:outline-2 has-focus-visible:outline-brand"
+            className="flex min-h-10 cursor-pointer items-center rounded-full px-4 font-medium text-muted text-sm transition-colors duration-150 hover:text-ink has-checked:bg-surface has-checked:font-semibold has-checked:text-ink has-checked:ring-1 has-checked:ring-line-strong has-focus-visible:outline-2 has-focus-visible:outline-brand"
           >
             <input
               type="radio"

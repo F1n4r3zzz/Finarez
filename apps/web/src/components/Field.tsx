@@ -18,10 +18,10 @@ interface FieldFrame {
 }
 
 const CONTROL =
-  'h-11 w-full rounded-lg border bg-surface px-3 text-base text-ink transition-colors duration-150 hover:border-subtle';
+  'h-12 w-full rounded-[14px] border bg-field px-3.5 text-base text-ink transition-colors duration-150 hover:border-subtle';
 
 function controlBorder(error?: string) {
-  return error ? 'border-expense' : 'border-line';
+  return error ? 'border-expense' : 'border-line-strong';
 }
 
 /** Label, control, error and hint, with the ids that tie them together. */

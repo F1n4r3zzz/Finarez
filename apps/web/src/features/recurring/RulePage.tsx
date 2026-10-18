@@ -175,7 +175,7 @@ export function RulePage() {
           )
         }
       />
-      <section className="mb-6 grid gap-5 rounded-xl border border-line bg-surface p-5 md:p-6">
+      <section className="mb-6 grid gap-5 rounded-[22px] border border-line bg-surface p-5 md:p-6">
         <div className="grid gap-1">
           <Amount
             value={templateAmount(rule.template, rule.currency)}

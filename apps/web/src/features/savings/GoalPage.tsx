@@ -378,7 +378,7 @@ export function GoalPage() {
           )
         }
       />
-      <section className="mb-6 grid gap-4 rounded-xl border border-line bg-surface p-5 md:p-6">
+      <section className="mb-6 grid gap-4 rounded-[22px] border border-line bg-surface p-5 md:p-6">
         <dl className="flex flex-wrap gap-x-10 gap-y-3">
           <div>
             <dt className="text-sm text-muted">{t('savings.saved')}</dt>

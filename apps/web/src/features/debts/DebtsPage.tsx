@@ -100,7 +100,7 @@ function DebtCard({ debt }: { debt: DebtView }) {
   return (
     <Link
       to={`/debts/${debt.id}`}
-      className="block h-full rounded-xl border border-line bg-surface p-5 transition-colors duration-150 hover:bg-hover"
+      className="block h-full rounded-[22px] border border-line bg-surface p-5 transition-colors duration-150 hover:bg-hover"
     >
       <div className="flex items-start justify-between gap-4">
         <span className="min-w-0">
@@ -134,7 +134,7 @@ function DebtCard({ debt }: { debt: DebtView }) {
 }
 
 const ADD_LINK =
-  'inline-flex min-h-11 items-center gap-2 rounded-lg bg-brand px-4 font-medium text-on-brand transition-colors duration-150 hover:bg-brand/90';
+  'inline-flex min-h-11 items-center gap-2 rounded-full bg-action px-5 font-semibold text-on-action transition-colors duration-150 hover:bg-action/90';
 
 export function DebtsPage() {
   const { t } = useTranslation();

@@ -2,8 +2,10 @@ import { LoaderCircle } from 'lucide-react';
 import type { ButtonHTMLAttributes } from 'react';
 
 const VARIANTS = {
-  primary: 'bg-brand text-on-brand hover:bg-brand/90',
-  secondary: 'border border-line bg-surface text-ink hover:bg-hover',
+  primary: 'bg-action font-semibold text-on-action hover:bg-action/90',
+  secondary: 'border border-line-strong bg-surface text-ink hover:bg-hover',
+  /** On the brand band at the top of the page. */
+  band: 'bg-band-chip font-semibold text-on-band hover:bg-band-chip/80',
 } as const;
 
 interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
@@ -27,7 +29,7 @@ export function Button({
       type={type}
       disabled={disabled || pending}
       aria-busy={pending || undefined}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 font-medium transition-colors duration-150 disabled:cursor-wait disabled:opacity-70 ${VARIANTS[variant]} ${wide ? 'w-full' : ''}`}
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 font-medium transition-colors duration-150 disabled:cursor-wait disabled:opacity-70 ${VARIANTS[variant]} ${wide ? 'w-full' : ''}`}
       {...rest}
     >
       {pending && (

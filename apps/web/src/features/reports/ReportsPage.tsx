@@ -354,7 +354,7 @@ export function ReportsPage() {
         >
           <section
             aria-label={t('reports.totals')}
-            className="rounded-xl border border-line bg-surface p-5 md:p-6"
+            className="rounded-[22px] border border-line bg-surface p-5 md:p-6"
           >
             <dl className="grid gap-5 sm:grid-cols-3">
               <Stat

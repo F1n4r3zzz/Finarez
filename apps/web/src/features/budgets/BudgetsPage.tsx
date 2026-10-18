@@ -161,7 +161,7 @@ function BudgetCard({
   return (
     <Link
       to={`/budgets/${budget.id}`}
-      className="grid h-full gap-4 rounded-xl border border-line bg-surface p-5 transition-colors duration-150 hover:bg-hover"
+      className="grid h-full gap-4 rounded-[22px] border border-line bg-surface p-5 transition-colors duration-150 hover:bg-hover"
     >
       <span className="min-w-0">
         <span className="line-clamp-2 font-semibold">{names(budget.categoryId).name}</span>

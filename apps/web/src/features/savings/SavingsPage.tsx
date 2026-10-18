@@ -90,7 +90,7 @@ function GoalCard({ goal }: { goal: GoalView }) {
   return (
     <Link
       to={`/savings/${goal.id}`}
-      className="grid h-full gap-4 rounded-xl border border-line bg-surface p-5 transition-colors duration-150 hover:bg-hover"
+      className="grid h-full gap-4 rounded-[22px] border border-line bg-surface p-5 transition-colors duration-150 hover:bg-hover"
     >
       <div className="flex items-start justify-between gap-4">
         <span className="min-w-0">

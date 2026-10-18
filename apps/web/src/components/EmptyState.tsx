@@ -10,7 +10,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon, title, body, children }: EmptyStateProps) {
   return (
-    <section className="rounded-xl border border-line bg-surface px-6 py-12 text-center md:py-16">
+    <section className="rounded-[22px] border border-line bg-surface px-6 py-12 text-center md:py-16">
       <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-brand-soft text-brand">
         <Icon size={24} aria-hidden="true" />
       </div>

@@ -174,7 +174,7 @@ export function BudgetPage() {
           )
         }
       />
-      <section className="mb-6 grid gap-4 rounded-xl border border-line bg-surface p-5 md:p-6">
+      <section className="mb-6 grid gap-4 rounded-[22px] border border-line bg-surface p-5 md:p-6">
         {budget.current ? (
           <>
             <h2 className="font-semibold first-letter:uppercase">
